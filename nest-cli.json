@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": ".",
+  "compilerOptions": {
+    "webpack": false,
+    "deleteOutDir": true,
+    "tsConfigPath": "tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": ".",
+  "projects": {
+    "sayho-bot": {
+      "type": "application",
+      "root": "apps/sayho-bot",
+      "entryFile": "main",
+      "sourceRoot": "apps/sayho-bot/src",
+      "compilerOptions": {
+        "deleteOutDir": true,
+        "watchAssets": true,
+        "tsConfigPath": "apps/sayho-bot/tsconfig.app.json"
+      }
+    },
+
+    "core": { 
+      "type": "library",
+      "root": "libs/core",
+      "entryFile": "index",
+      "sourceRoot": "libs/core/src",
+      "compilerOptions": {
+        "deleteOutDir": true,
+        "tsConfigPath": "libs/core/tsconfig.lib.json"
+      }
+    }
+  }
+}
