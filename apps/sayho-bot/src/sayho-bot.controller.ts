@@ -1,5 +1,5 @@
-import { Controller, Get } from "@nestjs/common";
-import { SayhoBotService } from "./sayho-bot.service";
+import { Controller, Get } from '@nestjs/common';
+import { SayhoBotService } from './sayho-bot.service';
 
 @Controller()
 export class SayhoBotController {

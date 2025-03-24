@@ -32,7 +32,6 @@
     "@nestjs/core": "^11.0.12",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/platform-express": "^11.0.12",
-    "dotenv": "^16.4.7",
     "helmet": "^8.1.0",
     "nest-winston": "^1.10.2",
     "nestjs-cls": "^5.4.1",

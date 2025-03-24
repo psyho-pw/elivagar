@@ -10,19 +10,34 @@
   "monorepo": true,
   "root": ".",
   "projects": {
+    "auth": {
+      "type": "application",
+      "root": "apps/auth",
+      "entryFile": "main",
+      "sourceRoot": "apps/auth/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/auth/tsconfig.app.json"
+      }
+    },
+    "notification": {
+      "type": "application",
+      "root": "apps/notification",
+      "entryFile": "main",
+      "sourceRoot": "apps/notification/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/notification/tsconfig.app.json"
+      }
+    },
     "sayho-bot": {
       "type": "application",
       "root": "apps/sayho-bot",
       "entryFile": "main",
       "sourceRoot": "apps/sayho-bot/src",
       "compilerOptions": {
-        "deleteOutDir": true,
-        "watchAssets": true,
         "tsConfigPath": "apps/sayho-bot/tsconfig.app.json"
       }
     },
-
-    "core": { 
+    "core": {
       "type": "library",
       "root": "libs/core",
       "entryFile": "index",
