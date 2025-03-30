@@ -1,3 +1,7 @@
+# Generated from proto
+libs/core/src/proto/generated/*
+!libs/core/src/proto/generated/.gitkeep
+
 # IDE
 .idea
 .vscode

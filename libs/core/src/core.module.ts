@@ -1,7 +1,7 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Global, Module } from '@nestjs/common';
-import { ClsModule } from './src/cls/cls.module';
-import { LoggerModule } from './src/logger/logger.module';
+import { ClsModule } from './cls/cls.module';
+import { LoggerModule } from './logger/logger.module';
 
 @Global()
 @Module({

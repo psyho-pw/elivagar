@@ -7,6 +7,7 @@ export const AppConfig = registerAs('App', (): IApp => {
     env: process.env.NODE_ENV,
     serviceName: process.env.SERVICE_NAME,
     port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+    grpcPort: process.env.GRPC_PORT ? parseInt(process.env.GRPC_PORT) : 5000,
     jwtSecret: process.env.JWT_SECRET,
     jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
     jwtAlgorithm: process.env.JWT_ALGORITHM,

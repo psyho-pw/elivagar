@@ -1,11 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 
-@Controller()
+@Controller('/')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
-  @Get()
+  @Get('/')
   getHello(): string {
     return this.notificationService.getHello();
   }

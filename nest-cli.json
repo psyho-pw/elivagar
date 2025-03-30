@@ -9,6 +9,7 @@
   },
   "monorepo": true,
   "root": ".",
+
   "projects": {
     "auth": {
       "type": "application",
@@ -34,7 +35,14 @@
       "entryFile": "main",
       "sourceRoot": "apps/sayho-bot/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/sayho-bot/tsconfig.app.json"
+        "tsConfigPath": "apps/sayho-bot/tsconfig.app.json",
+        "assets": [
+          {
+            "include": "../../../libs/core/src/proto/**/*",
+            "outDir": "dist/sayho-bot",
+            "watchAssets": true
+          }
+        ]
       }
     },
     "core": {

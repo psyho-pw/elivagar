@@ -5,6 +5,7 @@ import { tags } from 'typia';
 export interface IApp {
   env: Env;
   port: number & tags.Type<'int32'>;
+  grpcPort: number & tags.Type<'int32'>;
   serviceName: string;
   jwtSecret: string;
   jwtRefreshSecret: string;
