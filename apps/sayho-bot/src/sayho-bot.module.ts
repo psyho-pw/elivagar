@@ -6,7 +6,6 @@ import { Module } from '@nestjs/common';
 import { ConfigsModule } from './configs/configs.module';
 import { SayhoBotController } from './sayho-bot.controller';
 import { SayhoBotService } from './sayho-bot.service';
-import { SongModule } from './song/song.module';
 
 const guards = [RequestIdGuard];
 
@@ -15,7 +14,7 @@ const guards = [RequestIdGuard];
     ConfigsModule,
     CoreModule,
     GrpcModule.register({ name: AppName.Auth, version: 'v1' }),
-    SongModule,
+    // SongModule,
   ],
   controllers: [SayhoBotController],
   providers: [...guards, SayhoBotService],
