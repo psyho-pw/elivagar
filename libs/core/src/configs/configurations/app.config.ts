@@ -2,7 +2,9 @@ import { registerAs } from '@nestjs/config';
 import { validate, IValidation } from 'typia';
 import { IApp } from '../configs.interface';
 
-export const AppConfig = registerAs('App', (): IApp => {
+export const AppConfigKey = 'App';
+
+export const AppConfig = registerAs(AppConfigKey, (): IApp => {
   const config = {
     env: process.env.NODE_ENV,
     serviceName: process.env.SERVICE_NAME,
@@ -21,7 +23,10 @@ export const AppConfig = registerAs('App', (): IApp => {
 
   const res: IValidation<IApp> = validate<IApp>(config);
 
-  if (!res.success) throw new Error(JSON.stringify(res.errors));
+  if (!res.success) {
+    console.error(res.errors);
+    throw new Error(AppConfigKey);
+  }
 
   return res.data;
 });
