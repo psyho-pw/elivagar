@@ -5,9 +5,9 @@
 // source: auth/v1/auth.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
-export const protobufPackage = 'auth.v1';
+export const protobufPackage = "auth.v1";
 
 export interface LoginRequest {
   email: string;
@@ -19,15 +19,15 @@ export interface LoginResponse {
 }
 
 function createBaseLoginRequest(): LoginRequest {
-  return { email: '', password: '' };
+  return { email: "", password: "" };
 }
 
 export const LoginRequest: MessageFns<LoginRequest> = {
   encode(message: LoginRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.email !== '') {
+    if (message.email !== "") {
       writer.uint32(10).string(message.email);
     }
-    if (message.password !== '') {
+    if (message.password !== "") {
       writer.uint32(18).string(message.password);
     }
     return writer;
@@ -67,17 +67,17 @@ export const LoginRequest: MessageFns<LoginRequest> = {
 
   fromJSON(object: any): LoginRequest {
     return {
-      email: isSet(object.email) ? globalThis.String(object.email) : '',
-      password: isSet(object.password) ? globalThis.String(object.password) : '',
+      email: isSet(object.email) ? globalThis.String(object.email) : "",
+      password: isSet(object.password) ? globalThis.String(object.password) : "",
     };
   },
 
   toJSON(message: LoginRequest): unknown {
     const obj: any = {};
-    if (message.email !== '') {
+    if (message.email !== "") {
       obj.email = message.email;
     }
-    if (message.password !== '') {
+    if (message.password !== "") {
       obj.password = message.password;
     }
     return obj;
@@ -88,19 +88,19 @@ export const LoginRequest: MessageFns<LoginRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<LoginRequest>, I>>(object: I): LoginRequest {
     const message = createBaseLoginRequest();
-    message.email = object.email ?? '';
-    message.password = object.password ?? '';
+    message.email = object.email ?? "";
+    message.password = object.password ?? "";
     return message;
   },
 };
 
 function createBaseLoginResponse(): LoginResponse {
-  return { token: '' };
+  return { token: "" };
 }
 
 export const LoginResponse: MessageFns<LoginResponse> = {
   encode(message: LoginResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.token !== '') {
+    if (message.token !== "") {
       writer.uint32(10).string(message.token);
     }
     return writer;
@@ -131,12 +131,12 @@ export const LoginResponse: MessageFns<LoginResponse> = {
   },
 
   fromJSON(object: any): LoginResponse {
-    return { token: isSet(object.token) ? globalThis.String(object.token) : '' };
+    return { token: isSet(object.token) ? globalThis.String(object.token) : "" };
   },
 
   toJSON(message: LoginResponse): unknown {
     const obj: any = {};
-    if (message.token !== '') {
+    if (message.token !== "") {
       obj.token = message.token;
     }
     return obj;
@@ -147,7 +147,7 @@ export const LoginResponse: MessageFns<LoginResponse> = {
   },
   fromPartial<I extends Exact<DeepPartial<LoginResponse>, I>>(object: I): LoginResponse {
     const message = createBaseLoginResponse();
-    message.token = object.token ?? '';
+    message.token = object.token ?? "";
     return message;
   },
 };
@@ -156,7 +156,7 @@ export interface AuthService {
   Login(request: LoginRequest): Promise<LoginResponse>;
 }
 
-export const AuthServiceServiceName = 'auth.v1.AuthService';
+export const AuthServiceServiceName = "auth.v1.AuthService";
 export class AuthServiceClientImpl implements AuthService {
   private readonly rpc: Rpc;
   private readonly service: string;
@@ -167,7 +167,7 @@ export class AuthServiceClientImpl implements AuthService {
   }
   Login(request: LoginRequest): Promise<LoginResponse> {
     const data = LoginRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, 'Login', data);
+    const promise = this.rpc.request(this.service, "Login", data);
     return promise.then((data) => LoginResponse.decode(new BinaryReader(data)));
   }
 }
@@ -178,19 +178,14 @@ interface Rpc {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+export type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin
-  ? P
+export type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {
