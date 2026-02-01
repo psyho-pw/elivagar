@@ -23,7 +23,7 @@ export class LoggerService {
     this.context = this.caller?.constructor.name || 'Unknown';
   }
 
-  private format(obj: object | string, message = '', requestId?: string): Log {
+  private format(obj: unknown, message = '', requestId?: string): Log {
     if (!requestId) requestId = this.clsService.requestId;
     const log: Log = { message, requestId, logId: v7() };
     const appConfig = this.configService.AppConfig;
@@ -43,7 +43,9 @@ export class LoggerService {
       return log;
     }
 
-    log.data = obj;
+    if (typeof obj === 'object' && obj !== null) {
+      log.data = obj;
+    }
     return log;
   }
 
@@ -57,7 +59,7 @@ export class LoggerService {
 
   public verbose(
     detailedContext: string,
-    object: object | string,
+    object: unknown,
     message?: string,
     requestId?: string,
   ): void {
@@ -67,7 +69,7 @@ export class LoggerService {
 
   public debug(
     detailedContext: string,
-    object: object | string,
+    object: unknown,
     message?: string,
     requestId?: string,
   ): void {
@@ -77,7 +79,7 @@ export class LoggerService {
 
   public info(
     detailedContext: string,
-    object: object | string,
+    object: unknown,
     message?: string,
     requestId?: string,
   ): void {
@@ -87,7 +89,7 @@ export class LoggerService {
 
   public warn(
     detailedContext: string,
-    object: object | string,
+    object: unknown,
     message?: string,
     requestId?: string,
   ): void {
@@ -97,7 +99,7 @@ export class LoggerService {
 
   public error(
     detailedContext: string,
-    object: object | string,
+    object: unknown,
     message?: string,
     requestId?: string,
   ): void {

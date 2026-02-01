@@ -1,8 +1,8 @@
-import { MikroUuidEntity } from '@app/core/mikro/abstracts/base.entity';
-import { Entity, EntityRepositoryType, Property, TextType } from '@mikro-orm/mariadb';
+import { MikroUuidEntity } from '@app/mikro/abstracts/base.entity';
+import { Entity, EntityRepositoryType, Property, TextType } from '@mikro-orm/postgresql';
 import { SongRepository } from './song.repository';
 
-@Entity({ repository: () => SongRepository })
+@Entity({ schema: 'sayho', repository: () => SongRepository })
 export class Song extends MikroUuidEntity {
   [EntityRepositoryType]?: SongRepository;
 

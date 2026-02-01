@@ -44,6 +44,8 @@ lerna-debug.log*
 
 # Env
 .env
-.env.test
-.env.development
-.env.production
+.env.*
+!.env.example
+
+# MCP
+.mcp.json

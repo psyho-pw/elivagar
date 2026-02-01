@@ -1,0 +1,3 @@
+# Shared entities directory
+# Place entities here only when multiple services need to access the SAME table
+# Example: User entity if both auth and notification services need to read user data

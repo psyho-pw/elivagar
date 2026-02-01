@@ -4,8 +4,8 @@ import { ClientsModule, GrpcOptions, Transport } from '@nestjs/microservices';
 import { camelCase } from 'change-case';
 import { GrpcModuleOptions } from './grpc.interface';
 import { GrpcService } from './grpc.service';
-import { ConfigsServiceKey } from '../configs/configs.constant';
-import { IConfigsService } from '../configs/configs.interface';
+import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
+import { IConfigsService } from '@app/core/configs/configs.interface';
 
 @Module({
   providers: [GrpcService],

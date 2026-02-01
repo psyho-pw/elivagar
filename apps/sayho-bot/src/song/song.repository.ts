@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/mariadb';
+import { EntityRepository } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { Song } from './song.entity';
 

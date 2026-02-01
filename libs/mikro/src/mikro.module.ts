@@ -1,26 +1,27 @@
-import { MariaDbDriver } from '@mikro-orm/mariadb';
+import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
+import { IConfigsService } from '@app/core/configs/configs.interface';
 import { MikroOrmModuleOptions, MikroOrmModule as OrmModule } from '@mikro-orm/nestjs';
+import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { DynamicModule } from '@nestjs/common';
-import { ConfigsServiceKey } from '../configs/configs.constant';
-import { IConfigsService } from '../configs/configs.interface';
 
 export class MikroOrmModule {
   private static instance?: DynamicModule | Promise<DynamicModule>;
 
-  private static makeModulePath(serviceName: string): string {
-    return `apps/${serviceName}/src/**`;
-  }
-
   private static makeDistPath(serviceName: string): string {
-    return `dist/${serviceName}/${this.makeModulePath(serviceName)}/*.entity.js`;
+    return `dist/apps/${serviceName}/apps/${serviceName}/src/**/*.entity.js`;
   }
 
   private static makeTsPath(serviceName: string): string {
-    return `${this.makeModulePath(serviceName)}/*.entity.ts`;
+    return `apps/${serviceName}/src/**/*.entity.ts`;
   }
 
-  private static makeTsMigrationsPath(): string {
-    return `migrations`;
+  private static makeTsMigrationsPath(serviceName: string): string {
+    return `libs/mikro/migrations/${serviceName}`;
+  }
+
+  private static getSchemaName(serviceName: string): string {
+    // sayho-bot → sayho
+    return serviceName === 'sayho-bot' ? 'sayho' : serviceName;
   }
 
   public static getInstance(): DynamicModule | Promise<DynamicModule> {
@@ -29,24 +30,33 @@ export class MikroOrmModule {
     this.instance = OrmModule.forRootAsync({
       imports: [],
       inject: [ConfigsServiceKey],
-      driver: MariaDbDriver,
+      driver: PostgreSqlDriver,
       useFactory: async (configsService: IConfigsService): Promise<MikroOrmModuleOptions> => {
         const { serviceName } = configsService.AppConfig;
-        const { host, port, user, password } = configsService.DatabaseConfig;
+        const { host, port, user, password, dbName } = configsService.DatabaseConfig;
+
+        const schema = this.getSchemaName(serviceName);
 
         const options: MikroOrmModuleOptions = {
-          driver: MariaDbDriver,
+          driver: PostgreSqlDriver,
           entitiesTs: [this.makeTsPath(serviceName)],
           entities: [this.makeDistPath(serviceName)],
           host,
           port,
           user,
           password,
-          dbName: host,
+          dbName,
+          schema,
           autoLoadEntities: true,
+          allowGlobalContext: true,
+          discovery: {
+            warnWhenNoEntities: false,
+            requireEntitiesArray: false,
+          },
           migrations: {
             tableName: 'migrations',
-            pathTs: this.makeTsMigrationsPath(),
+            path: this.makeTsMigrationsPath(serviceName),
+            pathTs: this.makeTsMigrationsPath(serviceName),
             glob: '!(*.d).{js,ts}',
             transactional: true,
             allOrNothing: true,

@@ -8,10 +8,14 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { v7 } from 'uuid';
+import { LoggerService } from '../../logger/logger.service';
 
 @Injectable()
 export class RequestIdGuard implements CanActivate {
-  constructor(@Inject(ClsServiceKey) private readonly clsService: IClsService) {}
+  constructor(
+    @Inject(ClsServiceKey) private readonly clsService: IClsService,
+    private readonly loggerService: LoggerService,
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     try {
@@ -26,7 +30,8 @@ export class RequestIdGuard implements CanActivate {
       }
 
       throw new ServiceUnavailableException('not supported');
-    } catch (err) {
+    } catch (err: unknown) {
+      this.loggerService.error(this.canActivate.name, err as Error);
       return true;
     }
   }

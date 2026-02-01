@@ -1,7 +1,7 @@
 import { RequestIdGuard } from '@app/core/common/guards/cls.guard';
 import { AppName } from '@app/core/constants/app.constant';
 import { CoreModule } from '@app/core/core.module';
-import { GrpcModule } from '@app/core/grpc/grpc.module';
+import { GrpcModule } from '@app/grpc/grpc/grpc.module';
 import { Module } from '@nestjs/common';
 import { ConfigsModule } from './configs/configs.module';
 import { SayhoBotController } from './sayho-bot.controller';
@@ -13,7 +13,7 @@ const guards = [RequestIdGuard];
   imports: [
     ConfigsModule,
     CoreModule,
-    GrpcModule.register({ name: AppName.Auth, version: 'v1' }),
+    GrpcModule.register({ name: AppName.SayhoBot, version: 'v1' }),
     // SongModule,
   ],
   controllers: [SayhoBotController],

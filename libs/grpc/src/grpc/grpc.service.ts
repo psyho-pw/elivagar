@@ -4,9 +4,9 @@ import { Inject } from '@nestjs/common';
 import { GrpcOptions, Transport } from '@nestjs/microservices';
 import { camelCase } from 'change-case';
 import { GrpcModuleOptions } from './grpc.interface';
-import { ConfigsServiceKey } from '../configs/configs.constant';
-import { IConfigsService } from '../configs/configs.interface';
-import { LoggerService } from '../logger/logger.service';
+import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
+import { IConfigsService } from '@app/core/configs/configs.interface';
+import { LoggerService } from '@app/core/logger/logger.service';
 
 export class GrpcService {
   constructor(

@@ -17,7 +17,14 @@
       "entryFile": "main",
       "sourceRoot": "apps/auth/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/auth/tsconfig.app.json"
+        "tsConfigPath": "apps/auth/tsconfig.app.json",
+        "assets": [
+          {
+            "include": "../../../libs/grpc/src/proto/**/*",
+            "outDir": "dist/apps/auth",
+            "watchAssets": true
+          }
+        ]
       }
     },
     "notification": {
@@ -26,7 +33,14 @@
       "entryFile": "main",
       "sourceRoot": "apps/notification/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/notification/tsconfig.app.json"
+        "tsConfigPath": "apps/notification/tsconfig.app.json",
+        "assets": [
+          {
+            "include": "../../../libs/grpc/src/proto/**/*",
+            "outDir": "dist/apps/notification",
+            "watchAssets": true
+          }
+        ]
       }
     },
     "sayho-bot": {
@@ -38,7 +52,7 @@
         "tsConfigPath": "apps/sayho-bot/tsconfig.app.json",
         "assets": [
           {
-            "include": "../../../libs/core/src/proto/**/*",
+            "include": "../../../libs/grpc/src/proto/**/*",
             "outDir": "dist/sayho-bot",
             "watchAssets": true
           }
@@ -48,11 +62,28 @@
     "core": {
       "type": "library",
       "root": "libs/core",
-      "entryFile": "index",
       "sourceRoot": "libs/core/src",
       "compilerOptions": {
         "deleteOutDir": true,
         "tsConfigPath": "libs/core/tsconfig.lib.json"
+      }
+    },
+    "grpc": {
+      "type": "library",
+      "root": "libs/grpc",
+      "sourceRoot": "libs/grpc/src",
+      "compilerOptions": {
+        "deleteOutDir": true,
+        "tsConfigPath": "libs/grpc/tsconfig.json"
+      }
+    },
+    "mikro": {
+      "type": "library",
+      "root": "libs/mikro",
+      "sourceRoot": "libs/mikro/src",
+      "compilerOptions": {
+        "deleteOutDir": true,
+        "tsConfigPath": "libs/mikro/tsconfig.json"
       }
     }
   }

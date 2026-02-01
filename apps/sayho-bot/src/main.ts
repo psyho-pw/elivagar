@@ -1,6 +1,6 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
 import { IApp, IConfigsService } from '@app/core/configs/configs.interface';
-import { GrpcService } from '@app/core/grpc/grpc.service';
+import { GrpcService } from '@app/grpc/grpc/grpc.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';

@@ -1,9 +1,9 @@
-import { GrpcDto } from '@app/core/grpc/grpc.interface';
+import { GrpcDto } from '@app/grpc/grpc/grpc.interface';
 import {
   PingRequest,
   PingResponse,
   SayhoBotServiceServiceName,
-} from '@app/core/proto/generated/sayho-bot/v1/sayho-bot';
+} from '@app/grpc/proto/generated/sayho-bot/v1/sayho-bot';
 import { Controller, Get } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { SayhoBotService } from './sayho-bot.service';
