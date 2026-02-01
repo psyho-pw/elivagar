@@ -8,6 +8,8 @@
   "scripts": {
     "proto:generate": "find ./libs/grpc/src/proto -name '*.proto' | xargs protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./libs/grpc/src/proto/generated --proto_path=./libs/grpc/src/proto",
     "build:sayho-bot": "pnpm proto:generate && nest build sayho-bot",
+    "build:notification": "pnpm proto:generate && nest build notification",
+    "build:auth": "pnpm proto:generate && nest build auth",
     "start:sayho-bot": "pnpm proto:generate && SERVICE_NAME=sayho-bot TZ=utc dotenvx run -f .env.local -- nest start sayho-bot --watch",
     "start:notification": "pnpm proto:generate && SERVICE_NAME=notification TZ=utc dotenvx run -f .env.local -- nest start notification --watch",
     "start:auth": "pnpm proto:generate && SERVICE_NAME=auth TZ=utc dotenvx run -f .env.local -- nest start auth --watch",

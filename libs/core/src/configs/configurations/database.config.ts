@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import { IValidation, validate } from 'typia';
+import { getEnv, getEnvInt } from '../configs.helper';
 import { IDatabase } from '../configs.interface';
-import { getEnv, getEnvInt } from '../env.helper';
 
 export const DatabaseConfigKey = 'Database';
 

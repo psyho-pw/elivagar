@@ -5,18 +5,16 @@
 
 /**
  * Get service prefix based on SERVICE_NAME
- * Maps service names to their environment variable prefixes
+ * Dynamically generates prefix from service name (e.g., 'sayho-bot' -> 'SAYHO_BOT_')
  */
 export function getServicePrefix(): string {
   const serviceName = process.env.SERVICE_NAME || '';
 
-  const prefixMap: Record<string, string> = {
-    auth: 'AUTH_',
-    notification: 'NOTIFICATION_',
-    'sayho-bot': 'SAYHO_BOT_',
-  };
+  if (!serviceName) {
+    return '';
+  }
 
-  return prefixMap[serviceName] || '';
+  return serviceName.toUpperCase().replace(/-/g, '_') + '_';
 }
 
 /**

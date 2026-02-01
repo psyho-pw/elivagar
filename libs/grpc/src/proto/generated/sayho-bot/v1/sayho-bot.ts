@@ -5,9 +5,9 @@
 // source: sayho-bot/v1/sayho-bot.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
 
-export const protobufPackage = "sayhoBot.v1";
+export const protobufPackage = 'sayhoBot.v1';
 
 export interface PingRequest {
   message: string;
@@ -18,12 +18,12 @@ export interface PingResponse {
 }
 
 function createBasePingRequest(): PingRequest {
-  return { message: "" };
+  return { message: '' };
 }
 
 export const PingRequest: MessageFns<PingRequest> = {
   encode(message: PingRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.message !== "") {
+    if (message.message !== '') {
       writer.uint32(10).string(message.message);
     }
     return writer;
@@ -54,12 +54,12 @@ export const PingRequest: MessageFns<PingRequest> = {
   },
 
   fromJSON(object: any): PingRequest {
-    return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
+    return { message: isSet(object.message) ? globalThis.String(object.message) : '' };
   },
 
   toJSON(message: PingRequest): unknown {
     const obj: any = {};
-    if (message.message !== "") {
+    if (message.message !== '') {
       obj.message = message.message;
     }
     return obj;
@@ -70,18 +70,18 @@ export const PingRequest: MessageFns<PingRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<PingRequest>, I>>(object: I): PingRequest {
     const message = createBasePingRequest();
-    message.message = object.message ?? "";
+    message.message = object.message ?? '';
     return message;
   },
 };
 
 function createBasePingResponse(): PingResponse {
-  return { message: "" };
+  return { message: '' };
 }
 
 export const PingResponse: MessageFns<PingResponse> = {
   encode(message: PingResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.message !== "") {
+    if (message.message !== '') {
       writer.uint32(10).string(message.message);
     }
     return writer;
@@ -112,12 +112,12 @@ export const PingResponse: MessageFns<PingResponse> = {
   },
 
   fromJSON(object: any): PingResponse {
-    return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
+    return { message: isSet(object.message) ? globalThis.String(object.message) : '' };
   },
 
   toJSON(message: PingResponse): unknown {
     const obj: any = {};
-    if (message.message !== "") {
+    if (message.message !== '') {
       obj.message = message.message;
     }
     return obj;
@@ -128,7 +128,7 @@ export const PingResponse: MessageFns<PingResponse> = {
   },
   fromPartial<I extends Exact<DeepPartial<PingResponse>, I>>(object: I): PingResponse {
     const message = createBasePingResponse();
-    message.message = object.message ?? "";
+    message.message = object.message ?? '';
     return message;
   },
 };
@@ -137,7 +137,7 @@ export interface SayhoBotService {
   Ping(request: PingRequest): Promise<PingResponse>;
 }
 
-export const SayhoBotServiceServiceName = "sayhoBot.v1.SayhoBotService";
+export const SayhoBotServiceServiceName = 'sayhoBot.v1.SayhoBotService';
 export class SayhoBotServiceClientImpl implements SayhoBotService {
   private readonly rpc: Rpc;
   private readonly service: string;
@@ -148,7 +148,7 @@ export class SayhoBotServiceClientImpl implements SayhoBotService {
   }
   Ping(request: PingRequest): Promise<PingResponse> {
     const data = PingRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "Ping", data);
+    const promise = this.rpc.request(this.service, 'Ping', data);
     return promise.then((data) => PingResponse.decode(new BinaryReader(data)));
   }
 }
@@ -159,14 +159,19 @@ interface Rpc {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {

@@ -93,6 +93,8 @@ Services use `.env.local` file with `dotenvx` for environment management. Set `S
 ```bash
 # Build specific service (includes proto generation)
 pnpm build:sayho-bot
+pnpm build:notification
+pnpm build:auth
 
 # Generate protobuf types only
 pnpm proto:generate
@@ -100,33 +102,38 @@ pnpm proto:generate
 
 ### Database Migrations
 
-MikroORM migrations require `--config.app` and `--config.env` flags:
+MikroORM migrations use `--app` and `--env` npm config flags:
 
 ```bash
 # Create migration for a specific service
-pnpm migration:create:auth
-pnpm migration:create:notification
-pnpm migration:create:sayho-bot
+pnpm --config.env=local --config.app=auth migration:create
+pnpm --config.env=local --config.app=notification migration:create
+pnpm --config.env=local --config.app=sayho-bot migration:create
 
 # Run migrations
-pnpm migration:up:auth
-pnpm migration:up:notification
-pnpm migration:up:sayho-bot
-pnpm migration:up:all
+pnpm --config.env=local --config.app=auth migration:up
+pnpm --config.env=local --config.app=notification migration:up
+pnpm --config.env=local --config.app=sayho-bot migration:up 
 
 # Rollback migrations
-pnpm migration:down:auth
+pnpm --config.env=local --config.app=auth migration:down
 
 # Fresh migrations (drops and recreates)
-pnpm migration:fresh:auth
-pnpm migration:fresh:all
+pnpm --config.env=local --config.app=auth migration:fresh
 
 # Create schema (development)
-pnpm schema:create:auth
-pnpm schema:create:all
+pnpm --config.env=local --config.app=auth schema:create
 ```
 
-The MikroORM CLI config (mikro-orm.config.ts) dynamically loads the correct environment file and service configuration based on CLI arguments.
+Alternatively, use the wrapper script for simpler syntax:
+
+```bash
+# Example: ./scripts/mikro-orm-cli.sh <app> <env> <command>
+./scripts/mikro-orm-cli.sh auth local migration:create
+./scripts/mikro-orm-cli.sh sayho-bot local migration:up
+```
+
+The MikroORM CLI config (mikro-orm.config.ts) reads `APP` and `NODE_ENV` environment variables (set via npm config flags) to determine which service configuration and environment file to load.
 
 ### Testing
 
@@ -160,12 +167,13 @@ pnpm lint
 
 All entities should extend from `libs/mikro/src/abstracts/base.entity.ts`:
 
-- `MikroUuidEntity` - UUID primary key with timestamps
-- `MikroAutoIncrementEntity` - Auto-increment integer primary key with timestamps
-- `MikroUuidActorEntity` - UUID with actor tracking (extends MikroUuidEntity)
-- `MikroAutoIncrementActorEntity` - Auto-increment with actor tracking
+- `MikroEntity` - Base abstract entity with timestamps and soft delete
+- `MikroUuidEntity` - UUID primary key (extends MikroEntity)
+- `MikroAutoIncrementEntity` - Auto-increment integer primary key (extends MikroEntity)
+- `MikroUuidActorEntity` - Reserved for UUID with actor tracking (extends MikroUuidEntity)
+- `MikroAutoIncrementActorEntity` - Reserved for auto-increment with actor tracking (extends MikroAutoIncrementEntity)
 
-All entities include `createdAt`, `updatedAt`, and `deletedAt` (soft delete) fields.
+All entities include `createdAt`, `updatedAt`, and `deletedAt` (soft delete) fields. The project uses UUIDv7 for primary keys via the `uuid` package.
 
 ### Configuration Loading
 

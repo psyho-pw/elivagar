@@ -1,9 +1,9 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication } from "@nestjs/common";
-import * as request from "supertest";
-import { SayhobotModule } from "../src/sayho-bot.module";
+import { INestApplication } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import * as request from 'supertest';
+import { SayhobotModule } from '../src/sayho-bot.module';
 
-describe("SayhobotController (e2e)", () => {
+describe('SayhobotController (e2e)', () => {
   let app: INestApplication;
 
   beforeEach(async () => {
@@ -15,10 +15,7 @@ describe("SayhobotController (e2e)", () => {
     await app.init();
   });
 
-  it("/ (GET)", () => {
-    return request(app.getHttpServer())
-      .get("/")
-      .expect(200)
-      .expect("Hello World!");
+  it('/ (GET)', () => {
+    return request(app.getHttpServer()).get('/').expect(200).expect('Hello World!');
   });
 });

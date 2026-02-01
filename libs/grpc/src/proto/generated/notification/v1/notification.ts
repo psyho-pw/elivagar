@@ -5,9 +5,9 @@
 // source: notification/v1/notification.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
 
-export const protobufPackage = "notification.v1";
+export const protobufPackage = 'notification.v1';
 
 export interface NotificationRequest {
   message: string;
@@ -18,12 +18,12 @@ export interface NotificationResponse {
 }
 
 function createBaseNotificationRequest(): NotificationRequest {
-  return { message: "" };
+  return { message: '' };
 }
 
 export const NotificationRequest: MessageFns<NotificationRequest> = {
   encode(message: NotificationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.message !== "") {
+    if (message.message !== '') {
       writer.uint32(10).string(message.message);
     }
     return writer;
@@ -54,12 +54,12 @@ export const NotificationRequest: MessageFns<NotificationRequest> = {
   },
 
   fromJSON(object: any): NotificationRequest {
-    return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
+    return { message: isSet(object.message) ? globalThis.String(object.message) : '' };
   },
 
   toJSON(message: NotificationRequest): unknown {
     const obj: any = {};
-    if (message.message !== "") {
+    if (message.message !== '') {
       obj.message = message.message;
     }
     return obj;
@@ -68,20 +68,22 @@ export const NotificationRequest: MessageFns<NotificationRequest> = {
   create<I extends Exact<DeepPartial<NotificationRequest>, I>>(base?: I): NotificationRequest {
     return NotificationRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<NotificationRequest>, I>>(object: I): NotificationRequest {
+  fromPartial<I extends Exact<DeepPartial<NotificationRequest>, I>>(
+    object: I,
+  ): NotificationRequest {
     const message = createBaseNotificationRequest();
-    message.message = object.message ?? "";
+    message.message = object.message ?? '';
     return message;
   },
 };
 
 function createBaseNotificationResponse(): NotificationResponse {
-  return { message: "" };
+  return { message: '' };
 }
 
 export const NotificationResponse: MessageFns<NotificationResponse> = {
   encode(message: NotificationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.message !== "") {
+    if (message.message !== '') {
       writer.uint32(10).string(message.message);
     }
     return writer;
@@ -112,12 +114,12 @@ export const NotificationResponse: MessageFns<NotificationResponse> = {
   },
 
   fromJSON(object: any): NotificationResponse {
-    return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
+    return { message: isSet(object.message) ? globalThis.String(object.message) : '' };
   },
 
   toJSON(message: NotificationResponse): unknown {
     const obj: any = {};
-    if (message.message !== "") {
+    if (message.message !== '') {
       obj.message = message.message;
     }
     return obj;
@@ -126,9 +128,11 @@ export const NotificationResponse: MessageFns<NotificationResponse> = {
   create<I extends Exact<DeepPartial<NotificationResponse>, I>>(base?: I): NotificationResponse {
     return NotificationResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<NotificationResponse>, I>>(object: I): NotificationResponse {
+  fromPartial<I extends Exact<DeepPartial<NotificationResponse>, I>>(
+    object: I,
+  ): NotificationResponse {
     const message = createBaseNotificationResponse();
-    message.message = object.message ?? "";
+    message.message = object.message ?? '';
     return message;
   },
 };
@@ -137,7 +141,7 @@ export interface NotificationService {
   SendNotification(request: NotificationRequest): Promise<NotificationResponse>;
 }
 
-export const NotificationServiceServiceName = "notification.v1.NotificationService";
+export const NotificationServiceServiceName = 'notification.v1.NotificationService';
 export class NotificationServiceClientImpl implements NotificationService {
   private readonly rpc: Rpc;
   private readonly service: string;
@@ -148,7 +152,7 @@ export class NotificationServiceClientImpl implements NotificationService {
   }
   SendNotification(request: NotificationRequest): Promise<NotificationResponse> {
     const data = NotificationRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "SendNotification", data);
+    const promise = this.rpc.request(this.service, 'SendNotification', data);
     return promise.then((data) => NotificationResponse.decode(new BinaryReader(data)));
   }
 }
@@ -159,14 +163,19 @@ interface Rpc {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {

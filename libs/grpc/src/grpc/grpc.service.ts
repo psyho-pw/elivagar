@@ -1,12 +1,12 @@
 import { join } from 'path';
+import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
+import { IConfigsService } from '@app/core/configs/configs.interface';
+import { LoggerService } from '@app/core/logger/logger.service';
 import { ReflectionService } from '@grpc/reflection';
 import { Inject } from '@nestjs/common';
 import { GrpcOptions, Transport } from '@nestjs/microservices';
 import { camelCase } from 'change-case';
 import { GrpcModuleOptions } from './grpc.interface';
-import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { IConfigsService } from '@app/core/configs/configs.interface';
-import { LoggerService } from '@app/core/logger/logger.service';
 
 export class GrpcService {
   constructor(

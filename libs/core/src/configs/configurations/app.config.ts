@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import { validate, IValidation } from 'typia';
+import { getEnv, getEnvInt } from '../configs.helper';
 import { IApp } from '../configs.interface';
-import { getEnv, getEnvInt } from '../env.helper';
 
 export const AppConfigKey = 'App';
 

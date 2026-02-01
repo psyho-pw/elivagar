@@ -3,13 +3,8 @@ import { defineConfig } from '@mikro-orm/postgresql';
 const app = process.env.APP;
 const env = process.env.NODE_ENV;
 
-if (!app) {
-  throw new Error('Missing required environment variable: APP');
-}
-
-if (!env) {
-  throw new Error('Missing required environment variable: NODE_ENV');
-}
+if (!app) throw new Error('Missing required environment variable: APP');
+if (!env) throw new Error('Missing required environment variable: NODE_ENV');
 
 // Validate app name
 const validApps = ['auth', 'notification', 'sayho-bot'];
