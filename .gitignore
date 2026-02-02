@@ -1,6 +1,6 @@
 # Generated from proto
-libs/core/src/proto/generated/*
-!libs/core/src/proto/generated/.gitkeep
+libs/grpc/src/proto/generated/*
+!libs/grpc/src/proto/generated/.gitkeep
 
 # IDE
 .idea
