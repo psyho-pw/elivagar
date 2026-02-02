@@ -43,12 +43,18 @@ export class KafkaService
   }
 
   async onModuleDestroy(): Promise<void> {
-    // Shutdown is handled by ShutdownManager via disconnect()
-    // This hook is just for safety if module is destroyed without shutdown signal
+    // Fallback: disconnect if not already handled by ShutdownManager
+    // This ensures proper cleanup even when LifecycleModule is not imported
+    if (this._state !== ConnectionState.DISCONNECTED) {
+      await this.disconnect();
+    }
   }
 
   async connect(): Promise<void> {
-    if (this._state === ConnectionState.CONNECTED) {
+    if (
+      this._state === ConnectionState.CONNECTED ||
+      this._state === ConnectionState.CONNECTING
+    ) {
       return;
     }
 
