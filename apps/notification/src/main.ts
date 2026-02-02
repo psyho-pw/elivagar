@@ -1,4 +1,5 @@
-import { AbstractMain, BootstrapConfig } from '@app/core/bootstrap';
+import { AbstractMain } from '@app/core/bootstrap/abstract-main';
+import { BootstrapConfig } from '@app/core/bootstrap/bootstrap.interface';
 import { Type } from '@nestjs/common';
 import { NotificationModule } from './notification.module';
 

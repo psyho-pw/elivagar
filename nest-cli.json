@@ -94,6 +94,15 @@
         "deleteOutDir": true,
         "tsConfigPath": "libs/kafka/tsconfig.lib.json"
       }
+    },
+    "redis": {
+      "type": "library",
+      "root": "libs/redis",
+      "sourceRoot": "libs/redis/src",
+      "compilerOptions": {
+        "deleteOutDir": true,
+        "tsConfigPath": "libs/redis/tsconfig.lib.json"
+      }
     }
   }
 }

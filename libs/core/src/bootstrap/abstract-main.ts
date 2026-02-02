@@ -1,6 +1,7 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
 import { IApp, IConfigsService } from '@app/core/configs/configs.interface';
 import { Env } from '@app/core/constants/app.constant';
+import { ReadinessGateService } from '@app/core/lifecycle/readiness-gate.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { GrpcService } from '@app/grpc/grpc/grpc.service';
 import { Type, VersioningType } from '@nestjs/common';
@@ -15,6 +16,7 @@ import {
   BootstrapResult,
   GrpcConfig,
   MiddlewareConfig,
+  ReadinessConfig,
   VersioningConfig,
 } from './bootstrap.interface';
 
@@ -75,6 +77,12 @@ export abstract class AbstractMain {
 
     // gRPC 설정
     await this.configureGrpc(config.grpc);
+
+    // 애플리케이션 초기화 (OnModuleInit 훅 실행)
+    await this.app.init();
+
+    // Readiness 체크 - 모든 연결이 준비될 때까지 대기
+    await this.waitForReadiness(config.readiness);
 
     // 리스닝 전 훅
     await this.onBeforeListen();
@@ -252,6 +260,36 @@ export abstract class AbstractMain {
   protected isDeployedEnvironment(): boolean {
     const env = this.appConfig.env;
     return env !== Env.development && env !== Env.test;
+  }
+
+  /**
+   * 모든 연결이 준비될 때까지 대기 (Readiness Gate)
+   */
+  protected async waitForReadiness(config?: ReadinessConfig): Promise<void> {
+    if (config?.enabled === false) {
+      this.loggerService.debug('waitForReadiness', 'Readiness check disabled');
+      return;
+    }
+
+    try {
+      const readinessGate = this.app.get(ReadinessGateService);
+      await readinessGate.waitForReady(config?.timeout);
+    } catch (error) {
+      // ReadinessGateService가 없으면 건너뜀 (LifecycleModule이 import되지 않은 경우)
+      const isProviderNotFound =
+        error instanceof Error &&
+        (error.name === 'UnknownElementException' ||
+          error.message?.includes('Nest could not find'));
+      if (isProviderNotFound) {
+        this.loggerService.debug(
+          'waitForReadiness',
+          'LifecycleModule not imported, skipping readiness check',
+        );
+        return;
+      }
+      this.loggerService.error('waitForReadiness', error, 'Readiness check failed');
+      throw error;
+    }
   }
 
   /**

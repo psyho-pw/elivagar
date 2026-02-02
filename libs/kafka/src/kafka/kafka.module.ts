@@ -1,6 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
+import { SASLOptions } from 'kafkajs';
 import { KafkaConfig, KafkaConfigKey } from './kafka.config';
 import { KafkaClientKey, KafkaServiceKey } from './kafka.constant';
 import { IKafkaConfig, KafkaModuleOptions } from './kafka.interface';
@@ -8,10 +9,25 @@ import { KafkaService } from './kafka.service';
 
 @Module({})
 export class KafkaModule {
-  private static buildKafkaOptions(
+  private static makeSaslConfig(kafkaConfig: IKafkaConfig): SASLOptions | undefined {
+    const { saslUsername, saslPassword, saslMechanism } = kafkaConfig;
+    if (!saslUsername || !saslPassword || !saslMechanism) {
+      return undefined;
+    }
+
+    return {
+      mechanism: saslMechanism,
+      username: saslUsername,
+      password: saslPassword,
+    } as SASLOptions;
+  }
+
+  private static makeKafkaOptions(
     kafkaConfig: IKafkaConfig,
     options: KafkaModuleOptions = {},
   ): KafkaOptions {
+    const sasl = this.makeSaslConfig(kafkaConfig);
+
     return {
       transport: Transport.KAFKA,
       options: {
@@ -21,33 +37,7 @@ export class KafkaModule {
           ssl: kafkaConfig.ssl,
           connectionTimeout: kafkaConfig.connectionTimeout,
           requestTimeout: kafkaConfig.requestTimeout,
-          ...(kafkaConfig.saslUsername &&
-            kafkaConfig.saslPassword &&
-            kafkaConfig.saslMechanism === 'plain' && {
-              sasl: {
-                mechanism: 'plain' as const,
-                username: kafkaConfig.saslUsername,
-                password: kafkaConfig.saslPassword,
-              },
-            }),
-          ...(kafkaConfig.saslUsername &&
-            kafkaConfig.saslPassword &&
-            kafkaConfig.saslMechanism === 'scram-sha-256' && {
-              sasl: {
-                mechanism: 'scram-sha-256' as const,
-                username: kafkaConfig.saslUsername,
-                password: kafkaConfig.saslPassword,
-              },
-            }),
-          ...(kafkaConfig.saslUsername &&
-            kafkaConfig.saslPassword &&
-            kafkaConfig.saslMechanism === 'scram-sha-512' && {
-              sasl: {
-                mechanism: 'scram-sha-512' as const,
-                username: kafkaConfig.saslUsername,
-                password: kafkaConfig.saslPassword,
-              },
-            }),
+          ...(sasl && { sasl }),
         },
         consumer: {
           groupId: options.groupId ?? kafkaConfig.groupId,
@@ -75,7 +65,7 @@ export class KafkaModule {
             imports: [ConfigModule.forFeature(KafkaConfig)],
             useFactory: (configService: ConfigService): KafkaOptions => {
               const kafkaConfig = configService.get<IKafkaConfig>(KafkaConfigKey)!;
-              return this.buildKafkaOptions(kafkaConfig, options);
+              return this.makeKafkaOptions(kafkaConfig, options);
             },
             inject: [ConfigService],
           },
@@ -99,6 +89,6 @@ export class KafkaModule {
     kafkaConfig: IKafkaConfig,
     options: KafkaModuleOptions = {},
   ): KafkaOptions {
-    return this.buildKafkaOptions(kafkaConfig, options);
+    return this.makeKafkaOptions(kafkaConfig, options);
   }
 }

@@ -4,9 +4,9 @@ import {
   PingResponse,
   SayhoBotServiceServiceName,
 } from '@app/grpc/proto/generated/sayho-bot/v1/sayho-bot';
+import { TypedBody } from '@nestia/core';
 import { Controller, Get, Post } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { TypedBody } from '@nestia/core';
 import { SayhoBotService } from './sayho-bot.service';
 
 export interface ISendKafkaTest {

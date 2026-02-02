@@ -1,7 +1,7 @@
-import { IApp, IConfigsService } from '@app/core/configs/configs.interface';
+import { IApp } from '@app/core/configs/configs.interface';
 import { LoggerService } from '@app/core/logger/logger.service';
-import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { VersioningOptions } from '@nestjs/common';
+import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
 /**
@@ -55,6 +55,16 @@ export interface BootstrapOptions {
 }
 
 /**
+ * Readiness 설정
+ */
+export interface ReadinessConfig {
+  /** Readiness 체크 활성화 (기본값: true) */
+  enabled?: boolean;
+  /** 모든 연결 준비 대기 타임아웃 (기본값: 30000ms) */
+  timeout?: number;
+}
+
+/**
  * 전체 Bootstrap 설정
  */
 export interface BootstrapConfig {
@@ -62,4 +72,5 @@ export interface BootstrapConfig {
   middleware?: MiddlewareConfig;
   versioning?: VersioningConfig;
   grpc?: GrpcConfig;
+  readiness?: ReadinessConfig;
 }

@@ -28,7 +28,8 @@
     "schema:create": "APP=${npm_config_app} TZ=utc dotenvx run -f .env.${npm_config_env:-local} -- mikro-orm schema:create",
     "prepare": "ts-patch install",
     "container:up": "docker compose -f docker/compose.local.yml up -d",
-    "container:down": "docker compose -f docker/compose.local.yml down"
+    "container:down": "docker compose -f docker/compose.local.yml down",
+    "codegraph:reindex": "npx @colbymchenry/codegraph index"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.11.0",
@@ -50,6 +51,7 @@
     "@nestjs/platform-express": "^11.1.12",
     "change-case": "^5.4.4",
     "helmet": "^8.1.0",
+    "ioredis": "^5.9.2",
     "kafkajs": "^2.2.4",
     "nest-winston": "^1.10.2",
     "nestjs-cls": "^6.2.0",

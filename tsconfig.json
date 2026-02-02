@@ -28,7 +28,9 @@
       "@app/mikro": ["./libs/mikro/src"],
       "@app/mikro/*": ["./libs/mikro/src/*"],
       "@app/kafka": ["./libs/kafka/src"],
-      "@app/kafka/*": ["./libs/kafka/src/*"]
+      "@app/kafka/*": ["./libs/kafka/src/*"],
+      "@app/redis": ["./libs/redis/src"],
+      "@app/redis/*": ["./libs/redis/src/*"]
     },
     "plugins": [
       {

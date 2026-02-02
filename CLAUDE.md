@@ -25,9 +25,11 @@ apps/
 └── sayho-bot/     # Sayho bot service (port 4200, gRPC 8000)
 
 libs/
-├── core/          # Shared core functionality (logger, config, guards, CLS)
+├── core/          # Shared core functionality (logger, config, guards, CLS, lifecycle)
 ├── grpc/          # gRPC client configuration and proto files
-└── mikro/         # MikroORM configuration and base entities
+├── kafka/         # Kafka producer/consumer module
+├── mikro/         # MikroORM configuration and base entities
+└── redis/         # Redis client module
 ```
 
 ### Service-Specific Configuration
@@ -201,6 +203,119 @@ The project uses TypeScript transformers via `ts-patch`:
 - **Nestia** for enhanced NestJS validation and SDK generation
 
 These are configured in tsconfig.json plugins section.
+
+### Lifecycle Management & Graceful Shutdown
+
+The project uses a centralized lifecycle management system in `libs/core/src/lifecycle/`:
+
+**Core Components:**
+
+- `LifecycleModule` - Global module providing lifecycle services
+- `ConnectionRegistryService` - Registry for all external connections
+- `ReadinessGateService` - Blocks API server until all connections are ready
+- `ShutdownManagerService` - Coordinates graceful shutdown on SIGTERM/SIGINT
+- `MikroConnectionService` - Database connection lifecycle wrapper
+
+**IManagedConnection Interface:**
+All external connection services must implement this interface:
+
+```typescript
+interface IManagedConnection {
+  readonly connectionName: string;
+  readonly state: ConnectionState;
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  isHealthy(): Promise<boolean>;
+  drain?(): Promise<void>;  // Optional: drain pending work before shutdown
+}
+```
+
+**Shutdown Priority:**
+Connections are shut down in priority order (higher = shutdown first):
+
+- Kafka: priority 20 (shuts down first, drains pending messages)
+- Redis: priority 10
+- Database: priority 0 (shuts down last)
+
+**Startup Flow:**
+
+1. All modules initialized, connection services register with `ConnectionRegistryService`
+2. `app.init()` called - triggers `OnModuleInit` hooks, connections established
+3. `ReadinessGateService.waitForReady()` - waits for all connections (timeout: 30s)
+4. HTTP server starts accepting requests
+
+**Shutdown Flow (SIGTERM/SIGINT):**
+
+1. Grace period (5s) - allows load balancer to deregister
+2. Drain phase - each connection drains pending work
+3. Close connections phase - disconnect in priority order
+4. Application exits
+
+**Configuration (in CoreModule):**
+
+```typescript
+LifecycleModule.forRoot({
+  shutdown: { timeout: 30000, gracePeriod: 5000 },
+  readiness: { timeout: 30000, checkInterval: 1000 },
+})
+```
+
+### External Connection Modules
+
+**Kafka Module** (`libs/kafka/`):
+
+- `KafkaModule.register()` - For producer usage
+- `KafkaModule.getConsumerOptions()` - For microservice consumer setup
+- Implements `IManagedConnection` with retry logic and message drain support
+
+**Redis Module** (`libs/redis/`):
+
+- `RedisModule.register()` - Register Redis client with ioredis
+- Implements `IManagedConnection` with health checks
+- Config: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB`
+
+### Bootstrap Pattern
+
+All services extend `AbstractMain` from `libs/core/src/bootstrap/abstract-main.ts`:
+
+```typescript
+class MyServiceMain extends AbstractMain {
+  protected getModule(): Type<unknown> {
+    return MyServiceModule;
+  }
+
+  protected getBootstrapConfig(): BootstrapConfig {
+    return {
+      grpc: { enabled: true },
+      middleware: { globalPrefix: 'api' },
+      versioning: { enabled: true },
+      readiness: { enabled: true, timeout: 30000 },
+    };
+  }
+}
+
+MyServiceMain.run();
+```
+
+**Extensibility Hooks:**
+
+- `onBeforeListen()` - Called before HTTP server starts
+- `onAfterListen()` - Called after server starts (logs startup info)
+
+## Coding Conventions
+
+### No Barrel Files
+
+**Do NOT use barrel files (index.ts for re-exports).** Always use direct imports:
+
+```typescript
+// Bad - barrel import
+import { AbstractMain, BootstrapConfig } from '@app/core/bootstrap';
+
+// Good - direct import
+import { AbstractMain } from '@app/core/bootstrap/abstract-main';
+import { BootstrapConfig } from '@app/core/bootstrap/bootstrap.interface';
+```
 
 ## Important Notes
 
