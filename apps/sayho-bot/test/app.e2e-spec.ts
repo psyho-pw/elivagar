@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import * as request from 'supertest';
+import request from 'supertest';
 import { SayhobotModule } from '../src/sayho-bot.module';
 
 describe('SayhobotController (e2e)', () => {

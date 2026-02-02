@@ -10,7 +10,6 @@ module.exports = {
   coverageDirectory: './coverage',
   testEnvironment: 'node',
   roots: ['<rootDir>/apps/', '<rootDir>/libs/'],
-  // @app/* 경로 별칭 처리
   moduleNameMapper: {
     '^@app/core(|/.*)$': '<rootDir>/libs/core/src/$1',
     '^@app/grpc(|/.*)$': '<rootDir>/libs/grpc/src/$1',
