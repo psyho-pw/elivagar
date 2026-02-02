@@ -50,10 +50,7 @@ export class RedisService
   }
 
   async connect(): Promise<void> {
-    if (
-      this._state === ConnectionState.CONNECTED ||
-      this._state === ConnectionState.CONNECTING
-    ) {
+    if (this._state === ConnectionState.CONNECTED || this._state === ConnectionState.CONNECTING) {
       return;
     }
 

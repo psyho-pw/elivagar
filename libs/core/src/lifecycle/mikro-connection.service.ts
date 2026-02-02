@@ -36,10 +36,7 @@ export class MikroConnectionService implements IManagedConnection, OnModuleInit,
   }
 
   async connect(): Promise<void> {
-    if (
-      this._state === ConnectionState.CONNECTED ||
-      this._state === ConnectionState.CONNECTING
-    ) {
+    if (this._state === ConnectionState.CONNECTED || this._state === ConnectionState.CONNECTING) {
       return;
     }
 
