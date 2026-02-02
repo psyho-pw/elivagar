@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "postgresql": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://USER:PASSWORD@HOST:PORT/DATABASE?sslmode=require"
+      ]
+    },
+    "notionApi": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@notionhq/notion-mcp-server"
+      ],
+      "env": {
+        "NOTION_TOKEN": "YOUR_NOTION_INTEGRATION_TOKEN"
+      }
+    },
+    "codegraph": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@colbymchenry/codegraph",
+        "serve",
+        "--mcp"
+      ]
+    }
+  }
+}

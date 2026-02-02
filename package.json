@@ -50,6 +50,7 @@
     "@nestjs/platform-express": "^11.1.12",
     "change-case": "^5.4.4",
     "helmet": "^8.1.0",
+    "kafkajs": "^2.2.4",
     "nest-winston": "^1.10.2",
     "nestjs-cls": "^6.2.0",
     "reflect-metadata": "^0.2.2",

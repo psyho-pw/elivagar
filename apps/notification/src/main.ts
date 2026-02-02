@@ -1,8 +1,21 @@
-import { NestFactory } from '@nestjs/core';
+import { AbstractMain, BootstrapConfig } from '@app/core/bootstrap';
+import { Type } from '@nestjs/common';
 import { NotificationModule } from './notification.module';
 
-async function bootstrap() {
-  const app = await NestFactory.create(NotificationModule);
-  await app.listen(process.env.port ?? 3000);
+class NotificationMain extends AbstractMain {
+  protected getModule(): Type<unknown> {
+    return NotificationModule;
+  }
+
+  protected getBootstrapConfig(): BootstrapConfig {
+    return {
+      grpc: { enabled: true },
+      middleware: {
+        globalPrefix: 'api',
+      },
+      versioning: { enabled: true },
+    };
+  }
 }
-bootstrap();
+
+NotificationMain.run();

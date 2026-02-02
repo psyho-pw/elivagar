@@ -85,6 +85,15 @@
         "deleteOutDir": true,
         "tsConfigPath": "libs/mikro/tsconfig.json"
       }
+    },
+    "kafka": {
+      "type": "library",
+      "root": "libs/kafka",
+      "sourceRoot": "libs/kafka/src",
+      "compilerOptions": {
+        "deleteOutDir": true,
+        "tsConfigPath": "libs/kafka/tsconfig.lib.json"
+      }
     }
   }
 }
