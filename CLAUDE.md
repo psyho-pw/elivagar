@@ -25,11 +25,11 @@ apps/
 └── sayho-bot/     # Sayho bot service (port 4200, gRPC 8000)
 
 libs/
+├── cache/         # Cache module (Redis-backed with @nestjs/cache-manager)
 ├── core/          # Shared core functionality (logger, config, guards, CLS, lifecycle)
 ├── grpc/          # gRPC client configuration and proto files
 ├── kafka/         # Kafka producer/consumer module
-├── mikro/         # MikroORM configuration and base entities
-└── redis/         # Redis client module
+└── mikro/         # MikroORM configuration and base entities
 ```
 
 ### Service-Specific Configuration
@@ -218,7 +218,36 @@ Configuration uses Typia for runtime validation. Each service loads environment 
 2. Falls back to non-prefixed variable (e.g., `PORT`)
 3. Returns default value if neither exists
 
-Configuration modules are in `libs/core/src/configs/configurations/`.
+**Config Files** (`libs/core/src/configs/configurations/`):
+
+- `app.config.ts` - App settings (port, JWT, etc.)
+- `database.config.ts` - PostgreSQL connection
+- `redis.config.ts` - Redis connection
+- `kafka.config.ts` - Kafka broker settings
+
+**ConfigsService** (`libs/core/src/configs/configs.service.ts`):
+
+Provides typed access to configurations via getters:
+
+```typescript
+// Inject via ConfigsServiceKey
+constructor(@Inject(ConfigsServiceKey) private readonly configsService: ConfigsService) {}
+
+// Access configs
+this.configsService.AppConfig      // IApp (required)
+this.configsService.DatabaseConfig // IDatabase (required)
+this.configsService.RedisConfig    // IRedisConfig (optional - must be loaded)
+this.configsService.KafkaConfig    // IKafkaConfig (optional - must be loaded)
+```
+
+**Loading Configs per Service** (`apps/{service}/src/configs/configs.module.ts`):
+
+```typescript
+ConfigModule.forRoot({
+  cache: true,
+  load: [AppConfig, DatabaseConfig, RedisConfig, KafkaConfig], // Add configs as needed
+}),
+```
 
 ### MikroORM Module Singleton
 
@@ -295,17 +324,49 @@ LifecycleModule.forRoot({
 
 ### External Connection Modules
 
+**Cache Module** (`libs/cache/`):
+
+Redis-backed caching using `@nestjs/cache-manager` + `keyv` + `@keyv/redis`.
+
+```typescript
+// Option 1: Direct config (simpler, for standalone usage)
+CacheModule.register({
+  redis: RedisConfig(),
+  namespace: 'my-service',
+  ttl: 60000,
+}),
+
+// Option 2: Async with ConfigsService (recommended for DI)
+CacheModule.registerAsync({
+  useFactory: (configsService: ConfigsService) => ({
+    redis: configsService.RedisConfig,
+    namespace: 'my-service',
+  }),
+  inject: [ConfigsServiceKey],
+}),
+```
+
+- `CacheService` implements `IManagedConnection` with lifecycle management
+- `CacheService.getClient()` - Access raw Redis client for advanced operations (sorted sets, etc.)
+- Supports single-flight pattern via `wrap()` method
+
 **Kafka Module** (`libs/kafka/`):
 
-- `KafkaModule.register()` - For producer usage
+```typescript
+// Option 1: Direct config
+KafkaModule.register({ kafka: KafkaConfig() }),
+
+// Option 2: Async with ConfigsService
+KafkaModule.registerAsync({
+  useFactory: (configsService: ConfigsService) => ({
+    kafka: configsService.KafkaConfig,
+  }),
+  inject: [ConfigsServiceKey],
+}),
+```
+
 - `KafkaModule.getConsumerOptions()` - For microservice consumer setup
 - Implements `IManagedConnection` with retry logic and message drain support
-
-**Redis Module** (`libs/redis/`):
-
-- `RedisModule.register()` - Register Redis client with ioredis
-- Implements `IManagedConnection` with health checks
-- Config: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB`
 
 ### Bootstrap Pattern
 
@@ -355,9 +416,10 @@ import { BootstrapConfig } from '@app/core/bootstrap/bootstrap.interface';
 - Always run `pnpm proto:generate` after modifying `.proto` files
 - Each service must set `SERVICE_NAME` environment variable at runtime
 - Database schemas are service-isolated; cross-service queries must use gRPC
-- Use absolute imports via path aliases: `@app/core`, `@app/grpc`, `@app/mikro`
+- Use absolute imports via path aliases: `@app/core`, `@app/grpc`, `@app/mikro`, `@app/cache`, `@app/kafka`
 - The project uses UUIDv7 for primary keys (via `uuid` package v13)
 - Environment files follow pattern `.env.{environment}` (e.g., `.env.local`)
+- Redis/Kafka configs are optional - only load them in services that need them
 
 ## Docker Services
 
