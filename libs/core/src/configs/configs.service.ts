@@ -13,8 +13,6 @@ import { DatabaseConfigKey } from './configurations/database.config';
 import { KafkaConfigKey } from './configurations/kafka.config';
 import { RedisConfigKey } from './configurations/redis.config';
 
-
-
 @Injectable()
 export class ConfigsService implements IConfigsService {
   public constructor(private readonly configService: ConfigService<Configs>) {}
