@@ -1,7 +1,7 @@
 // Injection tokens
 export const CacheServiceKey = Symbol('CACHE_SERVICE');
 export const KeyvRedisKey = Symbol('KEYV_REDIS');
-export const CacheConfigKey = 'cache';
+export const CacheModuleOptionsKey = Symbol('CACHE_MODULE_OPTIONS');
 
 // AOP decorator symbol
 export const CACHE_DECORATOR = Symbol('CACHE_DECORATOR');

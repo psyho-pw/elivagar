@@ -2,12 +2,19 @@ import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
 import { ConfigsService } from '@app/core/configs/configs.service';
 import { AppConfig } from '@app/core/configs/configurations/app.config';
 import { DatabaseConfig } from '@app/core/configs/configurations/database.config';
+import { KafkaConfig } from '@app/core/configs/configurations/kafka.config';
+import { RedisConfig } from '@app/core/configs/configurations/redis.config';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 @Global()
 @Module({
-  imports: [ConfigModule.forRoot({ cache: true, load: [AppConfig, DatabaseConfig] })],
+  imports: [
+    ConfigModule.forRoot({
+      cache: true,
+      load: [AppConfig, DatabaseConfig, RedisConfig, KafkaConfig],
+    }),
+  ],
   providers: [{ provide: ConfigsServiceKey, useClass: ConfigsService }],
   exports: [ConfigsServiceKey],
 })

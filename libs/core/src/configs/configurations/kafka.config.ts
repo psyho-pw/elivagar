@@ -1,7 +1,7 @@
-import { getEnv, getEnvBool, getEnvInt } from '@app/core/configs/configs.helper';
 import { registerAs } from '@nestjs/config';
 import { validate, IValidation } from 'typia';
-import { IKafkaConfig } from './kafka.interface';
+import { getEnv, getEnvBool, getEnvInt } from '../configs.helper';
+import { IKafkaConfig } from '../configs.interface';
 
 export const KafkaConfigKey = 'Kafka';
 

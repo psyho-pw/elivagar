@@ -1,22 +1,22 @@
+import { IRedisConfig } from '@app/core/configs/configs.interface';
+import { ModuleMetadata, Type } from '@nestjs/common';
 import { CacheKeyType } from './cache.constant';
 
-export interface ICacheConfig {
-  host: string;
-  port: number;
-  password?: string;
-  db?: number;
-  keyPrefix?: string;
-}
-
 export interface CacheModuleOptions {
-  /** Database number (default: 0) */
-  db?: number;
+  /** Redis connection configuration (required) */
+  redis: IRedisConfig;
   /** Custom provider token for multi-instance scenarios */
   providerToken?: symbol;
-  /** Key prefix namespace */
+  /** Key prefix namespace (overrides redis.keyPrefix) */
   namespace?: string;
-  /** Default TTL in milliseconds */
+  /** Default TTL in milliseconds (default: 60000) */
   ttl?: number;
+}
+
+export interface CacheModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useFactory: (...args: any[]) => CacheModuleOptions | Promise<CacheModuleOptions>;
+  inject?: (Type | string | symbol)[];
 }
 
 export interface ICacheService {

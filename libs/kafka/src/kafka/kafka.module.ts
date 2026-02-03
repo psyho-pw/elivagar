@@ -1,10 +1,9 @@
+import { IKafkaConfig } from '@app/core/configs/configs.interface';
 import { DynamicModule, Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
 import { SASLOptions } from 'kafkajs';
-import { KafkaConfig, KafkaConfigKey } from './kafka.config';
 import { KafkaClientKey, KafkaServiceKey } from './kafka.constant';
-import { IKafkaConfig, KafkaModuleOptions } from './kafka.interface';
+import { KafkaModuleAsyncOptions, KafkaModuleOptions } from './kafka.interface';
 import { KafkaService } from './kafka.service';
 
 @Module({})
@@ -22,25 +21,23 @@ export class KafkaModule {
     } as SASLOptions;
   }
 
-  private static makeKafkaOptions(
-    kafkaConfig: IKafkaConfig,
-    options: KafkaModuleOptions = {},
-  ): KafkaOptions {
-    const sasl = this.makeSaslConfig(kafkaConfig);
+  private static makeKafkaOptions(options: KafkaModuleOptions): KafkaOptions {
+    const { kafka } = options;
+    const sasl = this.makeSaslConfig(kafka);
 
     return {
       transport: Transport.KAFKA,
       options: {
         client: {
-          clientId: options.clientId ?? kafkaConfig.clientId,
-          brokers: kafkaConfig.brokers,
-          ssl: kafkaConfig.ssl,
-          connectionTimeout: kafkaConfig.connectionTimeout,
-          requestTimeout: kafkaConfig.requestTimeout,
+          clientId: options.clientId ?? kafka.clientId,
+          brokers: kafka.brokers,
+          ssl: kafka.ssl,
+          connectionTimeout: kafka.connectionTimeout,
+          requestTimeout: kafka.requestTimeout,
           ...(sasl && { sasl }),
         },
         consumer: {
-          groupId: options.groupId ?? kafkaConfig.groupId,
+          groupId: options.groupId ?? kafka.groupId,
           allowAutoTopicCreation: true,
         },
         producer: {
@@ -53,21 +50,54 @@ export class KafkaModule {
   /**
    * Register Kafka module for producer usage
    * Use this in AppModule imports for services that need to publish events
+   *
+   * @param options.kafka - Kafka connection configuration (required)
+   * @param options.clientId - Override clientId from config
+   * @param options.groupId - Override groupId from config
    */
-  static register(options: KafkaModuleOptions = {}): DynamicModule {
+  static register(options: KafkaModuleOptions): DynamicModule {
+    const kafkaOptions = this.makeKafkaOptions(options);
+
     return {
       module: KafkaModule,
       imports: [
-        ConfigModule.forFeature(KafkaConfig),
+        ClientsModule.register([
+          {
+            name: KafkaClientKey,
+            ...kafkaOptions,
+          },
+        ]),
+      ],
+      providers: [
+        {
+          provide: KafkaServiceKey,
+          useClass: KafkaService,
+        },
+      ],
+      exports: [KafkaServiceKey, ClientsModule],
+    };
+  }
+
+  /**
+   * Register Kafka module asynchronously with dependency injection
+   *
+   * @param asyncOptions.imports - Modules to import (e.g., ConfigModule)
+   * @param asyncOptions.useFactory - Factory function returning KafkaModuleOptions
+   * @param asyncOptions.inject - Dependencies to inject into factory
+   */
+  static registerAsync(asyncOptions: KafkaModuleAsyncOptions): DynamicModule {
+    return {
+      module: KafkaModule,
+      imports: [
+        ...(asyncOptions.imports ?? []),
         ClientsModule.registerAsync([
           {
             name: KafkaClientKey,
-            imports: [ConfigModule.forFeature(KafkaConfig)],
-            useFactory: (configService: ConfigService): KafkaOptions => {
-              const kafkaConfig = configService.get<IKafkaConfig>(KafkaConfigKey)!;
-              return this.makeKafkaOptions(kafkaConfig, options);
+            useFactory: async (...args: unknown[]): Promise<KafkaOptions> => {
+              const options = await asyncOptions.useFactory(...args);
+              return this.makeKafkaOptions(options);
             },
-            inject: [ConfigService],
+            inject: asyncOptions.inject ?? [],
           },
         ]),
       ],
@@ -85,10 +115,7 @@ export class KafkaModule {
    * Get Kafka microservice options for NestFactory.createMicroservice()
    * Use this in main.ts to connect as a consumer
    */
-  static getConsumerOptions(
-    kafkaConfig: IKafkaConfig,
-    options: KafkaModuleOptions = {},
-  ): KafkaOptions {
-    return this.makeKafkaOptions(kafkaConfig, options);
+  static getConsumerOptions(options: KafkaModuleOptions): KafkaOptions {
+    return this.makeKafkaOptions(options);
   }
 }

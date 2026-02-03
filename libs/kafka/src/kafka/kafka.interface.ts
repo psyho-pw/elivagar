@@ -1,20 +1,19 @@
-import { tags } from 'typia';
+import { IKafkaConfig } from '@app/core/configs/configs.interface';
+import { ModuleMetadata, Type } from '@nestjs/common';
 
 export interface KafkaModuleOptions {
+  /** Kafka connection configuration (required) */
+  kafka: IKafkaConfig;
+  /** Override clientId from config */
   clientId?: string;
+  /** Override groupId from config */
   groupId?: string;
 }
 
-export interface IKafkaConfig {
-  brokers: string[];
-  clientId: string;
-  groupId: string;
-  ssl: boolean;
-  saslMechanism?: 'plain' | 'scram-sha-256' | 'scram-sha-512';
-  saslUsername?: string;
-  saslPassword?: string;
-  connectionTimeout?: number & tags.Type<'int32'> & tags.Minimum<0>;
-  requestTimeout?: number & tags.Type<'int32'> & tags.Minimum<0>;
+export interface KafkaModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useFactory: (...args: any[]) => KafkaModuleOptions | Promise<KafkaModuleOptions>;
+  inject?: (Type | string | symbol)[];
 }
 
 export interface IKafkaService {

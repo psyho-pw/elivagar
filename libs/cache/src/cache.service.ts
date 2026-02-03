@@ -11,6 +11,7 @@ import {
   OnModuleInit,
   Optional,
 } from '@nestjs/common';
+import type { RedisClientType } from '@redis/client';
 import { instanceToPlain } from 'class-transformer';
 import { KeyvRedisKey } from './cache.constant';
 import { ICacheService } from './cache.interface';
@@ -32,13 +33,11 @@ export class CacheService
     @Inject(KeyvRedisKey) private readonly keyvRedis: KeyvRedis<string>,
     @Optional() private readonly connectionRegistry?: ConnectionRegistryService,
   ) {
-    console.log('[CacheService] Constructor called');
     // Register with lifecycle manager if available (medium priority)
     this.connectionRegistry?.register(this, {
       shutdownPriority: 10,
       required: true,
     });
-    console.log('[CacheService] Registered with connection registry');
   }
 
   get state(): ConnectionState {
@@ -46,9 +45,7 @@ export class CacheService
   }
 
   async onModuleInit(): Promise<void> {
-    console.log('[CacheService] onModuleInit called');
     await this.connect();
-    console.log('[CacheService] onModuleInit completed');
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -59,30 +56,22 @@ export class CacheService
   }
 
   async connect(): Promise<void> {
-    console.log('[CacheService] connect() called, current state:', this._state);
     if (this._state === ConnectionState.CONNECTED || this._state === ConnectionState.CONNECTING) {
-      console.log('[CacheService] Already connected or connecting, skipping');
       return;
     }
 
     this._state = ConnectionState.CONNECTING;
-    this.logger.log('Connecting to cache (Redis)...');
 
     try {
       // Verify connection by performing a simple cache operation
       const testKey = '__connection_test__';
-      console.log('[CacheService] Testing cache.set...');
       await this.cache.set(testKey, 'ok', 1000);
-      console.log('[CacheService] cache.set completed');
-      console.log('[CacheService] Testing cache.del...');
       await this.cache.del(testKey);
-      console.log('[CacheService] cache.del completed');
 
       this._state = ConnectionState.CONNECTED;
       this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
       this.logger.log('✅ connected to cache (Redis)');
     } catch (error) {
-      console.log('[CacheService] connect() error:', error);
       this._state = ConnectionState.ERROR;
       this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
       this.logger.error('Failed to connect to cache', error);
@@ -125,6 +114,17 @@ export class CacheService
     }
   }
 
+  /**
+   * Get raw Redis client for operations not supported by cache-manager
+   * @throws Error if Redis client is not available
+   */
+  getClient(): RedisClientType {
+    if (this.keyvRedis && 'client' in this.keyvRedis) {
+      return this.keyvRedis.client as RedisClientType;
+    }
+    throw new Error('Redis client not available');
+  }
+
   // ICacheService implementation
 
   async get<T>(key: string): Promise<T | undefined> {
@@ -141,24 +141,14 @@ export class CacheService
   }
 
   async delByPattern(pattern: string): Promise<number> {
-    // For pattern-based deletion, we need to access the raw client
-    // This requires the keyv store to expose the client
-    const store = this.keyvRedis as unknown as { client?: { scanIterator?: Function } };
-    if (!store.client?.scanIterator) {
-      this.logger.warn('delByPattern: Redis client not available, skipping');
-      return 0;
-    }
+    const client = this.getClient();
 
     let count = 0;
-    for await (const keys of store.client.scanIterator({ MATCH: pattern })) {
-      if (typeof keys === 'string') {
-        await this.cache.del(keys);
+    for await (const keys of client.scanIterator({ MATCH: pattern })) {
+      const keyArray = Array.isArray(keys) ? keys : [keys];
+      for (const key of keyArray) {
+        await this.cache.del(key);
         count++;
-      } else if (Array.isArray(keys) && keys.length > 0) {
-        for (const key of keys) {
-          await this.cache.del(key);
-        }
-        count += keys.length;
       }
     }
 
@@ -175,32 +165,22 @@ export class CacheService
     }
   }
 
-  // Sorted set operations - requires raw Redis client access
-  // These will only work if the KeyvRedis exposes its client
+  // Sorted set operations - requires raw Redis client
 
   async zAdd(key: string, score: number, member: string): Promise<number> {
-    const store = this.keyvRedis as unknown as { client?: { zAdd?: Function } };
-    if (!store.client?.zAdd) {
-      throw new Error('zAdd: Redis client not available');
-    }
-    return await store.client.zAdd(key, { score, value: member });
+    const client = this.getClient();
+    return await client.zAdd(key, { score, value: member });
   }
 
   async zRevRank(key: string, member: string): Promise<number | null> {
-    const store = this.keyvRedis as unknown as { client?: { zRevRank?: Function } };
-    if (!store.client?.zRevRank) {
-      throw new Error('zRevRank: Redis client not available');
-    }
-    const rank = await store.client.zRevRank(key, member);
-    return rank !== null && typeof rank === 'number' ? rank + 1 : null;
+    const client = this.getClient();
+    const rank = await client.zRevRank(key, member);
+    return rank !== null ? rank + 1 : null;
   }
 
   async zCard(key: string): Promise<number> {
-    const store = this.keyvRedis as unknown as { client?: { zCard?: Function } };
-    if (!store.client?.zCard) {
-      throw new Error('zCard: Redis client not available');
-    }
-    return await store.client.zCard(key);
+    const client = this.getClient();
+    return await client.zCard(key);
   }
 
   // Single-flight/coalescing wrapper
