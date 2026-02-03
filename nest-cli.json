@@ -95,13 +95,13 @@
         "tsConfigPath": "libs/kafka/tsconfig.lib.json"
       }
     },
-    "redis": {
+    "cache": {
       "type": "library",
-      "root": "libs/redis",
-      "sourceRoot": "libs/redis/src",
+      "root": "libs/cache",
+      "sourceRoot": "libs/cache/src",
       "compilerOptions": {
         "deleteOutDir": true,
-        "tsConfigPath": "libs/redis/tsconfig.lib.json"
+        "tsConfigPath": "libs/cache/tsconfig.lib.json"
       }
     }
   }

@@ -1,3 +1,4 @@
+import { CacheModule } from '@app/cache/cache.module';
 import { RequestIdGuard } from '@app/core/common/guards/cls.guard';
 import { AppName } from '@app/core/constants/app.constant';
 import { CoreModule } from '@app/core/core.module';
@@ -16,6 +17,7 @@ const guards = [RequestIdGuard];
     CoreModule,
     GrpcModule.register({ name: AppName.SayhoBot, version: 'v1' }),
     KafkaModule.register(),
+    CacheModule.register({ namespace: 'sayho-bot' }),
     // SongModule,
   ],
   controllers: [SayhoBotController],

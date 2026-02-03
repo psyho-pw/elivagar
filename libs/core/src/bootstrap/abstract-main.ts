@@ -79,16 +79,24 @@ export abstract class AbstractMain {
     await this.configureGrpc(config.grpc);
 
     // 애플리케이션 초기화 (OnModuleInit 훅 실행)
+    console.log('[AbstractMain] Calling app.init()...');
     await this.app.init();
+    console.log('[AbstractMain] app.init() completed');
 
     // Readiness 체크 - 모든 연결이 준비될 때까지 대기
+    console.log('[AbstractMain] Calling waitForReadiness()...');
     await this.waitForReadiness(config.readiness);
+    console.log('[AbstractMain] waitForReadiness() completed');
 
     // 리스닝 전 훅
+    console.log('[AbstractMain] Calling onBeforeListen()...');
     await this.onBeforeListen();
+    console.log('[AbstractMain] onBeforeListen() completed');
 
     // 마이크로서비스 및 HTTP 서버 시작
+    console.log('[AbstractMain] Calling startServers()...');
     await this.startServers(config.grpc);
+    console.log('[AbstractMain] startServers() completed');
 
     // 리스닝 후 훅
     await this.onAfterListen();
