@@ -11,6 +11,13 @@ export class SongService {
   ) {}
 
   public async create(url: string, title: string): Promise<Song> {
+    const existing = await this.repository.findOne({ url });
+    if (existing) {
+      existing.count += 1;
+      await this.em.flush();
+      return existing;
+    }
+
     const now = new Date();
     const song = this.em.create(Song, { url, title, count: 1, createdAt: now, updatedAt: now });
     await this.em.persistAndFlush(song);

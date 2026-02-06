@@ -7,6 +7,7 @@ import {
   IVoiceConnectionManager,
   VoiceConnectionManagerPort,
 } from '../domain/ports/voice-connection.port';
+import { DiscordAudioPlayer } from '../infrastructure/voice/voice-connection.adapter';
 
 export interface PlayMusicRequest {
   guildId: string;
@@ -81,13 +82,7 @@ export class PlayMusicUseCase {
       },
     };
 
-    // TODO: inject AudioPlayerFactory via DI when this usecase is wired
-    const factory = (
-      this as unknown as {
-        audioPlayerFactory?: { create(events: AudioPlayerEvents): IAudioPlayer };
-      }
-    ).audioPlayerFactory;
-    return factory?.create(events) as IAudioPlayer;
+    return new DiscordAudioPlayer(events);
   }
 
   stop(guildId: string): void {

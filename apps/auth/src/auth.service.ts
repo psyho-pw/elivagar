@@ -41,7 +41,7 @@ export class AuthService {
   async login(email: string, password: string) {
     const user = await this.em.findOne(User, { email, deletedAt: null });
     if (!user) {
-      throw new RpcException({ code: GrpcStatus.NOT_FOUND, message: 'User not found' });
+      throw new RpcException({ code: GrpcStatus.UNAUTHENTICATED, message: 'Invalid credentials' });
     }
 
     const isValid = await bcrypt.compare(password, user.password);

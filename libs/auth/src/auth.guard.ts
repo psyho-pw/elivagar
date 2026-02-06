@@ -56,30 +56,21 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      const user = await this.cacheService.wrap<AuthUser | null>(
-        cacheKey,
-        async () => {
-          const response = await this.authGrpcClient.validateToken(token);
+      const response = await this.authGrpcClient.validateToken(token);
 
-          if (!response.valid || !response.user) {
-            return null;
-          }
-
-          return {
-            userId: response.user.userId,
-            email: response.user.email,
-            roles: response.user.roles,
-            tokenHash: response.user.tokenHash,
-            tokenExp: response.user.tokenExp,
-          };
-        },
-        AUTH_TOKEN_MAX_CACHE_TTL,
-      );
-
-      if (!user) {
+      if (!response.valid || !response.user) {
         throw new UnauthorizedException('Invalid or expired token');
       }
 
+      const user: AuthUser = {
+        userId: response.user.userId,
+        email: response.user.email,
+        roles: response.user.roles,
+        tokenHash: response.user.tokenHash,
+        tokenExp: response.user.tokenExp,
+      };
+
+      await this.cacheService.set(cacheKey, user, AUTH_TOKEN_MAX_CACHE_TTL);
       this.setUserContext(request, user);
       return true;
     } catch (err) {

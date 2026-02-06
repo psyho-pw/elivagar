@@ -66,6 +66,10 @@ export class PoTokenAdapter implements IPoTokenService, OnModuleInit {
 
     this.isRefreshing = true;
 
+    // Save originals before try block so they're accessible in finally
+    const originalWindow = (globalThis as Record<string, unknown>).window;
+    const originalDocument = (globalThis as Record<string, unknown>).document;
+
     try {
       this.loggerService.info('refreshPoToken', 'Generating new poToken...');
 
@@ -139,6 +143,17 @@ export class PoTokenAdapter implements IPoTokenService, OnModuleInit {
 
       return this.tokenData;
     } finally {
+      // Restore original globalThis properties
+      if (originalWindow === undefined) {
+        delete (globalThis as Record<string, unknown>).window;
+      } else {
+        (globalThis as Record<string, unknown>).window = originalWindow;
+      }
+      if (originalDocument === undefined) {
+        delete (globalThis as Record<string, unknown>).document;
+      } else {
+        (globalThis as Record<string, unknown>).document = originalDocument;
+      }
       this.isRefreshing = false;
     }
   }

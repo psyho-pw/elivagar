@@ -1,6 +1,6 @@
 import { ConfigsService } from '@app/core/configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import {
   ChatInputCommandInteraction,
   Client,
@@ -17,17 +17,18 @@ import { CommandHandler } from './presentation/commands/command.handler';
 import { EventHandler } from './presentation/events/event.handler';
 
 @Injectable()
-export class DiscordService {
+export class DiscordService implements OnModuleInit {
   constructor(
     @Inject(ConfigsServiceKey) private readonly configsService: ConfigsService,
     private readonly discordClient: DiscordClientAdapter,
     private readonly commandHandler: CommandHandler,
     private readonly eventHandler: EventHandler,
     private readonly loggerService: LoggerService,
-  ) {
-    this.init().then(() =>
-      this.loggerService.verbose('constructor', 'DiscordService instance initialized'),
-    );
+  ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.init();
+    this.loggerService.verbose('onModuleInit', 'DiscordService initialized');
   }
 
   @HandleDiscordError()

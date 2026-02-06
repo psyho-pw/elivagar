@@ -1,4 +1,3 @@
-//@ts-ignore
 import { ConfigsService } from '@app/core/configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { Inject, Injectable } from '@nestjs/common';
