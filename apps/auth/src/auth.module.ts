@@ -5,10 +5,11 @@ import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { ConfigsModule } from './configs/configs.module';
+import { JwtService } from './jwt/jwt.service';
 
 @Module({
   imports: [ConfigsModule, CoreModule, GrpcModule.register({ name: AppName.Auth })],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, JwtService],
 })
 export class AuthModule {}

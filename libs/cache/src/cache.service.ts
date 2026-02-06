@@ -1,16 +1,10 @@
 import { ConnectionRegistryService } from '@app/core/lifecycle/connection-registry.service';
 import { ConnectionNames } from '@app/core/lifecycle/lifecycle.constant';
 import { ConnectionState, IManagedConnection } from '@app/core/lifecycle/lifecycle.interface';
+import { LoggerService } from '@app/core/logger/logger.service';
 import KeyvRedis from '@keyv/redis';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
-import {
-  Inject,
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-  Optional,
-} from '@nestjs/common';
+import { Inject, Injectable, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import type { RedisClientType } from '@redis/client';
 import { instanceToPlain } from 'class-transformer';
 import { KeyvRedisKey } from './cache.constant';
@@ -20,7 +14,6 @@ import { ICacheService } from './cache.interface';
 export class CacheService
   implements ICacheService, IManagedConnection, OnModuleInit, OnModuleDestroy
 {
-  private readonly logger = new Logger(CacheService.name);
   private _state: ConnectionState = ConnectionState.DISCONNECTED;
 
   // Single-flight map for coalescing concurrent requests
@@ -31,6 +24,7 @@ export class CacheService
   constructor(
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
     @Inject(KeyvRedisKey) private readonly keyvRedis: KeyvRedis<string>,
+    private readonly loggerService: LoggerService,
     @Optional() private readonly connectionRegistry?: ConnectionRegistryService,
   ) {
     // Register with lifecycle manager if available (medium priority)
@@ -70,11 +64,11 @@ export class CacheService
 
       this._state = ConnectionState.CONNECTED;
       this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
-      this.logger.log('✅ connected to cache (Redis)');
+      this.loggerService.info(this.connect.name, '✅ connected to cache (Redis)');
     } catch (error) {
       this._state = ConnectionState.ERROR;
       this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
-      this.logger.error('Failed to connect to cache', error);
+      this.loggerService.error(this.connect.name, error, 'Failed to connect to cache');
       throw error;
     }
   }
@@ -85,13 +79,13 @@ export class CacheService
     }
 
     this._state = ConnectionState.DISCONNECTING;
-    this.logger.log('Disconnecting from cache...');
+    this.loggerService.info(this.disconnect.name, 'Disconnecting from cache...');
 
     try {
       await this.keyvRedis.disconnect();
       this._state = ConnectionState.DISCONNECTED;
       this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
-      this.logger.log('Disconnected from cache');
+      this.loggerService.info(this.disconnect.name, 'Disconnected from cache');
     } catch (error) {
       this._state = ConnectionState.ERROR;
       this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
@@ -189,14 +183,17 @@ export class CacheService
     // Check cache first
     const cached = await this.get<T>(key);
     if (cached !== undefined) {
-      this.logger.verbose?.(`cache hit: ${key}`);
+      this.loggerService.verbose(this.wrap.name, `cache hit: ${key}`);
       return cached;
     }
 
     // Check if there's an in-flight request
     const inflight = this.inflightRequests.get(key);
     if (inflight) {
-      this.logger.verbose?.(`single-flight: joining existing request for ${key}`);
+      this.loggerService.verbose(
+        this.wrap.name,
+        `single-flight: joining existing request for ${key}`,
+      );
       return inflight as Promise<T>;
     }
 

@@ -27,6 +27,8 @@ export const KafkaTopics = {
     MessageReceived: 'sayho-bot.message.received',
     ResponseSent: 'sayho-bot.response.sent',
     CommandExecuted: 'sayho-bot.command.executed',
+    SongPlayed: 'sayho-bot.song.played',
+    ErrorOccurred: 'sayho-bot.error.occurred',
   },
 } as const;
 

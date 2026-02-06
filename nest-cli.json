@@ -103,6 +103,15 @@
         "deleteOutDir": true,
         "tsConfigPath": "libs/cache/tsconfig.lib.json"
       }
+    },
+    "auth-lib": {
+      "type": "library",
+      "root": "libs/auth",
+      "sourceRoot": "libs/auth/src",
+      "compilerOptions": {
+        "deleteOutDir": true,
+        "tsConfigPath": "libs/auth/tsconfig.lib.json"
+      }
     }
   }
 }

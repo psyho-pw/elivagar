@@ -1,12 +1,12 @@
 import { MikroORM } from '@mikro-orm/core';
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConnectionRegistryService } from './connection-registry.service';
 import { ConnectionNames } from './lifecycle.constant';
 import { ConnectionState, IManagedConnection } from './lifecycle.interface';
+import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
 export class MikroConnectionService implements IManagedConnection, OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(MikroConnectionService.name);
   private _state: ConnectionState = ConnectionState.DISCONNECTED;
 
   readonly connectionName = ConnectionNames.DATABASE;
@@ -14,6 +14,7 @@ export class MikroConnectionService implements IManagedConnection, OnModuleInit,
   constructor(
     private readonly orm: MikroORM,
     private readonly connectionRegistry: ConnectionRegistryService,
+    private readonly loggerService: LoggerService,
   ) {
     // Register with lifecycle manager (lowest priority - shuts down last)
     this.connectionRegistry.register(this, {
@@ -41,7 +42,7 @@ export class MikroConnectionService implements IManagedConnection, OnModuleInit,
     }
 
     this._state = ConnectionState.CONNECTING;
-    this.logger.log('Connecting to database...');
+    this.loggerService.info(this.connect.name, 'Connecting to database...');
 
     try {
       // MikroORM connects automatically, but we verify the connection
@@ -56,11 +57,11 @@ export class MikroConnectionService implements IManagedConnection, OnModuleInit,
 
       this._state = ConnectionState.CONNECTED;
       this.connectionRegistry.emitStateChange(this.connectionName, this._state);
-      this.logger.log('✅ connected to database');
+      this.loggerService.info(this.connect.name, '✅ connected to database');
     } catch (error) {
       this._state = ConnectionState.ERROR;
       this.connectionRegistry.emitStateChange(this.connectionName, this._state);
-      this.logger.error('Failed to connect to database', error);
+      this.loggerService.error(this.connect.name, error, 'Failed to connect to database');
       throw error;
     }
   }
@@ -71,13 +72,13 @@ export class MikroConnectionService implements IManagedConnection, OnModuleInit,
     }
 
     this._state = ConnectionState.DISCONNECTING;
-    this.logger.log('Disconnecting from database...');
+    this.loggerService.info(this.disconnect.name, 'Disconnecting from database...');
 
     try {
       await this.orm.close();
       this._state = ConnectionState.DISCONNECTED;
       this.connectionRegistry.emitStateChange(this.connectionName, this._state);
-      this.logger.log('Disconnected from database');
+      this.loggerService.info(this.disconnect.name, 'Disconnected from database');
     } catch (error) {
       this._state = ConnectionState.ERROR;
       this.connectionRegistry.emitStateChange(this.connectionName, this._state);

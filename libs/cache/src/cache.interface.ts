@@ -1,5 +1,6 @@
 import { IRedisConfig } from '@app/core/configs/configs.interface';
 import { ModuleMetadata, Type } from '@nestjs/common';
+import { ConfigsService } from 'libs/core/src/configs/configs.service';
 import { CacheKeyType } from './cache.constant';
 
 export interface CacheModuleOptions {
@@ -14,8 +15,7 @@ export interface CacheModuleOptions {
 }
 
 export interface CacheModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useFactory: (...args: any[]) => CacheModuleOptions | Promise<CacheModuleOptions>;
+  useFactory: (configsService: ConfigsService) => CacheModuleOptions | Promise<CacheModuleOptions>;
   inject?: (Type | string | symbol)[];
 }
 

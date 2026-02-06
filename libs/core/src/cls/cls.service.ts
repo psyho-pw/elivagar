@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ClsService as ClsServiceInNest } from 'nestjs-cls';
-import { ClsStorage, IClsService } from './cls.interface';
+import { AuthUser, ClsStorage, IClsService } from './cls.interface';
 
 @Injectable()
 export class ClsService implements IClsService {
@@ -20,5 +20,29 @@ export class ClsService implements IClsService {
 
   public set requestId(requestId: string) {
     if (this.store) this.store.requestId = requestId;
+  }
+
+  public set controllerCtx(controllerCtx: string) {
+    if (this.store) this.store.controllerCtx = controllerCtx;
+  }
+
+  public get controllerCtx(): ClsStorage['controllerCtx'] {
+    return this.store?.controllerCtx;
+  }
+
+  public set methodCtx(methodCtx: string) {
+    if (this.store) this.store.methodCtx = methodCtx;
+  }
+
+  public get methodCtx(): ClsStorage['methodCtx'] {
+    return this.store?.methodCtx;
+  }
+
+  public set user(user: AuthUser | undefined) {
+    if (this.store) this.store.user = user;
+  }
+
+  public get user(): ClsStorage['user'] {
+    return this.store?.user;
   }
 }

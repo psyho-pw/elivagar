@@ -1,17 +1,18 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConnectionRegistryService } from './connection-registry.service';
 import { READINESS_CONFIG } from './lifecycle.constant';
 import { IReadinessConfig } from './lifecycle.interface';
+import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
 export class ReadinessGateService {
-  private readonly logger = new Logger(ReadinessGateService.name);
   private isReady = false;
 
   constructor(
     private readonly connectionRegistry: ConnectionRegistryService,
     @Inject(READINESS_CONFIG)
     private readonly config: IReadinessConfig,
+    private readonly loggerService: LoggerService,
   ) {}
 
   /**
@@ -22,7 +23,10 @@ export class ReadinessGateService {
   async waitForReady(timeoutOverride?: number): Promise<void> {
     // If no connections registered, immediately ready
     if (!this.connectionRegistry.hasConnections()) {
-      this.logger.debug('No connections registered, skipping readiness check');
+      this.loggerService.debug(
+        this.waitForReady.name,
+        'No connections registered, skipping readiness check',
+      );
       this.isReady = true;
       return;
     }
@@ -31,14 +35,14 @@ export class ReadinessGateService {
     const checkInterval = this.config.checkInterval ?? 1000;
     const startTime = Date.now();
 
-    this.logger.log('Waiting for all connections to be ready...');
+    this.loggerService.info(this.waitForReady.name, 'Waiting for all connections to be ready...');
 
     while (Date.now() - startTime < timeout) {
       const allReady = await this.connectionRegistry.areAllRequiredReady();
 
       if (allReady) {
         this.isReady = true;
-        this.logger.log('All required connections are ready');
+        this.loggerService.info(this.waitForReady.name, 'All required connections are ready');
         return;
       }
 
@@ -46,7 +50,10 @@ export class ReadinessGateService {
       const pending = this.connectionRegistry.getPendingRequiredConnections();
 
       if (pending.length > 0) {
-        this.logger.debug(`Waiting for connections: ${pending.join(', ')}`);
+        this.loggerService.debug(
+          this.waitForReady.name,
+          `Waiting for connections: ${pending.join(', ')}`,
+        );
       }
 
       await this.sleep(checkInterval);
@@ -59,7 +66,7 @@ export class ReadinessGateService {
       `Readiness timeout after ${timeout}ms. Pending connections: ${stillPending.join(', ')}`,
     );
 
-    this.logger.error(error.message);
+    this.loggerService.error(this.waitForReady.name, error.message);
     throw error;
   }
 

@@ -2,12 +2,12 @@ import {
   BeforeApplicationShutdown,
   Inject,
   Injectable,
-  Logger,
   OnApplicationShutdown,
 } from '@nestjs/common';
 import { ConnectionRegistryService } from './connection-registry.service';
 import { SHUTDOWN_CONFIG } from './lifecycle.constant';
 import { ConnectionState, IConnectionEntry, IShutdownConfig } from './lifecycle.interface';
+import { LoggerService } from '../logger/logger.service';
 
 enum ShutdownPhase {
   DRAIN = 'DRAIN',
@@ -16,13 +16,13 @@ enum ShutdownPhase {
 
 @Injectable()
 export class ShutdownManagerService implements BeforeApplicationShutdown, OnApplicationShutdown {
-  private readonly logger = new Logger(ShutdownManagerService.name);
   private isShuttingDown = false;
 
   constructor(
     private readonly connectionRegistry: ConnectionRegistryService,
     @Inject(SHUTDOWN_CONFIG)
     private readonly config: IShutdownConfig,
+    private readonly loggerService: LoggerService,
   ) {}
 
   /**
@@ -30,10 +30,13 @@ export class ShutdownManagerService implements BeforeApplicationShutdown, OnAppl
    * Use this for grace period (load balancer deregistration)
    */
   async beforeApplicationShutdown(signal?: string): Promise<void> {
-    this.logger.log(`Shutdown signal received: ${signal ?? 'unknown'}`);
+    this.loggerService.info(
+      this.beforeApplicationShutdown.name,
+      `Shutdown signal received: ${signal ?? 'unknown'}`,
+    );
 
     if (this.isShuttingDown) {
-      this.logger.warn('Shutdown already in progress');
+      this.loggerService.warn(this.beforeApplicationShutdown.name, 'Shutdown already in progress');
       return;
     }
 
@@ -42,7 +45,10 @@ export class ShutdownManagerService implements BeforeApplicationShutdown, OnAppl
     // Grace period for load balancer deregistration
     const gracePeriod = this.config.gracePeriod ?? 5000;
     if (gracePeriod > 0) {
-      this.logger.log(`Waiting ${gracePeriod}ms grace period...`);
+      this.loggerService.info(
+        this.beforeApplicationShutdown.name,
+        `Waiting ${gracePeriod}ms grace period...`,
+      );
       await this.sleep(gracePeriod);
     }
   }
@@ -62,20 +68,23 @@ export class ShutdownManagerService implements BeforeApplicationShutdown, OnAppl
       await this.executePhase(ShutdownPhase.CLOSE_CONNECTIONS);
 
       const duration = Date.now() - startTime;
-      this.logger.log(`Graceful shutdown completed in ${duration}ms`);
+      this.loggerService.info(
+        this.onApplicationShutdown.name,
+        `Graceful shutdown completed in ${duration}ms`,
+      );
     } catch (error) {
-      this.logger.error('Error during shutdown', error);
+      this.loggerService.error(this.onApplicationShutdown.name, error, 'Error during shutdown');
       throw error;
     }
   }
 
   private async executePhase(phase: ShutdownPhase): Promise<void> {
-    this.logger.log(`Executing shutdown phase: ${phase}`);
+    this.loggerService.info(this.executePhase.name, `Executing shutdown phase: ${phase}`);
 
     const connections = this.connectionRegistry.getAllConnections();
 
     if (connections.length === 0) {
-      this.logger.debug('No connections to shutdown');
+      this.loggerService.debug(this.executePhase.name, 'No connections to shutdown');
       return;
     }
 
@@ -100,30 +109,46 @@ export class ShutdownManagerService implements BeforeApplicationShutdown, OnAppl
       switch (phase) {
         case ShutdownPhase.DRAIN:
           if (connection.drain) {
-            this.logger.log(`Draining ${metadata.name}...`);
+            this.loggerService.info(
+              this.executeConnectionPhase.name,
+              `Draining ${metadata.name}...`,
+            );
             await this.withTimeout(
               connection.drain(),
               timeout,
               `Drain timeout for ${metadata.name}`,
             );
-            this.logger.log(`${metadata.name} drain complete`);
+            this.loggerService.info(
+              this.executeConnectionPhase.name,
+              `${metadata.name} drain complete`,
+            );
           }
           break;
 
         case ShutdownPhase.CLOSE_CONNECTIONS:
           if (connection.state !== ConnectionState.DISCONNECTED) {
-            this.logger.log(`Disconnecting ${metadata.name}...`);
+            this.loggerService.info(
+              this.executeConnectionPhase.name,
+              `Disconnecting ${metadata.name}...`,
+            );
             await this.withTimeout(
               connection.disconnect(),
               timeout,
               `Disconnect timeout for ${metadata.name}`,
             );
-            this.logger.log(`Disconnected from ${metadata.name}`);
+            this.loggerService.info(
+              this.executeConnectionPhase.name,
+              `Disconnected from ${metadata.name}`,
+            );
           }
           break;
       }
     } catch (error) {
-      this.logger.error(`Error during ${phase} for ${metadata.name}:`, error);
+      this.loggerService.error(
+        this.executeConnectionPhase.name,
+        error,
+        `Error during ${phase} for ${metadata.name}`,
+      );
       // Continue with other connections even if one fails
     }
   }

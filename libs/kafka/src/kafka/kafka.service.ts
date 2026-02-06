@@ -1,14 +1,8 @@
 import { ConnectionRegistryService } from '@app/core/lifecycle/connection-registry.service';
 import { ConnectionNames } from '@app/core/lifecycle/lifecycle.constant';
 import { ConnectionState, IManagedConnection } from '@app/core/lifecycle/lifecycle.interface';
-import {
-  Inject,
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-  Optional,
-} from '@nestjs/common';
+import { LoggerService } from '@app/core/logger/logger.service';
+import { Inject, Injectable, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { KafkaClientKey } from './kafka.constant';
 import { IKafkaService } from './kafka.interface';
@@ -17,7 +11,6 @@ import { IKafkaService } from './kafka.interface';
 export class KafkaService
   implements IKafkaService, IManagedConnection, OnModuleInit, OnModuleDestroy
 {
-  private readonly logger = new Logger(KafkaService.name);
   private _state: ConnectionState = ConnectionState.DISCONNECTED;
   private pendingMessages = 0;
 
@@ -25,6 +18,7 @@ export class KafkaService
 
   constructor(
     @Inject(KafkaClientKey) private readonly kafkaClient: ClientKafka,
+    private readonly loggerService: LoggerService,
     @Optional() private readonly connectionRegistry?: ConnectionRegistryService,
   ) {
     // Register with lifecycle manager if available (high priority - shuts down first)
@@ -56,7 +50,7 @@ export class KafkaService
     }
 
     this._state = ConnectionState.CONNECTING;
-    this.logger.log('Connecting to kafka...');
+    this.loggerService.info(this.connect.name, 'Connecting to kafka...');
 
     const maxRetries = 5;
     let lastError: Error | null = null;
@@ -66,11 +60,12 @@ export class KafkaService
         await this.kafkaClient.connect();
         this._state = ConnectionState.CONNECTED;
         this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
-        this.logger.log('✅ connected to kafka');
+        this.loggerService.info(this.connect.name, '✅ connected to kafka');
         return;
       } catch (error) {
         lastError = error as Error;
-        this.logger.warn(
+        this.loggerService.warn(
+          this.connect.name,
           `Kafka connection attempt ${attempt}/${maxRetries} failed: ${lastError.message}`,
         );
 
@@ -84,7 +79,10 @@ export class KafkaService
 
     this._state = ConnectionState.ERROR;
     this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
-    this.logger.error(`Failed to connect to kafka after ${maxRetries} attempts`);
+    this.loggerService.error(
+      this.connect.name,
+      `Failed to connect to kafka after ${maxRetries} attempts`,
+    );
     throw lastError;
   }
 
@@ -94,13 +92,13 @@ export class KafkaService
     }
 
     this._state = ConnectionState.DISCONNECTING;
-    this.logger.log('Disconnecting from kafka...');
+    this.loggerService.info(this.disconnect.name, 'Disconnecting from kafka...');
 
     try {
       await this.kafkaClient.close();
       this._state = ConnectionState.DISCONNECTED;
       this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
-      this.logger.log('Disconnected from kafka');
+      this.loggerService.info(this.disconnect.name, 'Disconnected from kafka');
     } catch (error) {
       this._state = ConnectionState.ERROR;
       this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
@@ -114,23 +112,29 @@ export class KafkaService
 
   async drain(): Promise<void> {
     if (this.pendingMessages === 0) {
-      this.logger.debug('No pending messages to drain');
+      this.loggerService.debug(this.drain.name, 'No pending messages to drain');
       return;
     }
 
     const timeout = 10000;
     const startTime = Date.now();
 
-    this.logger.log(`Draining ${this.pendingMessages} pending messages...`);
+    this.loggerService.info(
+      this.drain.name,
+      `Draining ${this.pendingMessages} pending messages...`,
+    );
 
     while (this.pendingMessages > 0 && Date.now() - startTime < timeout) {
       await this.sleep(100);
     }
 
     if (this.pendingMessages > 0) {
-      this.logger.warn(`Drain timeout reached with ${this.pendingMessages} messages still pending`);
+      this.loggerService.warn(
+        this.drain.name,
+        `Drain timeout reached with ${this.pendingMessages} messages still pending`,
+      );
     } else {
-      this.logger.log('Kafka drain complete');
+      this.loggerService.info(this.drain.name, 'Kafka drain complete');
     }
   }
 
@@ -147,10 +151,14 @@ export class KafkaService
         },
         error: (err) => {
           this.pendingMessages--;
-          this.logger.error(`Failed to emit message to topic ${topic}:`, err);
+          this.loggerService.error(
+            this.emit.name,
+            `Failed to emit message to topic ${topic}:`,
+            err,
+          );
         },
       });
-    this.logger.debug(`Message emitted to topic: ${topic}`);
+    this.loggerService.debug(this.emit.name, `Message emitted to topic: ${topic}`);
   }
 
   emitWithKey<T>(topic: string, key: string, message: T): void {
@@ -167,10 +175,17 @@ export class KafkaService
         },
         error: (err) => {
           this.pendingMessages--;
-          this.logger.error(`Failed to emit message to topic ${topic} with key ${key}:`, err);
+          this.loggerService.error(
+            this.emitWithKey.name,
+            `Failed to emit message to topic ${topic} with key ${key}:`,
+            err,
+          );
         },
       });
-    this.logger.debug(`Message emitted to topic: ${topic} with key: ${key}`);
+    this.loggerService.debug(
+      this.emitWithKey.name,
+      `Message emitted to topic: ${topic} with key: ${key}`,
+    );
   }
 
   private sleep(ms: number): Promise<void> {

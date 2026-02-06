@@ -1,5 +1,6 @@
 import { MikroOrmModule } from '@app/mikro/mikro.module';
 import { Global, Module } from '@nestjs/common';
+import { AopModule } from '@toss/nestjs-aop';
 import { ClsModule } from './cls/cls.module';
 import { LifecycleModule } from './lifecycle/lifecycle.module';
 import { MikroConnectionService } from './lifecycle/mikro-connection.service';
@@ -21,6 +22,7 @@ import { LoggerModule } from './logger/logger.module';
     }),
     MikroOrmModule.getInstance(),
     ClsModule,
+    AopModule,
   ],
   providers: [MikroConnectionService],
   exports: [MikroConnectionService],

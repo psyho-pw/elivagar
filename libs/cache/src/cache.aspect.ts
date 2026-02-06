@@ -1,21 +1,21 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { LoggerService } from '@app/core/logger/logger.service';
+import { Inject, Injectable } from '@nestjs/common';
 import { Aspect, LazyDecorator, WrapParams } from '@toss/nestjs-aop';
 import { instanceToPlain } from 'class-transformer';
+import { AnonymousFunction } from 'libs/core/types/anonymous-function.type';
 import { CACHE_DECORATOR, CacheKeyType, CacheServiceKey } from './cache.constant';
 import { CacheableQuery, CacheOptions } from './cache.interface';
 import { CacheService } from './cache.service';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyFunction = (...args: any[]) => any;
-
 @Aspect(CACHE_DECORATOR)
 @Injectable()
-export class CacheAspect implements LazyDecorator<AnyFunction, CacheOptions> {
-  private readonly logger = new Logger(CacheAspect.name);
+export class CacheAspect implements LazyDecorator<AnonymousFunction, CacheOptions> {
+  constructor(
+    @Inject(CacheServiceKey) private readonly cacheService: CacheService,
+    private readonly loggerService: LoggerService,
+  ) {}
 
-  constructor(@Inject(CacheServiceKey) private readonly cacheService: CacheService) {}
-
-  wrap({ method, metadata: options, methodName }: WrapParams<AnyFunction, CacheOptions>) {
+  wrap({ method, metadata: options, methodName }: WrapParams<AnonymousFunction, CacheOptions>) {
     return async (...args: unknown[]): Promise<unknown> => {
       // Check condition if provided
       if (options.condition && !options.condition(...args)) {
@@ -49,7 +49,7 @@ export class CacheAspect implements LazyDecorator<AnyFunction, CacheOptions> {
     try {
       return await this.cacheService.wrap(cacheKey, async () => await method(...args), options.ttl);
     } catch (err) {
-      this.logger.error(`Cache wrap failed for key: ${cacheKey}`, err, methodName);
+      this.loggerService.error(methodName, err, `Cache wrap failed for key: ${cacheKey}`);
       return method(...args);
     }
   }
@@ -64,7 +64,7 @@ export class CacheAspect implements LazyDecorator<AnyFunction, CacheOptions> {
     // Check cache first
     const cached = await this.cacheService.get(cacheKey);
     if (cached !== undefined) {
-      this.logger.verbose?.(`cache hit: ${cacheKey}`, methodName);
+      this.loggerService.verbose(methodName, `cache hit: ${cacheKey}`);
       return cached;
     }
 
@@ -75,9 +75,9 @@ export class CacheAspect implements LazyDecorator<AnyFunction, CacheOptions> {
       // Serialize and cache result
       const valueToCache = this.serializeValue(result);
       await this.cacheService.set(cacheKey, valueToCache, options.ttl);
-      this.logger.verbose?.(`cache miss: ${cacheKey}`, methodName);
+      this.loggerService.verbose(methodName, `cache miss: ${cacheKey}`);
     } catch (err) {
-      this.logger.error(`Cache set failed for key: ${cacheKey}`, err, methodName);
+      this.loggerService.error(methodName, err, `Cache set failed for key: ${cacheKey}`);
     }
 
     return result;

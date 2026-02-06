@@ -16,9 +16,7 @@ import { IConfigsService } from '../configs/configs.interface';
         const isDeployedEnv = env !== Env.development && env !== Env.test;
 
         if (isDeployedEnv) {
-          return {
-            transports: [new winston.transports.Console({ level: 'info' })],
-          };
+          return { transports: [new winston.transports.Console({ level: 'info' })] };
         }
 
         return {

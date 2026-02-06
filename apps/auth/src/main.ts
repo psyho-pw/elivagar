@@ -10,10 +10,9 @@ class AuthMain extends AbstractMain {
 
   protected getBootstrapConfig(): BootstrapConfig {
     return {
+      options: { bufferLogs: true, enableShutdownHooks: true },
       grpc: { enabled: true },
-      middleware: {
-        globalPrefix: 'api',
-      },
+      middleware: { globalPrefix: 'api' },
       versioning: { enabled: true },
     };
   }

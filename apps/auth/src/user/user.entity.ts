@@ -8,4 +8,7 @@ export class User extends MikroAutoIncrementEntity {
 
   @Property()
   password!: string;
+
+  @Property({ type: 'json', default: '["user"]' })
+  roles: string[] = ['user'];
 }

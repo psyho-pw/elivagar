@@ -4,6 +4,7 @@ import {
   PingResponse,
   SayhoBotServiceServiceName,
 } from '@app/grpc/proto/generated/sayho-bot/v1/sayho-bot';
+import { Public } from '@app/auth/decorators/public.decorator';
 import { TypedBody } from '@nestia/core';
 import { Controller, Get, Post } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
@@ -43,11 +44,13 @@ export function TransformDto() {
 export class SayhoBotController {
   constructor(private readonly sayhoBotService: SayhoBotService) {}
 
+  @Public()
   @Get('/')
   getHello(): string {
     return this.sayhoBotService.getHello();
   }
 
+  @Public()
   @Post('/kafka/test')
   sendKafkaTest(@TypedBody() body: ISendKafkaTest['body']): ISendKafkaTest['response'] {
     this.sayhoBotService.sendNotification(body.message);
