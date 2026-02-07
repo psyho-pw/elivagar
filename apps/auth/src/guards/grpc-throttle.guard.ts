@@ -22,7 +22,6 @@ export class GrpcThrottleGuard implements CanActivate {
     if (context.getType() !== 'rpc') {
       return true;
     }
-    GRPC_THROTTLE_KEY;
 
     const options = this.reflector.get<GrpcThrottleOptions | undefined>(
       GRPC_THROTTLE_KEY,

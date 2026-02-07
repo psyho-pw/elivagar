@@ -15,7 +15,7 @@ describe('GrpcThrottleGuard', () => {
   });
 
   function createHandler(name: string): () => void {
-    const fn = () => {};
+    const fn = (): void => {};
     Object.defineProperty(fn, 'name', { value: name });
     return fn;
   }
@@ -49,7 +49,6 @@ describe('GrpcThrottleGuard', () => {
     expect(guard.canActivate(context)).toBe(true);
     expect(reflector.get).not.toHaveBeenCalled();
   });
-  GRPC_THROTTLE_KEY;
 
   it('should return true when no @GrpcThrottle decorator is set', () => {
     reflector.get.mockReturnValue(undefined);
