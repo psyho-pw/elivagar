@@ -45,8 +45,14 @@ export class PlayMusicUseCase {
     queueState.addSongs(songs);
 
     if (!wasPlaying) {
+      queueState.isPlaying = true;
       this.clearIdleTimer(guildId);
-      await this.playNext(guildId, voiceChannel, channelId);
+      try {
+        await this.playNext(guildId, voiceChannel, channelId);
+      } catch (error) {
+        queueState.isPlaying = false;
+        throw error;
+      }
     }
 
     return {
@@ -126,7 +132,6 @@ export class PlayMusicUseCase {
 
     connection.subscribe(player);
     player.play(resource);
-    queueState.isPlaying = true;
 
     // Send now-playing message
     this.guildInfraStateManager.deleteCurrentInfoMessage(guildId);
@@ -154,7 +159,6 @@ export class PlayMusicUseCase {
 
     if (!queueState.isEmpty) {
       const nextSong = queueState.currentSong ?? null;
-      queueState.isPlaying = false;
       await this.playNext(guildId, voiceChannel, channelId);
       return { skipped: true, nextSong, queueEmpty: false };
     }
