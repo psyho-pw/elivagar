@@ -94,6 +94,7 @@ export class DiscordAudioPlayer implements IAudioPlayer {
 @Injectable()
 export class VoiceConnectionAdapter implements IVoiceConnectionManager {
   private readonly connections = new Map<string, DiscordVoiceConnection>();
+  private readonly pendingConnections = new Map<string, Promise<IVoiceConnection>>();
   private discordClient: Client | null = null;
 
   setClient(client: Client): void {
@@ -106,6 +107,22 @@ export class VoiceConnectionAdapter implements IVoiceConnectionManager {
       return existing;
     }
 
+    const pending = this.pendingConnections.get(channel.guildId);
+    if (pending) {
+      return pending;
+    }
+
+    const promise = this.createConnection(channel);
+    this.pendingConnections.set(channel.guildId, promise);
+
+    try {
+      return await promise;
+    } finally {
+      this.pendingConnections.delete(channel.guildId);
+    }
+  }
+
+  private async createConnection(channel: VoiceChannelInfo): Promise<IVoiceConnection> {
     if (!this.discordClient) {
       throw new Error('Discord client not initialized');
     }

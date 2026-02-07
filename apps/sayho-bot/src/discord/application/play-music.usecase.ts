@@ -168,14 +168,14 @@ export class PlayMusicUseCase {
   }
 
   stop(guildId: string): void {
-    const player = this.guildInfraStateManager.getPlayer(guildId);
-    if (player) {
-      player.stop();
-    }
-
     const queueState = this.queueStateManager.get(guildId);
     if (queueState) {
       queueState.reset();
+    }
+
+    const player = this.guildInfraStateManager.getPlayer(guildId);
+    if (player) {
+      player.stop();
     }
 
     this.voiceConnectionManager.destroyConnection(guildId);
