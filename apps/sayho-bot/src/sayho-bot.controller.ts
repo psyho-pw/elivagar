@@ -6,9 +6,10 @@ import {
   PingResponse,
   SayhoBotServiceServiceName,
 } from '@app/grpc/proto/generated/sayho-bot/v1/sayho-bot';
-import { TypedBody } from '@nestia/core';
-import { Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
+import { ZodValidationPipe } from 'nestjs-zod';
+import { z } from 'zod';
 import { SayhoBotService } from './sayho-bot.service';
 
 export interface ISendKafkaTest {
@@ -20,6 +21,10 @@ export interface ISendKafkaTest {
     message: string;
   };
 }
+
+const SendKafkaTestBodySchema = z.object({
+  message: z.string(),
+});
 
 @Controller('/')
 export class SayhoBotController {
@@ -33,7 +38,9 @@ export class SayhoBotController {
 
   @Public()
   @Post('/kafka/test')
-  sendKafkaTest(@TypedBody() body: ISendKafkaTest['body']): ISendKafkaTest['response'] {
+  sendKafkaTest(
+    @Body(new ZodValidationPipe(SendKafkaTestBodySchema)) body: ISendKafkaTest['body'],
+  ): ISendKafkaTest['response'] {
     this.sayhoBotService.sendNotification(body.message);
     return { success: true, message: `Event sent: ${body.message}` };
   }

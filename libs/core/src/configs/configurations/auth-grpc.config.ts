@@ -1,9 +1,13 @@
 import { registerAs } from '@nestjs/config';
-import { assert } from 'typia';
+import { z } from 'zod';
 import { getEnv, getEnvInt } from '../configs.helper';
 import { IAuthGrpcConfig } from '../configs.interface';
 
 export const AuthGrpcConfigKey = 'AuthGrpc';
+
+export const AuthGrpcConfigSchema = z.object({
+  url: z.string().min(1),
+}) satisfies z.ZodType<IAuthGrpcConfig>;
 
 export const AuthGrpcConfig = registerAs(AuthGrpcConfigKey, (): IAuthGrpcConfig => {
   const host = getEnv('AUTH_GRPC_HOST', 'localhost');
@@ -13,5 +17,5 @@ export const AuthGrpcConfig = registerAs(AuthGrpcConfigKey, (): IAuthGrpcConfig 
     url: `${host}:${port}`,
   };
 
-  return assert<IAuthGrpcConfig>(config);
+  return AuthGrpcConfigSchema.parse(config);
 });

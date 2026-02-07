@@ -12,6 +12,7 @@
     "outDir": "./dist",
     "incremental": true,
     "skipLibCheck": true,
+    "skipDefaultLibCheck": false,
     "strictNullChecks": true,
     "noImplicitAny": true,
     "strictBindCallApply": true,
@@ -19,8 +20,8 @@
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "baseUrl": ".",
     "paths": {
+      "*": ["./*"],
       "@app/core": ["./libs/core/src"],
       "@app/core/*": ["./libs/core/src/*"],
       "@app/grpc": ["./libs/grpc/src"],

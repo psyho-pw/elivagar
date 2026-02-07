@@ -3,7 +3,7 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": ".",
   "compilerOptions": {
-    "webpack": false,
+    "webpack": true,
     "deleteOutDir": true,
     "tsConfigPath": "tsconfig.app.json"
   },
@@ -17,7 +17,7 @@
       "entryFile": "main",
       "sourceRoot": "apps/auth/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/auth/tsconfig.app.json",
+        "tsConfigPath": "apps/auth/tsconfig.app.tsgo.json",
         "assets": [
           {
             "include": "../../../libs/grpc/src/proto/**/*",
@@ -33,7 +33,7 @@
       "entryFile": "main",
       "sourceRoot": "apps/notification/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/notification/tsconfig.app.json",
+        "tsConfigPath": "apps/notification/tsconfig.app.tsgo.json",
         "assets": [
           {
             "include": "../../../libs/grpc/src/proto/**/*",
@@ -49,11 +49,11 @@
       "entryFile": "main",
       "sourceRoot": "apps/sayho-bot/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/sayho-bot/tsconfig.app.json",
+        "tsConfigPath": "apps/sayho-bot/tsconfig.app.tsgo.json",
         "assets": [
           {
             "include": "../../../libs/grpc/src/proto/**/*",
-            "outDir": "dist/sayho-bot",
+            "outDir": "dist/apps/sayho-bot",
             "watchAssets": true
           }
         ]

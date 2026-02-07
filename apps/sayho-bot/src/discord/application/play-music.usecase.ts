@@ -1,5 +1,5 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { ConfigsService } from '@app/core/configs/configs.service';
+import { ConfigsService } from '../../configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { PlayMusicRequest, PlayMusicResult, SkipResult } from './play-music.interface';
@@ -237,7 +237,7 @@ export class PlayMusicUseCase {
         );
         setTimeout(
           () => sentMsg.delete().catch(() => {}),
-          this.configsService.DiscordConfig!.messageDeleteTimeout,
+          this.configsService.DiscordConfig.messageDeleteTimeout,
         );
       }
       this.idleTimers.delete(guildId);

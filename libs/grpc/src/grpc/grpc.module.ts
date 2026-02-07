@@ -13,7 +13,7 @@ import { GrpcService } from './grpc.service';
 })
 export class GrpcModule {
   public static makeOptions({ name, version = 'v1', url }: GrpcModuleOptions): GrpcOptions {
-    const protoPath = join(__dirname, `../../../../proto/${name}/${version}/${name}.proto`);
+    const protoPath = join(process.cwd(), `libs/grpc/src/proto/${name}/${version}/${name}.proto`);
 
     const opt: GrpcOptions = {
       transport: Transport.GRPC,

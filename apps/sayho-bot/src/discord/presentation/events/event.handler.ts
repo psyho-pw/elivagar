@@ -1,5 +1,4 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { ConfigsService } from '@app/core/configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { Inject, Injectable } from '@nestjs/common';
 import {
@@ -17,6 +16,7 @@ import {
 import { WithDiscordContext } from '../../../common/aop/discord-context.aspect';
 import { HandleDiscordError } from '../../../common/aop/discord-error.aspect';
 import { DiscordException } from '../../../common/exceptions/discord.exception';
+import { ConfigsService } from '../../../configs/configs.service';
 import { HandleVoiceStateUseCase } from '../../application/handle-voice-state.usecase';
 import { PlayMusicUseCase } from '../../application/play-music.usecase';
 import { SearchVideoUseCase } from '../../application/search-video.usecase';
@@ -112,7 +112,7 @@ export class EventHandler {
     const reply = await interaction.editReply({
       embeds: [buildQueuedEmbed(selectedUrl, 1, result.totalInQueue, song.title, song.thumbnail)],
     });
-    setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+    setTimeout(() => reply.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
     this.guildInfraStateManager.removeFromDeleteQueue(guild.id, interaction.message.id);
   }
 
@@ -133,16 +133,16 @@ export class EventHandler {
 
     if (message.author.bot) return;
 
-    if (!message.content.startsWith(this.configsService.DiscordConfig!.commandPrefix)) {
+    if (!message.content.startsWith(this.configsService.DiscordConfig.commandPrefix)) {
       this.loggerService.verbose(
         this.messageCreate.name,
-        `doesn't match prefix '${this.configsService.DiscordConfig!.commandPrefix}' skipping...`,
+        `doesn't match prefix '${this.configsService.DiscordConfig.commandPrefix}' skipping...`,
       );
       return;
     }
 
     const args = message.content
-      .slice(this.configsService.DiscordConfig!.commandPrefix.length)
+      .slice(this.configsService.DiscordConfig.commandPrefix.length)
       .trim()
       .split(/ +/g);
     const commandName = args.shift()?.toLowerCase() ?? '';

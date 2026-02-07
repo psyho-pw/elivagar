@@ -1,7 +1,7 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { ConfigsService } from '@app/core/configs/configs.service';
 import { Inject, Injectable } from '@nestjs/common';
 import Youtube, { Video } from 'simple-youtube-api';
+import { ConfigsService } from '../../../configs/configs.service';
 import { IYoutubeSearch, PlaylistInfo, VideoInfo } from '../../domain/ports/youtube-search.port';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class YoutubeSearchAdapter implements IYoutubeSearch {
     @Inject(ConfigsServiceKey)
     private readonly configsService: ConfigsService,
   ) {
-    this.youtube = new Youtube(this.configsService.YoutubeConfig!.youtubeApiKey);
+    this.youtube = new Youtube(this.configsService.YoutubeConfig.youtubeApiKey);
   }
 
   async searchVideos(query: string, limit = 5): Promise<VideoInfo[]> {

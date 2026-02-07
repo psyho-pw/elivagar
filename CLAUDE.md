@@ -9,7 +9,7 @@ Elivagar is a NestJS-based microservices monorepo built with TypeScript, featuri
 - **NestJS** for the framework
 - **MikroORM** with PostgreSQL for database management (separate schemas per service)
 - **gRPC** for inter-service communication
-- **Typia** for runtime type validation and transformation
+- **Zod** for runtime type validation
 - **pnpm** for package management
 
 ## Architecture
@@ -218,7 +218,7 @@ All entities include `createdAt`, `updatedAt`, and `deletedAt` (soft delete) fie
 
 ### Configuration Loading
 
-Configuration uses Typia for runtime validation. Each service loads environment variables through the `getEnv()` helper which:
+Configuration uses Zod schemas for runtime validation. Each config file defines a Zod schema (e.g., `AppConfigSchema`) with `satisfies z.ZodType<IApp>` for type safety, and validates via `safeParse` (with error logging) or `parse` (direct throw). Each service loads environment variables through the `getEnv()` helper which:
 
 1. Checks for service-prefixed variable (e.g., `AUTH_PORT`)
 2. Falls back to non-prefixed variable (e.g., `PORT`)
@@ -234,33 +234,44 @@ Configuration uses Typia for runtime validation. Each service loads environment 
 - `youtube.config.ts` - YouTube API settings (apiKey, cookie, identityToken, proxy)
 - `auth-grpc.config.ts` - Auth gRPC client settings (url)
 
-**ConfigsService** (`libs/core/src/configs/configs.service.ts`):
+**ConfigsService (Layered Architecture)**:
 
-Provides typed access to configurations via getters:
+The ConfigsService follows a base + extension pattern:
+
+- **Core `ConfigsService`** (`libs/core/src/configs/configs.service.ts`) - Only core configs (`AppConfig`, `DatabaseConfig`). Uses `protected configService` to allow subclassing.
+- **Service-specific `ConfigsService`** (`apps/{service}/src/configs/configs.service.ts`) - Extends core, adds service-specific getters with `getOrThrow` (non-optional return types).
 
 ```typescript
-// Inject via ConfigsServiceKey
-constructor(@Inject(ConfigsServiceKey) private readonly configsService: ConfigsService) {}
+// Core ConfigsService (libs/core) - base class
+@Injectable()
+export class ConfigsService implements IConfigsService {
+  constructor(protected readonly configService: ConfigService) {}
+  get AppConfig(): IApp { ... }       // getOrThrow
+  get DatabaseConfig(): IDatabase { ... } // getOrThrow
+}
 
-// Core configs (required for all services)
-this.configsService.AppConfig      // IApp
-this.configsService.DatabaseConfig // IDatabase
-
-// Optional configs (returns undefined if not loaded)
-this.configsService.RedisConfig    // IRedisConfig | undefined
-this.configsService.KafkaConfig    // IKafkaConfig | undefined
-this.configsService.DiscordConfig  // IDiscordConfig | undefined
-this.configsService.YoutubeConfig  // IYoutubeConfig | undefined
-this.configsService.AuthGrpcConfig // IAuthGrpcConfig | undefined
+// Service-specific ConfigsService (apps/{service}) - extends core
+import { ConfigsService as CoreConfigsService } from '@app/core/configs/configs.service';
+@Injectable()
+export class ConfigsService extends CoreConfigsService {
+  get RedisConfig(): IRedisConfig { ... }  // getOrThrow (non-optional!)
+  get KafkaConfig(): IKafkaConfig { ... }
+  // ... service-specific configs
+}
 ```
+
+**Injection**: Always inject via `ConfigsServiceKey`. Within a service's own code, import `ConfigsService` from the local `./configs/configs.service` to get typed access to service-specific configs. For cross-cutting code in `libs/` that only needs core configs, use `IConfigsService` from `@app/core/configs/configs.interface`.
 
 **Loading Configs per Service** (`apps/{service}/src/configs/configs.module.ts`):
 
 ```typescript
+// Each service loads only the configs it needs
 ConfigModule.forRoot({
   cache: true,
-  load: [AppConfig, DatabaseConfig, RedisConfig, KafkaConfig, DiscordConfig], // Add configs as needed
+  load: [AppConfig, DatabaseConfig, RedisConfig, KafkaConfig, DiscordConfig],
 }),
+// Provides the local ConfigsService (extends core) via ConfigsServiceKey
+providers: [{ provide: ConfigsServiceKey, useClass: ConfigsService }],
 ```
 
 ### MikroORM Module Singleton
@@ -270,15 +281,6 @@ The `MikroOrmModule.getInstance()` returns a singleton instance to ensure only o
 - Selects the correct schema based on `SERVICE_NAME`
 - Discovers entities in the service's directory
 - Configures migrations path
-
-### TypeScript Transformers
-
-The project uses TypeScript transformers via `ts-patch`:
-
-- **Typia** for runtime type validation and serialization
-- **Nestia** for enhanced NestJS validation and SDK generation
-
-These are configured in tsconfig.json plugins section.
 
 ### CoreModule
 
@@ -422,8 +424,13 @@ Shared authentication library for consumer services using gRPC token introspecti
 **Module Registration:**
 
 ```typescript
-// In module imports
-AuthModule.forRoot(),  // Registers gRPC client globally
+// In module imports (registerAsync pattern - similar to CacheModule/KafkaModule)
+AuthModule.registerAsync({
+  useFactory: (configsService: ConfigsService) => ({
+    url: configsService.AuthGrpcConfig.url,
+  }),
+  inject: [ConfigsServiceKey],
+}),
 
 // In module providers
 AuthModule.getGuardProvider(),         // APP_GUARD - requires CacheModule imported first

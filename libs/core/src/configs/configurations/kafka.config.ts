@@ -1,9 +1,21 @@
 import { registerAs } from '@nestjs/config';
-import { validate, IValidation } from 'typia';
+import { z } from 'zod';
 import { getEnv, getEnvBool, getEnvInt } from '../configs.helper';
 import { IKafkaConfig } from '../configs.interface';
 
 export const KafkaConfigKey = 'Kafka';
+
+export const KafkaConfigSchema = z.object({
+  brokers: z.array(z.string().min(1)),
+  clientId: z.string().min(1),
+  groupId: z.string().min(1),
+  ssl: z.boolean(),
+  saslMechanism: z.enum(['plain', 'scram-sha-256', 'scram-sha-512']).optional(),
+  saslUsername: z.string().optional(),
+  saslPassword: z.string().optional(),
+  connectionTimeout: z.number().int().min(0).optional(),
+  requestTimeout: z.number().int().min(0).optional(),
+}) satisfies z.ZodType<IKafkaConfig>;
 
 export const KafkaConfig = registerAs(KafkaConfigKey, (): IKafkaConfig => {
   const serviceName = getEnv('SERVICE_NAME', 'elivagar');
@@ -20,10 +32,10 @@ export const KafkaConfig = registerAs(KafkaConfigKey, (): IKafkaConfig => {
     requestTimeout: getEnvInt('KAFKA_REQUEST_TIMEOUT', 30000),
   };
 
-  const res: IValidation<IKafkaConfig> = validate<IKafkaConfig>(config);
+  const res = KafkaConfigSchema.safeParse(config);
 
   if (!res.success) {
-    console.error(res.errors);
+    console.error(res.error.issues);
     throw new Error(KafkaConfigKey);
   }
 

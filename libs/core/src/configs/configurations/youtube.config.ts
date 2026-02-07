@@ -1,9 +1,16 @@
 import { registerAs } from '@nestjs/config';
-import { assert } from 'typia';
+import { z } from 'zod';
 import { getEnv } from '../configs.helper';
 import { IYoutubeConfig } from '../configs.interface';
 
 export const YoutubeConfigKey = 'Youtube';
+
+export const YoutubeConfigSchema = z.object({
+  youtubeApiKey: z.string().min(1),
+  cookie: z.string().optional(),
+  identityToken: z.string().optional(),
+  proxy: z.string().optional(),
+}) satisfies z.ZodType<IYoutubeConfig>;
 
 export const YoutubeConfig = registerAs(YoutubeConfigKey, (): IYoutubeConfig => {
   const config: IYoutubeConfig = {
@@ -13,5 +20,5 @@ export const YoutubeConfig = registerAs(YoutubeConfigKey, (): IYoutubeConfig => 
     proxy: getEnv('PROXY') || undefined,
   };
 
-  return assert<IYoutubeConfig>(config);
+  return YoutubeConfigSchema.parse(config);
 });

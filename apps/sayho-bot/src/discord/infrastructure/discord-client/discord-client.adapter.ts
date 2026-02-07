@@ -1,5 +1,4 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { ConfigsService } from '@app/core/configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { generateDependencyReport } from '@discordjs/voice';
 import { Inject, Injectable } from '@nestjs/common';
@@ -13,6 +12,7 @@ import {
 } from 'discord.js';
 import { HandleDiscordError } from '../../../common/aop/discord-error.aspect';
 import { DiscordException } from '../../../common/exceptions/discord.exception';
+import { ConfigsService } from '../../../configs/configs.service';
 
 type CommandFunction = (payload: Message | ChatInputCommandInteraction) => Promise<void>;
 
@@ -42,8 +42,8 @@ export class DiscordClientAdapter {
     this.loggerService.verbose('init', generateDependencyReport());
 
     try {
-      this.rest = new REST({ version: '10' }).setToken(this.configsService.DiscordConfig!.token);
-      await this.discordBotClient.login(this.configsService.DiscordConfig!.token);
+      this.rest = new REST({ version: '10' }).setToken(this.configsService.DiscordConfig.token);
+      await this.discordBotClient.login(this.configsService.DiscordConfig.token);
       this.loggerService.verbose('init', 'DiscordBotClient instance initialized');
     } catch (err) {
       console.error(err);

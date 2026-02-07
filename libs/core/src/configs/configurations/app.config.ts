@@ -1,9 +1,37 @@
 import { registerAs } from '@nestjs/config';
-import { validate, IValidation } from 'typia';
+import { z } from 'zod';
 import { getEnv, getEnvInt } from '../configs.helper';
 import { IApp } from '../configs.interface';
 
 export const AppConfigKey = 'App';
+
+export const AppConfigSchema = z.object({
+  env: z.enum(['test', 'local', 'production']),
+  port: z.number().int(),
+  grpcPort: z.number().int(),
+  serviceName: z.string().min(1),
+  jwtSecret: z.string().min(1),
+  jwtRefreshSecret: z.string().min(1),
+  jwtAlgorithm: z.enum([
+    'HS256',
+    'HS384',
+    'HS512',
+    'RS256',
+    'RS384',
+    'RS512',
+    'ES256',
+    'ES384',
+    'ES512',
+    'PS256',
+    'PS384',
+    'PS512',
+    'none',
+  ]),
+  jwtExpire: z.number().int().min(0),
+  jwtRefreshExpire: z.number().int().min(0),
+  jwtIssuer: z.string().min(1),
+  clientURI: z.string().min(1),
+}) satisfies z.ZodType<IApp>;
 
 export const AppConfig = registerAs(AppConfigKey, (): IApp => {
   const config = {
@@ -20,10 +48,10 @@ export const AppConfig = registerAs(AppConfigKey, (): IApp => {
     clientURI: getEnv('CLIENT_URI'),
   };
 
-  const res: IValidation<IApp> = validate<IApp>(config);
+  const res = AppConfigSchema.safeParse(config);
 
   if (!res.success) {
-    console.error(res.errors);
+    console.error(res.error.issues);
     throw new Error(AppConfigKey);
   }
 
