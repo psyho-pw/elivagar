@@ -1,9 +1,17 @@
 import { registerAs } from '@nestjs/config';
-import { assert } from 'typia';
+import { z } from 'zod';
 import { getEnv, getEnvInt } from '../configs.helper';
 import { IRedisConfig } from '../configs.interface';
 
 export const RedisConfigKey = 'Redis';
+
+export const RedisConfigSchema = z.object({
+  host: z.string().min(1),
+  port: z.number(),
+  password: z.string().optional(),
+  db: z.number().optional(),
+  keyPrefix: z.string().optional(),
+}) satisfies z.ZodType<IRedisConfig>;
 
 export const RedisConfig = registerAs(RedisConfigKey, (): IRedisConfig => {
   const config: IRedisConfig = {
@@ -14,5 +22,5 @@ export const RedisConfig = registerAs(RedisConfigKey, (): IRedisConfig => {
     keyPrefix: getEnv('REDIS_KEY_PREFIX') || undefined,
   };
 
-  return assert<IRedisConfig>(config);
+  return RedisConfigSchema.parse(config);
 });

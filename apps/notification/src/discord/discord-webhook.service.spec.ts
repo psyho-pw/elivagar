@@ -34,7 +34,7 @@ describe('DiscordWebhookService', () => {
     const { unit, unitRef } = await TestBed.solitary(DiscordWebhookService)
       .mock(ConfigsServiceKey)
       .impl(() => ({
-        DiscordConfig: { webhookUrl },
+        DiscordWebhookConfig: { webhookUrl },
       }))
       .compile();
 

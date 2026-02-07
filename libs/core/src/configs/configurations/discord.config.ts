@@ -1,9 +1,17 @@
 import { registerAs } from '@nestjs/config';
-import { assert } from 'typia';
+import { z } from 'zod';
 import { getEnv, getEnvInt } from '../configs.helper';
 import { IDiscordConfig } from '../configs.interface';
 
 export const DiscordConfigKey = 'Discord';
+
+export const DiscordConfigSchema = z.object({
+  token: z.string().min(1),
+  clientId: z.string().min(1),
+  guildId: z.string().min(1),
+  commandPrefix: z.string().min(1),
+  messageDeleteTimeout: z.number(),
+}) satisfies z.ZodType<IDiscordConfig>;
 
 export const DiscordConfig = registerAs(DiscordConfigKey, (): IDiscordConfig => {
   const config: IDiscordConfig = {
@@ -12,8 +20,7 @@ export const DiscordConfig = registerAs(DiscordConfigKey, (): IDiscordConfig => 
     guildId: getEnv('DISCORD_GUILD_ID'),
     commandPrefix: getEnv('DISCORD_COMMAND_PREFIX', '!'),
     messageDeleteTimeout: getEnvInt('DISCORD_MESSAGE_DELETE_TIMEOUT', 7000),
-    webhookUrl: getEnv('DISCORD_WEBHOOK_URL'),
   };
 
-  return assert<IDiscordConfig>(config);
+  return DiscordConfigSchema.parse(config);
 });

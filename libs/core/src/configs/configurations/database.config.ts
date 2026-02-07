@@ -1,9 +1,17 @@
 import { registerAs } from '@nestjs/config';
-import { IValidation, validate } from 'typia';
+import { z } from 'zod';
 import { getEnv, getEnvInt } from '../configs.helper';
 import { IDatabase } from '../configs.interface';
 
 export const DatabaseConfigKey = 'Database';
+
+export const DatabaseConfigSchema = z.object({
+  host: z.string().min(1),
+  port: z.number().int(),
+  user: z.string().min(1),
+  password: z.string().min(1),
+  dbName: z.string().min(1),
+}) satisfies z.ZodType<IDatabase>;
 
 export const DatabaseConfig = registerAs(DatabaseConfigKey, (): IDatabase => {
   const config = {
@@ -14,10 +22,10 @@ export const DatabaseConfig = registerAs(DatabaseConfigKey, (): IDatabase => {
     dbName: getEnv('DB_DATABASE'),
   };
 
-  const res: IValidation<IDatabase> = validate<IDatabase>(config);
+  const res = DatabaseConfigSchema.safeParse(config);
 
   if (!res.success) {
-    console.error(res.errors);
+    console.error(res.error.issues);
     throw new Error(DatabaseConfigKey);
   }
 
