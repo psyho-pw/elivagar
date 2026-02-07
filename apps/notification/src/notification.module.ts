@@ -7,10 +7,12 @@ import { MikroConnectionService } from '@app/core/lifecycle/mikro-connection.ser
 import { GrpcModule } from '@app/grpc/grpc/grpc.module';
 import { KafkaModule } from '@app/kafka/kafka/kafka.module';
 import { MikroOrmModule } from '@app/mikro/mikro.module';
+import { MikroOrmModule as OrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 import { ConfigsModule } from './configs/configs.module';
 import { ConfigsService } from './configs/configs.service';
 import { DiscordModule } from './discord/discord.module';
+import { Notification } from './notification/notification.entity';
 import { NotificationController } from './notification.controller';
 import { NotificationService } from './notification.service';
 
@@ -19,6 +21,7 @@ import { NotificationService } from './notification.service';
     ConfigsModule,
     CoreModule,
     MikroOrmModule.getInstance(),
+    OrmModule.forFeature([Notification]),
     GrpcModule.register({ name: AppName.Notification }),
     KafkaModule.registerAsync({
       useFactory: (configsService: ConfigsService) => ({

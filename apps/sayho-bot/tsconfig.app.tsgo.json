@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tsconfig.tsgo.json",
   "compilerOptions": {
     "declaration": false,
     "outDir": "../../dist/apps/sayho-bot"

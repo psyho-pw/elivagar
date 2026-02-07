@@ -55,6 +55,9 @@ export abstract class AbstractMain {
    * Bootstrap 프로세스를 조율하는 템플릿 메서드
    */
   protected async bootstrap(): Promise<BootstrapResult> {
+    // HMR: 이전 앱이 완전히 종료될 때까지 대기
+    await this.waitForPreviousClose();
+
     const config = this.getBootstrapConfig();
 
     // NestJS 애플리케이션 생성
@@ -255,7 +258,20 @@ export abstract class AbstractMain {
     const hotModule = (module as NodeModule & { hot?: HotModule }).hot;
     if (hotModule) {
       hotModule.accept();
-      hotModule.dispose(() => this.app.close());
+      hotModule.dispose((data) => {
+        data.closePromise = this.app.close();
+      });
+    }
+  }
+
+  /**
+   * HMR: 이전 모듈의 앱이 완전히 종료될 때까지 대기
+   * module.hot.data를 통해 이전 dispose에서 전달된 close Promise를 await
+   */
+  private async waitForPreviousClose(): Promise<void> {
+    const hotModule = (module as NodeModule & { hot?: HotModule }).hot;
+    if (hotModule?.data?.closePromise) {
+      await hotModule.data.closePromise;
     }
   }
 
@@ -328,5 +344,10 @@ export abstract class AbstractMain {
  */
 interface HotModule {
   accept(): void;
-  dispose(callback: () => void): void;
+  dispose(callback: (data: HotModuleData) => void): void;
+  data?: HotModuleData;
+}
+
+interface HotModuleData {
+  closePromise?: Promise<void>;
 }

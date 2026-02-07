@@ -16,7 +16,7 @@ export class GrpcService {
 
   public getOptions({ name, version = 'v1' }: GrpcModuleOptions): GrpcOptions {
     const port = this.configsService.AppConfig.grpcPort;
-    const protoPath = join(__dirname, `../../../../proto/${name}/${version}/${name}.proto`);
+    const protoPath = join(process.cwd(), `libs/grpc/src/proto/${name}/${version}/${name}.proto`);
 
     const opt: GrpcOptions = {
       transport: Transport.GRPC,

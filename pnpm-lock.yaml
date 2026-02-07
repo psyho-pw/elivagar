@@ -219,6 +219,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^8.54.0
         version: 8.54.0(eslint@9.39.2)(typescript@5.9.3)
+      '@typescript/native-preview':
+        specifier: 7.0.0-dev.20260207.1
+        version: 7.0.0-dev.20260207.1
       discord-api-types:
         specifier: ^0.38.37
         version: 0.38.38
@@ -269,7 +272,7 @@ importers:
         version: 29.4.6(@babel/core@7.29.0)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.29.0))(jest-util@30.2.0)(jest@30.2.0(@types/node@25.1.0)(ts-node@10.9.2(@swc/core@1.11.13)(@types/node@25.1.0)(typescript@5.9.3)))(typescript@5.9.3)
       ts-loader:
         specifier: ^9.5.4
-        version: 9.5.4(typescript@5.9.3)(webpack@5.104.1(@swc/core@1.11.13))
+        version: 9.5.4(typescript@5.9.3)(webpack@5.105.0(@swc/core@1.11.13))
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@swc/core@1.11.13)(@types/node@25.1.0)(typescript@5.9.3)
@@ -2100,6 +2103,45 @@ packages:
     resolution: {integrity: sha512-VFlhGSl4opC0bprJiItPQ1RfUhGDIBokcPwaFH4yiBCaNPeld/9VeXbiPO1cLyorQi1G1vL+ecBk1x8o1axORA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260207.1':
+    resolution: {integrity: sha512-Nd1XiXY8tFYmW/rX4nctVkg5JbV3Fk6HgKIanLvgLK+HPuzKX+ooHhr+1T2k6NGZxKaz5dAFSaL5egZLYSiL9Q==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260207.1':
+    resolution: {integrity: sha512-LoZkIjYooQtlU7pVgqaVKt4E5Ugda5fSgoZwczeluKkFI4yqyNXSm8lxHoys3VfsBVmETjPUR2vLzDvGG731DQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260207.1':
+    resolution: {integrity: sha512-/DH9rIohX1X0XmV3TH3/9E1lRBTzArhYbRlHgwxys4BmsJqy+Kfv93vfRXfWQ6NZ5lmS8FPwGCySz2oK7eD/QA==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260207.1':
+    resolution: {integrity: sha512-PBQHIs7FMoVtixiL3HQr1zBN/56vuV76BsFEqsZf2xU7lYx+Atbk1j7Zp16gaHM188HNn14ivnCqumw08vSglA==}
+    cpu: [arm]
+    os: [linux]
+
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260207.1':
+    resolution: {integrity: sha512-9+Xoui+GKXgpgKCPc6XKCEldXBM0JhjVh2GyaxdgtrUk5yleLcbG4MgNYW8MbeoSq1HttAQrgU0d+py/D8fGkw==}
+    cpu: [x64]
+    os: [linux]
+
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260207.1':
+    resolution: {integrity: sha512-MstKFyDbLGGOCtS5JlTEDnldklBcbbrC0xbWTN+QG9yTh+/G2heV41upmWKCssAF1hpYLf9p99RlCZPZL19zKw==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260207.1':
+    resolution: {integrity: sha512-YhZ0gpPJ3IQbnLEHufkWDJbJuv0Lt352jYc3HQSSddmuuposb5EtbHW36aegGkMbZV6kN4oapUWBk+V/z4LU2w==}
+    cpu: [x64]
+    os: [win32]
+
+  '@typescript/native-preview@7.0.0-dev.20260207.1':
+    resolution: {integrity: sha512-IRm6uO1cdSd6b/ze23l9d/7iITl1jtt52pxKODBKlx/MaCPsSpFQLQYb+XleKv8AJJXgsFItOxTBrS8Tl3XZ3g==}
+    hasBin: true
+
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
 
@@ -3094,6 +3136,10 @@ packages:
 
   enhanced-resolve@5.18.1:
     resolution: {integrity: sha512-ZSW3ma5GkcQBIpwZTSRAI8N71Uuwgs93IezB7mf7R60tC8ZbJideoDNKjHn2O9KIlx6rkGTTEk1xUCK2E1Y2Yg==}
+    engines: {node: '>=10.13.0'}
+
+  enhanced-resolve@5.19.0:
+    resolution: {integrity: sha512-phv3E1Xl4tQOShqSte26C7Fl84EwUdZsyOuSSk9qtAGyyQs2s3jJzComh+Abf4g187lUUAvH+H26omrqia2aGg==}
     engines: {node: '>=10.13.0'}
 
   entities@6.0.1:
@@ -5709,6 +5755,16 @@ packages:
       webpack-cli:
         optional: true
 
+  webpack@5.105.0:
+    resolution: {integrity: sha512-gX/dMkRQc7QOMzgTe6KsYFM7DxeIONQSui1s0n/0xht36HvrgbxtM1xBlgx596NbpHuQU8P7QpKwrZYwUX48nw==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+    peerDependencies:
+      webpack-cli: '*'
+    peerDependenciesMeta:
+      webpack-cli:
+        optional: true
+
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
     engines: {node: '>=18'}
@@ -7917,6 +7973,37 @@ snapshots:
       '@typescript-eslint/types': 8.54.0
       eslint-visitor-keys: 4.2.1
 
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260207.1':
+    optional: true
+
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260207.1':
+    optional: true
+
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260207.1':
+    optional: true
+
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260207.1':
+    optional: true
+
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260207.1':
+    optional: true
+
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260207.1':
+    optional: true
+
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260207.1':
+    optional: true
+
+  '@typescript/native-preview@7.0.0-dev.20260207.1':
+    optionalDependencies:
+      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260207.1
+      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260207.1
+      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260207.1
+      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260207.1
+      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260207.1
+      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260207.1
+      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260207.1
+
   '@ungap/structured-clone@1.3.0': {}
 
   '@unrs/resolver-binding-android-arm-eabi@1.11.1':
@@ -8920,6 +9007,11 @@ snapshots:
   encodeurl@2.0.0: {}
 
   enhanced-resolve@5.18.1:
+    dependencies:
+      graceful-fs: 4.2.11
+      tapable: 2.3.0
+
+  enhanced-resolve@5.19.0:
     dependencies:
       graceful-fs: 4.2.11
       tapable: 2.3.0
@@ -11651,6 +11743,17 @@ snapshots:
     optionalDependencies:
       '@swc/core': 1.11.13
 
+  terser-webpack-plugin@5.3.16(@swc/core@1.11.13)(webpack@5.105.0(@swc/core@1.11.13)):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.25
+      jest-worker: 27.5.1
+      schema-utils: 4.3.3
+      serialize-javascript: 6.0.2
+      terser: 5.39.0
+      webpack: 5.105.0(@swc/core@1.11.13)
+    optionalDependencies:
+      '@swc/core': 1.11.13
+
   terser@5.39.0:
     dependencies:
       '@jridgewell/source-map': 0.3.6
@@ -11746,7 +11849,7 @@ snapshots:
       babel-jest: 30.2.0(@babel/core@7.29.0)
       jest-util: 30.2.0
 
-  ts-loader@9.5.4(typescript@5.9.3)(webpack@5.104.1(@swc/core@1.11.13)):
+  ts-loader@9.5.4(typescript@5.9.3)(webpack@5.105.0(@swc/core@1.11.13)):
     dependencies:
       chalk: 4.1.2
       enhanced-resolve: 5.18.1
@@ -11754,7 +11857,7 @@ snapshots:
       semver: 7.7.1
       source-map: 0.7.4
       typescript: 5.9.3
-      webpack: 5.104.1(@swc/core@1.11.13)
+      webpack: 5.105.0(@swc/core@1.11.13)
 
   ts-mixer@6.0.4: {}
 
@@ -12021,6 +12124,38 @@ snapshots:
       schema-utils: 4.3.3
       tapable: 2.3.0
       terser-webpack-plugin: 5.3.16(@swc/core@1.11.13)(webpack@5.104.1(@swc/core@1.11.13))
+      watchpack: 2.5.1
+      webpack-sources: 3.3.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+
+  webpack@5.105.0(@swc/core@1.11.13):
+    dependencies:
+      '@types/eslint-scope': 3.7.7
+      '@types/estree': 1.0.8
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.15.0
+      acorn-import-phases: 1.0.4(acorn@8.15.0)
+      browserslist: 4.28.1
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.19.0
+      es-module-lexer: 2.0.0
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.1
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 4.3.3
+      tapable: 2.3.0
+      terser-webpack-plugin: 5.3.16(@swc/core@1.11.13)(webpack@5.105.0(@swc/core@1.11.13))
       watchpack: 2.5.1
       webpack-sources: 3.3.3
     transitivePeerDependencies:

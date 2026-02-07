@@ -9,6 +9,7 @@ libs/grpc/src/proto/generated/*
 # compiled output
 /dist
 /node_modules
+/.webpack-cache
 
 # Logs
 logs
