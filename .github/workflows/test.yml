@@ -39,6 +39,6 @@ jobs:
         if: always()
         uses: ./.github/actions/discord-notification
         with:
-          status: ${{ job.status == 'success' && 'SUCCESS' || 'FAIL' }}
+          status: ${{ job.status == 'success' && 'Success' || 'Fail' }}
           title: Test
           discord_webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}

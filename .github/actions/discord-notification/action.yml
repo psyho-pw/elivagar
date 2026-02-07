@@ -4,8 +4,8 @@ description: Send workflow result notification to Discord webhook
 inputs:
   status:
     required: false
-    default: "FAIL"
-    description: "Result status (SUCCESS or FAIL)"
+    default: "Fail"
+    description: "Result status (Success or Fail)"
   title:
     required: false
     default: ""
@@ -21,7 +21,7 @@ runs:
     - name: Send Discord notification
       shell: bash
       run: |
-        if [ "${{ inputs.status }}" = "SUCCESS" ]; then
+        if [ "${{ inputs.status }}" = "Success" ]; then
           COLOR=3066993
           EMOJI="white_check_mark"
         else
@@ -35,6 +35,11 @@ runs:
         fi
 
         BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+        if [ -n "${GITHUB_BASE_REF}" ]; then
+          BRANCH_DISPLAY="\`${BRANCH_NAME}\` → \`${GITHUB_BASE_REF}\`"
+        else
+          BRANCH_DISPLAY="\`${BRANCH_NAME}\`"
+        fi
 
         DESCRIPTION=""
         if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -43,8 +48,8 @@ runs:
 
         FIELDS="[
           { \"name\": \"Status\", \"value\": \"\`${{ inputs.status }}\`\", \"inline\": true },
-          { \"name\": \"Branch\", \"value\": \"\`${BRANCH_NAME}\`\", \"inline\": true },
-          { \"name\": \"Actor\", \"value\": \"\`${GITHUB_ACTOR}\`\", \"inline\": true },
+          { \"name\": \"Branch\", \"value\": \"${BRANCH_DISPLAY}\", \"inline\": true },
+          { \"name\": \"Author\", \"value\": \"\`${GITHUB_ACTOR}\`\", \"inline\": true },
           { \"name\": \"Workflow\", \"value\": \"[${GITHUB_WORKFLOW}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})\", \"inline\": false }
         ]"
 
