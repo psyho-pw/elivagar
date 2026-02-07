@@ -21,6 +21,7 @@ describe('AuthService', () => {
 
   const testEmail = faker.internet.email();
   const testPassword = faker.internet.password();
+  const testName = faker.person.fullName();
   const testHashedPassword = faker.string.alphanumeric(60);
   const testUserId = faker.string.uuid();
   const testAccessToken = faker.string.alphanumeric(32);
@@ -64,12 +65,13 @@ describe('AuthService', () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue(testHashedPassword);
       em.create.mockReturnValue(mockUser);
 
-      const result = await authService.register(testEmail, testPassword);
+      const result = await authService.register(testEmail, testPassword, testName);
 
       expect(em.findOne).toHaveBeenCalledWith(User, { email: testEmail, deletedAt: null });
       expect(bcrypt.hash).toHaveBeenCalledWith(testPassword, 12);
       expect(em.create).toHaveBeenCalledWith(User, {
         email: testEmail,
+        name: testName,
         password: testHashedPassword,
         roles: ['user'],
       });
@@ -81,7 +83,7 @@ describe('AuthService', () => {
       em.findOne.mockResolvedValue(mockUser);
 
       const error = await authService
-        .register(testEmail, testPassword)
+        .register(testEmail, testPassword, testName)
         .catch((err: unknown) => err);
 
       expect(error).toBeInstanceOf(RpcException);

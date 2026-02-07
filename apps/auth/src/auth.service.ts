@@ -17,7 +17,7 @@ export class AuthService {
     private readonly loggerService: LoggerService,
   ) {}
 
-  async register(email: string, password: string): Promise<{ userId: string; email: string }> {
+  async register(email: string, password: string, name: string): Promise<{ userId: string; email: string }> {
     const existing = await this.em.findOne(User, { email, deletedAt: null });
     if (existing) {
       throw new RpcException({
@@ -30,6 +30,7 @@ export class AuthService {
     // MikroORM handles default values (createdAt, updatedAt, deletedAt) at entity level
     const user = this.em.create(User, {
       email,
+      name,
       password: hashedPassword,
       roles: ['user'],
     } as unknown as User);

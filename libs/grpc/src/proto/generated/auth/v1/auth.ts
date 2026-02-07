@@ -12,6 +12,7 @@ export const protobufPackage = "auth.v1";
 export interface RegisterRequest {
   email: string;
   password: string;
+  name: string;
 }
 
 export interface RegisterResponse {
@@ -59,7 +60,7 @@ export interface RefreshTokenResponse {
 }
 
 function createBaseRegisterRequest(): RegisterRequest {
-  return { email: "", password: "" };
+  return { email: "", password: "", name: "" };
 }
 
 export const RegisterRequest: MessageFns<RegisterRequest> = {
@@ -69,6 +70,9 @@ export const RegisterRequest: MessageFns<RegisterRequest> = {
     }
     if (message.password !== "") {
       writer.uint32(18).string(message.password);
+    }
+    if (message.name !== "") {
+      writer.uint32(26).string(message.name);
     }
     return writer;
   },
@@ -96,6 +100,14 @@ export const RegisterRequest: MessageFns<RegisterRequest> = {
           message.password = reader.string();
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -109,6 +121,7 @@ export const RegisterRequest: MessageFns<RegisterRequest> = {
     return {
       email: isSet(object.email) ? globalThis.String(object.email) : "",
       password: isSet(object.password) ? globalThis.String(object.password) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
     };
   },
 
@@ -120,6 +133,9 @@ export const RegisterRequest: MessageFns<RegisterRequest> = {
     if (message.password !== "") {
       obj.password = message.password;
     }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
     return obj;
   },
 
@@ -130,6 +146,7 @@ export const RegisterRequest: MessageFns<RegisterRequest> = {
     const message = createBaseRegisterRequest();
     message.email = object.email ?? "";
     message.password = object.password ?? "";
+    message.name = object.name ?? "";
     return message;
   },
 };

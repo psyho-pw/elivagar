@@ -24,7 +24,7 @@ export class AuthController {
   @TransformDto()
   @GrpcThrottle(3, 60)
   async Register({ data }: GrpcDto<RegisterRequest, RegisterResponse>): Promise<RegisterResponse> {
-    return this.authService.register(data.email, data.password);
+    return this.authService.register(data.email, data.password, data.name);
   }
 
   @GrpcMethod(AuthServiceServiceName)

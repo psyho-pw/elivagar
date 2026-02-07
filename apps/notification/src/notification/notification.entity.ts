@@ -3,8 +3,8 @@ import { Entity, Property } from '@mikro-orm/core';
 
 @Entity({ schema: 'notification' })
 export class Notification extends MikroAutoIncrementEntity {
-  @Property()
-  userId!: number;
+  @Property({ type: 'uuid' })
+  userId!: string;
 
   @Property()
   title!: string;

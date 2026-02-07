@@ -11,6 +11,7 @@ describe('AuthController', () => {
 
   const testEmail = faker.internet.email();
   const testPassword = faker.internet.password();
+  const testName = faker.person.fullName();
   const testUserId = faker.string.uuid();
   const testAccessToken = faker.string.alphanumeric(32);
   const testRefreshToken = faker.string.alphanumeric(32);
@@ -37,7 +38,7 @@ describe('AuthController', () => {
       const expected = { userId: testUserId, email: testEmail };
       authService.register.mockResolvedValue(expected);
 
-      const data = { email: testEmail, password: testPassword };
+      const data = { email: testEmail, password: testPassword, name: testName };
       const register = controller.Register as unknown as (
         data: unknown,
         metadata: Metadata,
@@ -45,7 +46,7 @@ describe('AuthController', () => {
       ) => Promise<unknown>;
       const result = await register.call(controller, data, mockMetadata, mockCall);
 
-      expect(authService.register).toHaveBeenCalledWith(testEmail, testPassword);
+      expect(authService.register).toHaveBeenCalledWith(testEmail, testPassword, testName);
       expect(result).toEqual(expected);
     });
   });
