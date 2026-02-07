@@ -4,7 +4,6 @@ import { LoggerService } from '@app/core/logger/logger.service';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   ChatInputCommandInteraction,
-  InteractionResponse,
   Message,
   PermissionFlagsBits,
   StageChannel,
@@ -82,27 +81,30 @@ export class CommandHandler {
       return;
     }
 
-    const result = await this.playMusicUseCase.play({
-      guildId: message.guildId,
-      songs,
-      voiceChannel: voiceChannelInfo,
-      channelId,
-    });
+    const currentQueue = this.manageQueueUseCase.getQueue(message.guildId);
+    const totalInQueue = currentQueue.length + songs.length;
 
-    this.loggerService.info('playlistHandler', `queue length: ${result.totalInQueue}`);
+    this.loggerService.info('playlistHandler', `queue length: ${totalInQueue}`);
 
     const reply = await message.reply({
       embeds: [
         buildQueuedEmbed(
           url,
           songs.length,
-          result.totalInQueue,
+          totalInQueue,
           songs[0]?.title ?? 'Unknown',
           songs[0]?.thumbnail ?? '',
         ),
       ],
     });
     setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+
+    await this.playMusicUseCase.play({
+      guildId: message.guildId,
+      songs,
+      voiceChannel: voiceChannelInfo,
+      channelId,
+    });
   }
 
   @HandleDiscordError({ bubble: true })
@@ -123,19 +125,22 @@ export class CommandHandler {
       return;
     }
 
-    const result = await this.playMusicUseCase.play({
+    const currentQueue = this.manageQueueUseCase.getQueue(message.guildId);
+    const totalInQueue = currentQueue.length + 1;
+
+    this.loggerService.info('singleVidHandler', `Queue length: ${totalInQueue}`);
+
+    const reply = await message.reply({
+      embeds: [buildQueuedEmbed(url, 1, totalInQueue, song.title, song.thumbnail)],
+    });
+    setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+
+    await this.playMusicUseCase.play({
       guildId: message.guildId,
       songs: [song],
       voiceChannel: voiceChannelInfo,
       channelId: message.channelId,
     });
-
-    this.loggerService.info('singleVidHandler', `Queue length: ${result.totalInQueue}`);
-
-    const reply = await message.reply({
-      embeds: [buildQueuedEmbed(url, 1, result.totalInQueue, song.title, song.thumbnail)],
-    });
-    setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
   }
 
   @HandleDiscordError({ bubble: true })
@@ -162,7 +167,7 @@ export class CommandHandler {
       value: item.url,
     }));
 
-    const selectList: Message | InteractionResponse = await payload.reply({
+    const selectList = await payload.reply({
       content: `'${searchTxt}' 검색 결과`,
       components: [
         {
@@ -180,16 +185,11 @@ export class CommandHandler {
       ],
     });
 
-    let replyMessage: Message | undefined;
-    if (selectList instanceof Message) {
-      replyMessage = selectList;
-    } else if (payload instanceof ChatInputCommandInteraction) {
-      replyMessage = await payload.fetchReply();
-    }
+    const replyMessage: Message =
+      selectList instanceof Message
+        ? selectList
+        : await (payload as ChatInputCommandInteraction).fetchReply();
 
-    if (!replyMessage) {
-      throw new DiscordException('cannot specify reply message object', 'command');
-    }
     this.guildInfraStateManager.addToDeleteQueue(payload.guildId ?? '', replyMessage);
   }
 
@@ -351,6 +351,10 @@ export class CommandHandler {
     }
     if (!payload.guildId) throw new DiscordException('guild is not specified', 'command');
 
+    if (payload instanceof ChatInputCommandInteraction) {
+      await payload.deferReply();
+    }
+
     this.loggerService.verbose('skip', 'Skipping song...');
 
     const voiceChannel = this.getVoiceChannelFromPayload(payload)!;
@@ -363,12 +367,16 @@ export class CommandHandler {
     );
 
     if (result.queueEmpty) {
-      const reply = await payload.reply('Nothing to play');
-      setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+      const msg = payload instanceof ChatInputCommandInteraction
+        ? await payload.editReply('Nothing to play')
+        : await payload.reply('Nothing to play');
+      setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
       return;
     }
 
-    const msg = await payload.reply('Skipping ...');
+    const msg = payload instanceof ChatInputCommandInteraction
+      ? await payload.editReply('Skipping ...')
+      : await payload.reply('Skipping ...');
     setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
   }
 

@@ -85,6 +85,8 @@ export class EventHandler {
       return;
     }
 
+    await interaction.deferReply();
+
     const voiceChannelInfo: VoiceChannelInfo = {
       id: member.voice.channel.id,
       guildId: guild.id,
@@ -93,7 +95,7 @@ export class EventHandler {
 
     const song = await this.searchVideoUseCase.getByUrl(selectedUrl, voiceChannelInfo);
     if (!song) {
-      await interaction.reply('Video is either private or it does not exist');
+      await interaction.editReply('Video is either private or it does not exist');
       return;
     }
 
@@ -107,7 +109,7 @@ export class EventHandler {
     this.loggerService.info(this.selectMenuHandler.name, `${song.title} added to queue`);
     this.loggerService.info(this.selectMenuHandler.name, `queue length: ${result.totalInQueue}`);
 
-    const reply = await interaction.reply({
+    const reply = await interaction.editReply({
       embeds: [buildQueuedEmbed(selectedUrl, 1, result.totalInQueue, song.title, song.thumbnail)],
     });
     setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
