@@ -1,0 +1,16 @@
+node_modules
+dist
+.git
+.webpack-cache
+.codegraph
+.idea
+.vscode
+.env*
+*.md
+docker/
+test/
+coverage/
+.eslintrc*
+eslint.config*
+.prettierrc*
+jest.config*

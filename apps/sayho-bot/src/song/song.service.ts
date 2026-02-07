@@ -1,6 +1,7 @@
 import { EntityManager, FilterQuery } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { Song } from './song.entity';
+import { SongListResult, SongResult } from './song.interface';
 import { SongRepository } from './song.repository';
 
 function escapeLike(value: string): string {
@@ -14,35 +15,50 @@ export class SongService {
     private readonly em: EntityManager,
   ) {}
 
-  public async create(url: string, title: string): Promise<Song> {
+  public async create(url: string, title: string): Promise<SongResult> {
     const existing = await this.repository.findOne({ url });
     if (existing) {
       existing.count += 1;
       await this.em.flush();
-      return existing;
+      return this.toResult(existing);
     }
 
     const now = new Date();
     const song = this.em.create(Song, { url, title, count: 1, createdAt: now, updatedAt: now });
     await this.em.persistAndFlush(song);
-    return song;
+    return this.toResult(song);
   }
 
   public async findAll(
     page: number,
     limit: number,
     searchText?: string,
-  ): Promise<[Song[], number]> {
+  ): Promise<SongListResult> {
     const where: FilterQuery<Song> = {};
     if (searchText) {
       where.title = { $like: `%${escapeLike(searchText)}%` };
     }
 
-    return this.repository.findAndCount(where, {
+    const [songs, total] = await this.repository.findAndCount(where, {
       orderBy: { createdAt: 'DESC' },
       offset: (page - 1) * limit,
       limit,
     });
+
+    return {
+      items: songs.map((song) => this.toResult(song)),
+      total,
+    };
+  }
+
+  private toResult(song: Song): SongResult {
+    return {
+      id: song.id,
+      url: song.url,
+      title: song.title,
+      count: song.count,
+      createdAt: song.createdAt,
+    };
   }
 
   public async incrementCount(url: string): Promise<void> {

@@ -12,7 +12,7 @@ class NotificationMain extends AbstractMain {
     return NotificationModule;
   }
 
-  protected getBootstrapConfig(): BootstrapConfig {
+  protected override getBootstrapConfig(): BootstrapConfig {
     return {
       options: { bufferLogs: true, enableShutdownHooks: true },
       grpc: { enabled: true },
@@ -21,7 +21,7 @@ class NotificationMain extends AbstractMain {
     };
   }
 
-  protected async onBeforeListen(): Promise<void> {
+  protected override async onBeforeListen(): Promise<void> {
     const configsService = this.app.get<ConfigsService>(ConfigsServiceKey);
     const kafkaConfig = configsService.KafkaConfig;
     const kafkaOptions: KafkaOptions = KafkaModule.getConsumerOptions({

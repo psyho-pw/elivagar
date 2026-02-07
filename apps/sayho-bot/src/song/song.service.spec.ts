@@ -33,7 +33,13 @@ describe('SongService', () => {
       expect(existing.count).toBe(4);
       expect(em.flush).toHaveBeenCalled();
       expect(em.persistAndFlush).not.toHaveBeenCalled();
-      expect(result).toBe(existing);
+      expect(result).toEqual({
+        id: existing.id,
+        url: existing.url,
+        title: existing.title,
+        count: 4,
+        createdAt: existing.createdAt,
+      });
     });
 
     it('should create and persist a new song if URL does not exist', async () => {
@@ -54,7 +60,13 @@ describe('SongService', () => {
         }),
       );
       expect(em.persistAndFlush).toHaveBeenCalledWith(newSong);
-      expect(result).toBe(newSong);
+      expect(result).toEqual({
+        id: newSong.id,
+        url: newSong.url,
+        title: newSong.title,
+        count: newSong.count,
+        createdAt: newSong.createdAt,
+      });
     });
 
     it('should pass createdAt and updatedAt as Date instances when creating', async () => {
@@ -80,14 +92,14 @@ describe('SongService', () => {
       const songs = [song1, song2];
       repository.findAndCount.mockResolvedValue([songs, 2]);
 
-      const [results, total] = await service.findAll(1, 20);
+      const result = await service.findAll(1, 20);
 
       expect(repository.findAndCount).toHaveBeenCalledWith(
         {},
         { orderBy: { createdAt: 'DESC' }, offset: 0, limit: 20 },
       );
-      expect(results).toHaveLength(2);
-      expect(total).toBe(2);
+      expect(result.items).toHaveLength(2);
+      expect(result.total).toBe(2);
     });
 
     it('should apply search filter when searchText is provided', async () => {
