@@ -23,6 +23,7 @@
     "test:e2e": "jest --config ./apps/elivagar/test/jest-e2e.json",
     "migration:create": "APP=${npm_config_app} TZ=utc dotenvx run -f .env.${npm_config_env:-local} -- mikro-orm migration:create",
     "migration:up": "APP=${npm_config_app} TZ=utc dotenvx run -f .env.${npm_config_env:-local} -- mikro-orm migration:up",
+    "migration:up:all": "pnpm --config.app=auth migration:up && pnpm --config.app=notification migration:up && pnpm --config.app=sayho-bot migration:up",
     "migration:down": "APP=${npm_config_app} TZ=utc dotenvx run -f .env.${npm_config_env:-local} -- mikro-orm migration:down",
     "migration:fresh": "APP=${npm_config_app} TZ=utc dotenvx run -f .env.${npm_config_env:-local} -- mikro-orm migration:fresh",
     "schema:create": "APP=${npm_config_app} TZ=utc dotenvx run -f .env.${npm_config_env:-local} -- mikro-orm schema:create",
