@@ -1,5 +1,5 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { ConfigsService } from '@app/core/configs/configs.service';
+import { ConfigsService } from '../../configs/configs.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { LeaveChannelUseCase } from './leave-channel.usecase';
 import { IMessageSender, MessageSenderPort } from '../domain/ports/message-sender.port';
@@ -17,7 +17,7 @@ export class HandleVoiceStateUseCase {
     this.leaveChannelUseCase.execute(guildId);
     setTimeout(
       () => sentMsg.delete().catch(() => {}),
-      this.configsService.DiscordConfig!.messageDeleteTimeout,
+      this.configsService.DiscordConfig.messageDeleteTimeout,
     );
   }
 }

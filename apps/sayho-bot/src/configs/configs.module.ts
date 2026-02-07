@@ -1,5 +1,4 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { ConfigsService } from '@app/core/configs/configs.service';
 import { AppConfig } from '@app/core/configs/configurations/app.config';
 import { AuthGrpcConfig } from '@app/core/configs/configurations/auth-grpc.config';
 import { DatabaseConfig } from '@app/core/configs/configurations/database.config';
@@ -9,6 +8,7 @@ import { RedisConfig } from '@app/core/configs/configurations/redis.config';
 import { YoutubeConfig } from '@app/core/configs/configurations/youtube.config';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ConfigsService } from './configs.service';
 
 @Global()
 @Module({

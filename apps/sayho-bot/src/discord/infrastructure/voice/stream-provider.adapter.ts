@@ -1,11 +1,11 @@
 import { Readable } from 'stream';
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { ConfigsService } from '@app/core/configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { createAudioResource, StreamType } from '@discordjs/voice';
 import { Inject, Injectable } from '@nestjs/common';
 import { YtdlCore, toPipeableStream } from '@ybd-project/ytdl-core';
 import { fetch as undiciFetch, ProxyAgent } from 'undici';
+import { ConfigsService } from '../../../configs/configs.service';
 import { AudioResource } from '../../domain/ports/audio-player.port';
 import { IPoTokenService, PoTokenServicePort } from '../../domain/ports/po-token.port';
 import { IStreamProvider } from '../../domain/ports/stream-provider.port';
@@ -28,7 +28,7 @@ export class StreamProviderAdapter implements IStreamProvider {
   }
 
   private createYtdlClient(): YtdlCore {
-    const proxyUrl = this.configsService.YoutubeConfig!.proxy;
+    const proxyUrl = this.configsService.YoutubeConfig.proxy;
     const proxyAgent = proxyUrl
       ? new ProxyAgent({
           uri: proxyUrl,

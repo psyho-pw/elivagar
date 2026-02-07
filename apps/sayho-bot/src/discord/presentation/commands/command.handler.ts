@@ -1,5 +1,4 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { ConfigsService } from '@app/core/configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { Inject, Injectable } from '@nestjs/common';
 import {
@@ -11,6 +10,7 @@ import {
 } from 'discord.js';
 import { HandleDiscordError } from '../../../common/aop/discord-error.aspect';
 import { DiscordException } from '../../../common/exceptions/discord.exception';
+import { ConfigsService } from '../../../configs/configs.service';
 import { LeaveChannelUseCase } from '../../application/leave-channel.usecase';
 import { ManageQueueUseCase } from '../../application/manage-queue.usecase';
 import { PlayMusicUseCase } from '../../application/play-music.usecase';
@@ -77,7 +77,7 @@ export class CommandHandler {
 
     if (!songs.length) {
       const msg = await message.reply('No videos found');
-      setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+      setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
       return;
     }
 
@@ -97,7 +97,7 @@ export class CommandHandler {
         ),
       ],
     });
-    setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+    setTimeout(() => reply.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
 
     await this.playMusicUseCase.play({
       guildId: message.guildId,
@@ -121,7 +121,7 @@ export class CommandHandler {
 
     if (!song) {
       const msg = await message.reply('Video is either private or it does not exist');
-      setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+      setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
       return;
     }
 
@@ -133,7 +133,7 @@ export class CommandHandler {
     const reply = await message.reply({
       embeds: [buildQueuedEmbed(url, 1, totalInQueue, song.title, song.thumbnail)],
     });
-    setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+    setTimeout(() => reply.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
 
     await this.playMusicUseCase.play({
       guildId: message.guildId,
@@ -201,7 +201,7 @@ export class CommandHandler {
       const content = payload.options.getString('input') ?? '';
       if (!content.length) {
         const msg = await payload.reply(`parameter count doesn't match`);
-        setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+        setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
         return null;
       }
 
@@ -212,13 +212,13 @@ export class CommandHandler {
     }
 
     const args = payload.content
-      .slice(this.configsService.DiscordConfig!.commandPrefix.length)
+      .slice(this.configsService.DiscordConfig.commandPrefix.length)
       .trim()
       .split(/ +/g);
 
     if (args.length < 2) {
       const msg = await payload.reply(`parameter count doesn't match`);
-      setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+      setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
       return null;
     }
 
@@ -238,7 +238,7 @@ export class CommandHandler {
 
     if (!parsedCommand) {
       const msg = await payload.reply('You need to be in a voice channel to play music');
-      setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+      setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
       return;
     }
 
@@ -247,7 +247,7 @@ export class CommandHandler {
 
     if (!permissions) {
       const msg = await payload.reply('Permission Error');
-      setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+      setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
       return;
     }
 
@@ -258,7 +258,7 @@ export class CommandHandler {
       const msg = await payload.reply(
         'I need the permissions to join and speak in your voice channel',
       );
-      setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+      setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
       return;
     }
 
@@ -279,7 +279,7 @@ export class CommandHandler {
   public async emptyQueue(payload: Message | ChatInputCommandInteraction): Promise<void> {
     if (!this.getVoiceChannelFromPayload(payload)) {
       const msg = await payload.reply('You have to be in a voice channel to clear queue music');
-      setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+      setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
       return;
     }
     if (!payload.guildId) throw new DiscordException('guild is not specified', 'command');
@@ -287,19 +287,19 @@ export class CommandHandler {
     const queue = this.manageQueueUseCase.getQueue(payload.guildId);
     if (queue.length === 0) {
       const msg = await payload.reply('Queue is empty');
-      setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+      setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
       return;
     }
 
     this.manageQueueUseCase.clearQueue(payload.guildId);
 
     const msg = await payload.reply('queue cleared');
-    setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+    setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
   }
 
   @HandleDiscordError()
   public async help(payload: Message | ChatInputCommandInteraction): Promise<void> {
-    const discordConfig = this.configsService.DiscordConfig!;
+    const discordConfig = this.configsService.DiscordConfig;
     const embed = buildHelpEmbed(discordConfig.commandPrefix);
 
     const msg = await payload.reply({ embeds: [embed] });
@@ -310,7 +310,7 @@ export class CommandHandler {
   public async leave(payload: Message | ChatInputCommandInteraction): Promise<void> {
     if (!this.getVoiceChannelFromPayload(payload)) {
       const msg = await payload.reply('You have to be in a voice channel to make bot leave');
-      setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+      setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
       return;
     }
     if (!payload.guildId) throw new DiscordException('guild is not specified', 'command');
@@ -318,7 +318,7 @@ export class CommandHandler {
     this.leaveChannelUseCase.execute(payload.guildId);
 
     const msg = await payload.reply('bye bye ,,,');
-    setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+    setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
   }
 
   @HandleDiscordError()
@@ -332,21 +332,21 @@ export class CommandHandler {
     const musicQueue = this.manageQueueUseCase.getQueue(payload.guildId);
     if (musicQueue.length <= 1) {
       const msg = await payload.reply('Queue is empty');
-      setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+      setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
       return;
     }
 
     const embed = buildQueueListEmbed(musicQueue);
 
     const msg = await payload.reply({ embeds: [embed] });
-    setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+    setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
   }
 
   @HandleDiscordError()
   public async skip(payload: Message | ChatInputCommandInteraction): Promise<void> {
     if (!this.getVoiceChannelFromPayload(payload)) {
       const reply = await payload.reply('You have to be in a voice channel to see queue');
-      setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+      setTimeout(() => reply.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
       return;
     }
     if (!payload.guildId) throw new DiscordException('guild is not specified', 'command');
@@ -370,14 +370,14 @@ export class CommandHandler {
       const msg = payload instanceof ChatInputCommandInteraction
         ? await payload.editReply('Nothing to play')
         : await payload.reply('Nothing to play');
-      setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+      setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
       return;
     }
 
     const msg = payload instanceof ChatInputCommandInteraction
       ? await payload.editReply('Skipping ...')
       : await payload.reply('Skipping ...');
-    setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+    setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
   }
 
   @HandleDiscordError()
@@ -387,6 +387,6 @@ export class CommandHandler {
     this.manageQueueUseCase.shuffle(payload.guildId);
 
     const msg = await payload.reply('Queue shuffled');
-    setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
+    setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
   }
 }

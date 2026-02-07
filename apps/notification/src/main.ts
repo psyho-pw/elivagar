@@ -1,8 +1,10 @@
 import { AbstractMain } from '@app/core/bootstrap/abstract-main';
 import { BootstrapConfig } from '@app/core/bootstrap/bootstrap.interface';
+import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
 import { KafkaModule } from '@app/kafka/kafka/kafka.module';
 import { Type } from '@nestjs/common';
 import { KafkaOptions } from '@nestjs/microservices';
+import { ConfigsService } from './configs/configs.service';
 import { NotificationModule } from './notification.module';
 
 class NotificationMain extends AbstractMain {
@@ -20,7 +22,8 @@ class NotificationMain extends AbstractMain {
   }
 
   protected async onBeforeListen(): Promise<void> {
-    const kafkaConfig = this.configService.KafkaConfig!;
+    const configsService = this.app.get<ConfigsService>(ConfigsServiceKey);
+    const kafkaConfig = configsService.KafkaConfig;
     const kafkaOptions: KafkaOptions = KafkaModule.getConsumerOptions({
       kafka: kafkaConfig,
       groupId: `notification-consumer`,

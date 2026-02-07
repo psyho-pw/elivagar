@@ -1,5 +1,4 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { ConfigsService } from '@app/core/configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import {
@@ -12,6 +11,7 @@ import {
   VoiceState,
 } from 'discord.js';
 import { HandleDiscordError } from '../common/aop/discord-error.aspect';
+import { ConfigsService } from '../configs/configs.service';
 import { IMessageSender, MessageSenderPort } from './domain/ports/message-sender.port';
 import {
   IVoiceConnectionManager,
@@ -146,7 +146,7 @@ export class DiscordService implements OnModuleInit {
 
     // Register slash commands
     await this.discordClient.Rest.put(
-      Routes.applicationCommands(this.configsService.DiscordConfig!.clientId),
+      Routes.applicationCommands(this.configsService.DiscordConfig.clientId),
       { body: slashCommands },
     );
 

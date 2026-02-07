@@ -1,7 +1,7 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { ConfigsService } from '@app/core/configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { SayhoBotErrorEvent } from '@app/kafka/events/events.interface';
+import { ConfigsService } from '../configs/configs.service';
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { EmbedBuilder, WebhookClient } from 'discord.js';
 
@@ -21,7 +21,7 @@ export class DiscordWebhookService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit(): void {
-    const { webhookUrl } = this.configsService.DiscordConfig!;
+    const { webhookUrl } = this.configsService.DiscordWebhookConfig;
     this.webhookClient = new WebhookClient({ url: webhookUrl });
   }
 
