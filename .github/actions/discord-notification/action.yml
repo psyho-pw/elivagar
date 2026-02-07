@@ -1,0 +1,69 @@
+name: discord-notification
+description: Send workflow result notification to Discord webhook
+
+inputs:
+  status:
+    required: false
+    default: "Fail"
+    description: "Result status (Success or Fail)"
+  title:
+    required: false
+    default: ""
+    description: "Notification title (e.g. Test, Build, Deploy)"
+  discord_webhook:
+    required: true
+    description: "Discord webhook URL"
+
+runs:
+  using: composite
+
+  steps:
+    - name: Send Discord notification
+      shell: bash
+      run: |
+        if [ "${{ inputs.status }}" = "Success" ]; then
+          COLOR=3066993
+          EMOJI="white_check_mark"
+        else
+          COLOR=15158332
+          EMOJI="x"
+        fi
+
+        TITLE="${{ inputs.title }}"
+        if [ -z "$TITLE" ]; then
+          TITLE="${GITHUB_WORKFLOW}"
+        fi
+
+        BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+        if [ -n "${GITHUB_BASE_REF}" ]; then
+          BRANCH_DISPLAY="\`${BRANCH_NAME}\` → \`${GITHUB_BASE_REF}\`"
+        else
+          BRANCH_DISPLAY="\`${BRANCH_NAME}\`"
+        fi
+
+        DESCRIPTION=""
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          DESCRIPTION="[#${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})"
+        fi
+
+        FIELDS="[
+          { \"name\": \"Status\", \"value\": \"\`${{ inputs.status }}\`\", \"inline\": true },
+          { \"name\": \"Branch\", \"value\": \"${BRANCH_DISPLAY}\", \"inline\": true },
+          { \"name\": \"Author\", \"value\": \"\`${GITHUB_ACTOR}\`\", \"inline\": true },
+          { \"name\": \"Workflow\", \"value\": \"[${GITHUB_WORKFLOW}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})\", \"inline\": false }
+        ]"
+
+        PAYLOAD=$(cat <<EOF
+        {
+          "embeds": [{
+            "title": ":${EMOJI}: ${TITLE} ${{ inputs.status }}",
+            "description": "${DESCRIPTION}",
+            "color": ${COLOR},
+            "fields": ${FIELDS},
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }]
+        }
+        EOF
+        )
+
+        curl -s -H "Content-Type: application/json" -d "${PAYLOAD}" "${{ inputs.discord_webhook }}"
