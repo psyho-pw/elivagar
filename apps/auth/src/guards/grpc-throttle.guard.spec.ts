@@ -1,9 +1,9 @@
+import { status } from '@grpc/grpc-js';
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
-import { GrpcThrottleGuard } from './grpc-throttle.guard';
 import { GRPC_THROTTLE_KEY, GrpcThrottleOptions } from './grpc-throttle.decorator';
+import { GrpcThrottleGuard } from './grpc-throttle.guard';
 
 describe('GrpcThrottleGuard', () => {
   let guard: GrpcThrottleGuard;
@@ -15,15 +15,12 @@ describe('GrpcThrottleGuard', () => {
   });
 
   function createHandler(name: string): () => void {
-    const fn = () => {};
+    const fn = (): void => {};
     Object.defineProperty(fn, 'name', { value: name });
     return fn;
   }
 
-  function createRpcContext(
-    handlerName: string,
-    peer?: string[],
-  ): ExecutionContext {
+  function createRpcContext(handlerName: string, peer?: string[]): ExecutionContext {
     const handler = createHandler(handlerName);
     return {
       getType: () => 'rpc',
@@ -51,7 +48,7 @@ describe('GrpcThrottleGuard', () => {
 
     expect(guard.canActivate(context)).toBe(true);
     expect(reflector.get).not.toHaveBeenCalled();
-  });GRPC_THROTTLE_KEY
+  });
 
   it('should return true when no @GrpcThrottle decorator is set', () => {
     reflector.get.mockReturnValue(undefined);

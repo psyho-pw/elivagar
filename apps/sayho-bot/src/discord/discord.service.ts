@@ -12,7 +12,14 @@ import {
   VoiceState,
 } from 'discord.js';
 import { HandleDiscordError } from '../common/aop/discord-error.aspect';
+import { IMessageSender, MessageSenderPort } from './domain/ports/message-sender.port';
+import {
+  IVoiceConnectionManager,
+  VoiceConnectionManagerPort,
+} from './domain/ports/voice-connection.port';
 import { DiscordClientAdapter } from './infrastructure/discord-client/discord-client.adapter';
+import { DiscordMessageSenderAdapter } from './infrastructure/discord-client/message-sender.adapter';
+import { VoiceConnectionAdapter } from './infrastructure/voice/voice-connection.adapter';
 import { CommandHandler } from './presentation/commands/command.handler';
 import { EventHandler } from './presentation/events/event.handler';
 
@@ -23,6 +30,9 @@ export class DiscordService implements OnModuleInit {
     private readonly discordClient: DiscordClientAdapter,
     private readonly commandHandler: CommandHandler,
     private readonly eventHandler: EventHandler,
+    @Inject(MessageSenderPort) private readonly messageSender: IMessageSender,
+    @Inject(VoiceConnectionManagerPort)
+    private readonly voiceConnectionManager: IVoiceConnectionManager,
     private readonly loggerService: LoggerService,
   ) {}
 
@@ -34,6 +44,11 @@ export class DiscordService implements OnModuleInit {
   @HandleDiscordError()
   private async init(): Promise<void> {
     await this.discordClient.init();
+
+    // Inject client into adapters that need it
+    const client = this.discordClient.getClient();
+    (this.messageSender as DiscordMessageSenderAdapter).setClient(client);
+    (this.voiceConnectionManager as VoiceConnectionAdapter).setClient(client);
 
     const slashCommands = [];
 

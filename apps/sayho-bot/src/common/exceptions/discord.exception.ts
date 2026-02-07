@@ -1,5 +1,5 @@
-import { HttpStatus } from '@nestjs/common';
 import { GeneralException } from '@app/core/common/exceptions/general.exception';
+import { HttpStatus } from '@nestjs/common';
 
 export type DiscordExceptionContext = 'service' | 'client' | 'command' | 'event' | 'notification';
 

@@ -1,9 +1,9 @@
 jest.mock('uuid', () => ({ v7: jest.fn(() => 'mock-uuid') }));
 
 import { TestBed, Mocked } from '@suites/unit';
+import { GracePeriodService } from './grace-period.service';
 import { GRACE_PERIOD_CONFIG } from './lifecycle.constant';
 import { IGracePeriodConfig } from './lifecycle.interface';
-import { GracePeriodService } from './grace-period.service';
 import { LoggerService } from '../logger/logger.service';
 
 describe('GracePeriodService', () => {
@@ -52,10 +52,7 @@ describe('GracePeriodService', () => {
   });
 
   it('should wait for grace period before completing', async () => {
-    const svc = new GracePeriodService(
-      { gracePeriod: 3000 },
-      logger as unknown as LoggerService,
-    );
+    const svc = new GracePeriodService({ gracePeriod: 3000 }, logger as unknown as LoggerService);
 
     let resolved = false;
     const promise = svc.beforeApplicationShutdown('SIGTERM').then(() => {
