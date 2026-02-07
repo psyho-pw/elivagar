@@ -1,8 +1,8 @@
 import { IKafkaConfig } from '@app/core/configs/configs.interface';
+import { ConfigsService } from '@app/core/configs/configs.service';
 import { DynamicModule, Module } from '@nestjs/common';
 import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
 import { SASLOptions } from 'kafkajs';
-import { ConfigsService } from 'libs/core/src/configs/configs.service';
 import { KafkaClientKey, KafkaServiceKey } from './kafka.constant';
 import { KafkaModuleAsyncOptions, KafkaModuleOptions } from './kafka.interface';
 import { KafkaService } from './kafka.service';

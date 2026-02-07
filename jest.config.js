@@ -11,6 +11,9 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/apps/', '<rootDir>/libs/'],
   moduleNameMapper: {
+    '^uuid$': '<rootDir>/test/mocks/uuid.ts',
+    '^change-case$': '<rootDir>/test/mocks/change-case.ts',
+    '^@test(|/.*)$': '<rootDir>/test/$1',
     '^@app/core(|/.*)$': '<rootDir>/libs/core/src/$1',
     '^@app/grpc(|/.*)$': '<rootDir>/libs/grpc/src/$1',
     '^@app/mikro(|/.*)$': '<rootDir>/libs/mikro/src/$1',

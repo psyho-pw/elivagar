@@ -1,12 +1,13 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
 import { IConfigsService } from '@app/core/configs/configs.interface';
 import { LoggerService } from '@app/core/logger/logger.service';
+import { AnonymousFunction } from '@app/core/types/anonymous-function.type';
 import { KafkaTopics } from '@app/kafka/events/events.constant';
+import { SayhoBotErrorEvent } from '@app/kafka/events/events.interface';
 import { KafkaServiceKey } from '@app/kafka/kafka/kafka.constant';
 import { IKafkaService } from '@app/kafka/kafka/kafka.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { Aspect, LazyDecorator, WrapParams, createDecorator } from '@toss/nestjs-aop';
-import { AnonymousFunction } from 'libs/core/types/anonymous-function.type';
 import { GeneralException } from '../exceptions/general.exception';
 
 export const DiscordErrorHandlerKey = Symbol('DiscordErrorHandler');
@@ -42,14 +43,15 @@ export class DiscordErrorAspect implements LazyDecorator<
 
         this.loggerService.error('wrap', error, errorMessage);
 
-        const env = this.configsService.AppConfig.env;
+        const _env = this.configsService.AppConfig.env;
         // if (env === Env.production) {
-        this.kafkaService.emit(KafkaTopics.SayhoBot.ErrorOccurred, {
+        const event: SayhoBotErrorEvent = {
           message: errorMessage,
           stack: errorStack.substring(0, 1024),
           context: methodName,
           timestamp: new Date().toISOString(),
-        });
+        };
+        this.kafkaService.emit(KafkaTopics.SayhoBot.ErrorOccurred, event);
         // }
 
         if (metadata?.bubble) {

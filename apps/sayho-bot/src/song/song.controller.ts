@@ -26,8 +26,8 @@ export class SongController {
     @Query('limit') limit?: string,
     @Query('searchText') searchText?: string,
   ): Promise<FindAllResponse> {
-    const pageNum = page ? parseInt(page, 10) : 1;
-    const limitNum = limit ? parseInt(limit, 10) : 20;
+    const pageNum = page ? parseInt(page, 10) || 1 : 1;
+    const limitNum = limit ? parseInt(limit, 10) || 20 : 20;
 
     const [songs, total] = await this.service.findAll(pageNum, limitNum, searchText);
 

@@ -1,6 +1,7 @@
 import { AuthModule } from '@app/auth/auth.module';
 import { CacheModule } from '@app/cache/cache.module';
 import { RequestIdGuard } from '@app/core/common/guards/cls.guard';
+import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
 import { ConfigsService } from '@app/core/configs/configs.service';
 import { AppName } from '@app/core/constants/app.constant';
 import { CoreModule } from '@app/core/core.module';
@@ -8,7 +9,6 @@ import { GrpcModule } from '@app/grpc/grpc/grpc.module';
 import { KafkaModule } from '@app/kafka/kafka/kafka.module';
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ConfigsServiceKey } from 'libs/core/src/configs/configs.constant';
 import { ConfigsModule } from './configs/configs.module';
 import { DiscordModule } from './discord/discord.module';
 import { SayhoBotController } from './sayho-bot.controller';
@@ -42,6 +42,11 @@ const guards = [RequestIdGuard];
     SongModule,
   ],
   controllers: [SayhoBotController],
-  providers: [...guards, AuthModule.getGuardProvider(), AuthModule.getEventListenerProvider(), SayhoBotService],
+  providers: [
+    ...guards,
+    AuthModule.getGuardProvider(),
+    AuthModule.getEventListenerProvider(),
+    SayhoBotService,
+  ],
 })
 export class SayhoBotModule {}

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Song, VoiceChannelInfo } from '../domain/entities/song.entity';
+import { Song, VoiceChannelInfo } from '../domain/entities/song';
 import { IYoutubeSearch, VideoInfo, YoutubeSearchPort } from '../domain/ports/youtube-search.port';
 
 export interface SearchVideoRequest {

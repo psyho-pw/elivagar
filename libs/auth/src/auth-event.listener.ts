@@ -8,7 +8,7 @@ import { AUTH_TOKEN_CACHE_PREFIX } from './auth.constant';
 
 export interface SessionRevokedPayload {
   tokenHash: string;
-  userId: number;
+  userId: string;
   reason?: string;
 }
 

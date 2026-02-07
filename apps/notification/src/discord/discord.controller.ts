@@ -1,14 +1,8 @@
 import { KafkaTopics } from '@app/kafka/events/events.constant';
+import { SayhoBotErrorEvent } from '@app/kafka/events/events.interface';
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { DiscordWebhookService } from './discord-webhook.service';
-
-export interface SayhoBotErrorEvent {
-  message: string;
-  stack: string;
-  context: string;
-  timestamp: string;
-}
 
 @Controller()
 export class DiscordController {

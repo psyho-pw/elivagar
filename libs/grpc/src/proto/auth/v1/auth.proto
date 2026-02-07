@@ -15,7 +15,7 @@ message RegisterRequest {
 }
 
 message RegisterResponse {
-  int32 user_id = 1;
+  string user_id = 1;
   string email = 2;
 }
 
@@ -41,7 +41,7 @@ message ValidateTokenResponse {
 }
 
 message UserInfo {
-  int32 user_id = 1;
+  string user_id = 1;
   string email = 2;
   repeated string roles = 3;
   int64 token_exp = 4;

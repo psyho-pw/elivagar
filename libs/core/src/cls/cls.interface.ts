@@ -1,7 +1,7 @@
 import { ClsStore } from 'nestjs-cls';
 
 export type AuthUser = {
-  userId: number;
+  userId: string;
   email: string;
   roles: string[];
   tokenHash: string;

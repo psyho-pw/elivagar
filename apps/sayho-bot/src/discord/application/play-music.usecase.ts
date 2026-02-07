@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { QueueStateManager } from './queue-state.manager';
-import { Song, VoiceChannelInfo } from '../domain/entities/song.entity';
+import { Song, VoiceChannelInfo } from '../domain/entities/song';
 import { IAudioPlayer, AudioPlayerEvents } from '../domain/ports/audio-player.port';
 import { IStreamProvider, StreamProviderPort } from '../domain/ports/stream-provider.port';
 import {

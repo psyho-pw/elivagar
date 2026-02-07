@@ -1,3 +1,4 @@
+import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
 import { ConfigsService } from '@app/core/configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
@@ -10,7 +11,6 @@ import {
   SlashCommandBuilder,
   VoiceState,
 } from 'discord.js';
-import { ConfigsServiceKey } from 'libs/core/src/configs/configs.constant';
 import { HandleDiscordError } from '../common/aop/discord-error.aspect';
 import { DiscordClientAdapter } from './infrastructure/discord-client/discord-client.adapter';
 import { CommandHandler } from './presentation/commands/command.handler';

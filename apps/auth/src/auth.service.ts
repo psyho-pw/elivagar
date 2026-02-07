@@ -17,7 +17,7 @@ export class AuthService {
     private readonly loggerService: LoggerService,
   ) {}
 
-  async register(email: string, password: string) {
+  async register(email: string, password: string): Promise<{ userId: string; email: string }> {
     const existing = await this.em.findOne(User, { email, deletedAt: null });
     if (existing) {
       throw new RpcException({
@@ -38,7 +38,10 @@ export class AuthService {
     return { userId: user.id, email: user.email };
   }
 
-  async login(email: string, password: string) {
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
     const user = await this.em.findOne(User, { email, deletedAt: null });
     if (!user) {
       throw new RpcException({ code: GrpcStatus.UNAUTHENTICATED, message: 'Invalid credentials' });
@@ -62,7 +65,13 @@ export class AuthService {
     };
   }
 
-  validateToken(token: string) {
+  validateToken(token: string): {
+    valid: boolean;
+    user:
+      | { userId: string; email: string; roles: string[]; tokenExp: number; tokenHash: string }
+      | undefined;
+    errorMessage: string;
+  } {
     try {
       const payload: JwtPayload = this.jwtService.verifyAccessToken(token);
       const tokenHash = JwtService.hashToken(token);
@@ -88,7 +97,9 @@ export class AuthService {
     }
   }
 
-  async refreshToken(refreshToken: string) {
+  async refreshToken(
+    refreshToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
     try {
       const { sub } = this.jwtService.verifyRefreshToken(refreshToken);
       const user = await this.em.findOne(User, { id: sub, deletedAt: null });

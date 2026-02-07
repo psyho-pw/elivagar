@@ -1,8 +1,8 @@
 import { ClsStorage, IClsService } from '@app/core/cls/cls.interface';
 import { ClsServiceKey } from '@app/core/cls/cls.module';
+import { AnonymousFunction } from '@app/core/types/anonymous-function.type';
 import { Inject, Injectable } from '@nestjs/common';
 import { Aspect, LazyDecorator, WrapParams, createDecorator } from '@toss/nestjs-aop';
-import { AnonymousFunction } from 'libs/core/types/anonymous-function.type';
 import { v7 } from 'uuid';
 
 export const DiscordContextKey = Symbol('DiscordContext');

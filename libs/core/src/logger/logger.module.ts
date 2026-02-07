@@ -13,7 +13,7 @@ import { IConfigsService } from '../configs/configs.interface';
       inject: [ConfigsServiceKey],
       useFactory: (configsService: IConfigsService) => {
         const { env, serviceName } = configsService.AppConfig;
-        const isDeployedEnv = env !== Env.development && env !== Env.test;
+        const isDeployedEnv = env !== Env.local && env !== Env.test;
 
         if (isDeployedEnv) {
           return { transports: [new winston.transports.Console({ level: 'info' })] };

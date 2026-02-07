@@ -21,7 +21,7 @@ import { PlayerAdapter } from './player.adapter';
 import { HandleDiscordError } from '../../../common/aop/discord-error.aspect';
 import { DiscordException } from '../../../common/exceptions/discord.exception';
 import { SongService } from '../../../song/song.service';
-import { Song } from '../../domain/entities/song.entity';
+import { Song } from '../../domain/entities/song';
 import { IStreamProvider, StreamProviderPort } from '../../domain/ports/stream-provider.port';
 
 type CommandFunction = (payload: Message | ChatInputCommandInteraction) => Promise<void>;

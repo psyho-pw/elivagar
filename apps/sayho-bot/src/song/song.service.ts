@@ -3,6 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { Song } from './song.entity';
 import { SongRepository } from './song.repository';
 
+function escapeLike(value: string): string {
+  return value.replace(/[%_\\]/g, '\\$&');
+}
+
 @Injectable()
 export class SongService {
   constructor(
@@ -31,7 +35,7 @@ export class SongService {
   ): Promise<[Song[], number]> {
     const where: FilterQuery<Song> = {};
     if (searchText) {
-      where.title = { $like: `%${searchText}%` };
+      where.title = { $like: `%${escapeLike(searchText)}%` };
     }
 
     return this.repository.findAndCount(where, {

@@ -198,7 +198,7 @@ export abstract class AbstractMain {
    * 애플리케이션 로거로 Winston 설정
    */
   protected setupLogger(env: Env): void {
-    if (env === Env.development) {
+    if (env === Env.local) {
       this.app.useLogger(false);
       return;
     }
@@ -264,7 +264,7 @@ export abstract class AbstractMain {
    */
   protected isDeployedEnvironment(): boolean {
     const env = this.appConfig.env;
-    return env !== Env.development && env !== Env.test;
+    return env !== Env.local && env !== Env.test;
   }
 
   /**

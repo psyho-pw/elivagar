@@ -64,6 +64,7 @@ export default [
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
+          varsIgnorePattern: '^_',
           argsIgnorePattern: '^_',
           ignoreRestSiblings: true,
         },
@@ -87,6 +88,17 @@ export default [
         },
       ],
       'import/no-unresolved': 0,
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['libs/*'],
+              message: 'Use path alias instead (e.g., @app/core/..., @app/grpc/..., @app/mikro/..., @app/cache/..., @app/kafka/..., @app/auth/...).',
+            },
+          ],
+        },
+      ],
       'unused-imports/no-unused-imports': 'error',
       'unused-imports/no-unused-vars': [
         'warn',

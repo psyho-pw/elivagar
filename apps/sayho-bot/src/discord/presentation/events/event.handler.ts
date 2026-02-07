@@ -1,3 +1,4 @@
+import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
 import { ConfigsService } from '@app/core/configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { Inject, Injectable } from '@nestjs/common';
@@ -13,12 +14,11 @@ import {
   StringSelectMenuInteraction,
   VoiceState,
 } from 'discord.js';
-import { ConfigsServiceKey } from 'libs/core/src/configs/configs.constant';
 import { WithDiscordContext } from '../../../common/aop/discord-context.aspect';
 import { HandleDiscordError } from '../../../common/aop/discord-error.aspect';
 import { DiscordException } from '../../../common/exceptions/discord.exception';
 import { SearchVideoUseCase } from '../../application/search-video.usecase';
-import { VoiceChannelInfo } from '../../domain/entities/song.entity';
+import { VoiceChannelInfo } from '../../domain/entities/song';
 import { DiscordClientAdapter } from '../../infrastructure/discord-client/discord-client.adapter';
 
 @Injectable()

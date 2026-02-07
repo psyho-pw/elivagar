@@ -10,7 +10,7 @@ import {
 } from '@discordjs/voice';
 import { Injectable } from '@nestjs/common';
 import { Client, VoiceChannel, StageChannel } from 'discord.js';
-import { VoiceChannelInfo } from '../../domain/entities/song.entity';
+import { VoiceChannelInfo } from '../../domain/entities/song';
 import {
   AudioPlayerEvents,
   AudioResource,

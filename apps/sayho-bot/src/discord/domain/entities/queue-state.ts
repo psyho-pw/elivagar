@@ -1,4 +1,4 @@
-import { Song } from './song.entity';
+import { Song } from './song';
 
 export class QueueState {
   #queue: Song[] = [];

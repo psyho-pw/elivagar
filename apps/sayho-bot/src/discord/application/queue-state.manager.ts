@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { QueueState } from '../domain/entities/queue-state.entity';
+import { QueueState } from '../domain/entities/queue-state';
 
 @Injectable()
 export class QueueStateManager {

@@ -1,8 +1,8 @@
-import { Union } from 'libs/core/types/union.type';
+import { Union } from '@app/core/types/union.type';
 
 export const Env = {
   test: 'test',
-  development: 'development',
+  local: 'local',
   production: 'production',
 } as const;
 export type Env = Union<typeof Env>;

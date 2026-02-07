@@ -1,8 +1,8 @@
 import { LoggerService } from '@app/core/logger/logger.service';
+import { AnonymousFunction } from '@app/core/types/anonymous-function.type';
 import { Inject, Injectable } from '@nestjs/common';
 import { Aspect, LazyDecorator, WrapParams } from '@toss/nestjs-aop';
 import { instanceToPlain } from 'class-transformer';
-import { AnonymousFunction } from 'libs/core/types/anonymous-function.type';
 import { CACHE_DECORATOR, CacheKeyType, CacheServiceKey } from './cache.constant';
 import { CacheableQuery, CacheOptions } from './cache.interface';
 import { CacheService } from './cache.service';

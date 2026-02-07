@@ -1,5 +1,5 @@
 import { IAudioPlayer } from './audio-player.port';
-import { VoiceChannelInfo } from '../entities/song.entity';
+import { VoiceChannelInfo } from '../entities/song';
 
 export interface IVoiceConnection {
   readonly channelId: string;

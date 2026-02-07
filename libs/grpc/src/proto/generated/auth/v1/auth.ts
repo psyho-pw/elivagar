@@ -15,7 +15,7 @@ export interface RegisterRequest {
 }
 
 export interface RegisterResponse {
-  userId: number;
+  userId: string;
   email: string;
 }
 
@@ -41,7 +41,7 @@ export interface ValidateTokenResponse {
 }
 
 export interface UserInfo {
-  userId: number;
+  userId: string;
   email: string;
   roles: string[];
   tokenExp: number;
@@ -135,13 +135,13 @@ export const RegisterRequest: MessageFns<RegisterRequest> = {
 };
 
 function createBaseRegisterResponse(): RegisterResponse {
-  return { userId: 0, email: "" };
+  return { userId: "", email: "" };
 }
 
 export const RegisterResponse: MessageFns<RegisterResponse> = {
   encode(message: RegisterResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.userId !== 0) {
-      writer.uint32(8).int32(message.userId);
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
     }
     if (message.email !== "") {
       writer.uint32(18).string(message.email);
@@ -157,11 +157,11 @@ export const RegisterResponse: MessageFns<RegisterResponse> = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1: {
-          if (tag !== 8) {
+          if (tag !== 10) {
             break;
           }
 
-          message.userId = reader.int32();
+          message.userId = reader.string();
           continue;
         }
         case 2: {
@@ -184,18 +184,18 @@ export const RegisterResponse: MessageFns<RegisterResponse> = {
   fromJSON(object: any): RegisterResponse {
     return {
       userId: isSet(object.userId)
-        ? globalThis.Number(object.userId)
+        ? globalThis.String(object.userId)
         : isSet(object.user_id)
-        ? globalThis.Number(object.user_id)
-        : 0,
+        ? globalThis.String(object.user_id)
+        : "",
       email: isSet(object.email) ? globalThis.String(object.email) : "",
     };
   },
 
   toJSON(message: RegisterResponse): unknown {
     const obj: any = {};
-    if (message.userId !== 0) {
-      obj.userId = Math.round(message.userId);
+    if (message.userId !== "") {
+      obj.userId = message.userId;
     }
     if (message.email !== "") {
       obj.email = message.email;
@@ -208,7 +208,7 @@ export const RegisterResponse: MessageFns<RegisterResponse> = {
   },
   fromPartial<I extends Exact<DeepPartial<RegisterResponse>, I>>(object: I): RegisterResponse {
     const message = createBaseRegisterResponse();
-    message.userId = object.userId ?? 0;
+    message.userId = object.userId ?? "";
     message.email = object.email ?? "";
     return message;
   },
@@ -549,13 +549,13 @@ export const ValidateTokenResponse: MessageFns<ValidateTokenResponse> = {
 };
 
 function createBaseUserInfo(): UserInfo {
-  return { userId: 0, email: "", roles: [], tokenExp: 0, tokenHash: "" };
+  return { userId: "", email: "", roles: [], tokenExp: 0, tokenHash: "" };
 }
 
 export const UserInfo: MessageFns<UserInfo> = {
   encode(message: UserInfo, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.userId !== 0) {
-      writer.uint32(8).int32(message.userId);
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
     }
     if (message.email !== "") {
       writer.uint32(18).string(message.email);
@@ -580,11 +580,11 @@ export const UserInfo: MessageFns<UserInfo> = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1: {
-          if (tag !== 8) {
+          if (tag !== 10) {
             break;
           }
 
-          message.userId = reader.int32();
+          message.userId = reader.string();
           continue;
         }
         case 2: {
@@ -631,10 +631,10 @@ export const UserInfo: MessageFns<UserInfo> = {
   fromJSON(object: any): UserInfo {
     return {
       userId: isSet(object.userId)
-        ? globalThis.Number(object.userId)
+        ? globalThis.String(object.userId)
         : isSet(object.user_id)
-        ? globalThis.Number(object.user_id)
-        : 0,
+        ? globalThis.String(object.user_id)
+        : "",
       email: isSet(object.email) ? globalThis.String(object.email) : "",
       roles: globalThis.Array.isArray(object?.roles) ? object.roles.map((e: any) => globalThis.String(e)) : [],
       tokenExp: isSet(object.tokenExp)
@@ -652,8 +652,8 @@ export const UserInfo: MessageFns<UserInfo> = {
 
   toJSON(message: UserInfo): unknown {
     const obj: any = {};
-    if (message.userId !== 0) {
-      obj.userId = Math.round(message.userId);
+    if (message.userId !== "") {
+      obj.userId = message.userId;
     }
     if (message.email !== "") {
       obj.email = message.email;
@@ -675,7 +675,7 @@ export const UserInfo: MessageFns<UserInfo> = {
   },
   fromPartial<I extends Exact<DeepPartial<UserInfo>, I>>(object: I): UserInfo {
     const message = createBaseUserInfo();
-    message.userId = object.userId ?? 0;
+    message.userId = object.userId ?? "";
     message.email = object.email ?? "";
     message.roles = object.roles?.map((e) => e) || [];
     message.tokenExp = object.tokenExp ?? 0;

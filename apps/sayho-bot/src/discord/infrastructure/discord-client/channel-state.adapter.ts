@@ -1,8 +1,8 @@
 import { AudioPlayer, VoiceConnection } from '@discordjs/voice';
 import { Injectable } from '@nestjs/common';
 import { InteractionResponse, Message } from 'discord.js';
-import { QueueState } from '../../domain/entities/queue-state.entity';
-import { Song } from '../../domain/entities/song.entity';
+import { QueueState } from '../../domain/entities/queue-state';
+import { Song } from '../../domain/entities/song';
 
 /**
  * Discord-specific channel state that extends domain QueueState

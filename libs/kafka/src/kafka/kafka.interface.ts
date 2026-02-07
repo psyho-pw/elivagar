@@ -1,6 +1,6 @@
 import { IKafkaConfig } from '@app/core/configs/configs.interface';
+import { ConfigsService } from '@app/core/configs/configs.service';
 import { ModuleMetadata, Type } from '@nestjs/common';
-import { ConfigsService } from 'libs/core/src/configs/configs.service';
 
 export interface KafkaModuleOptions {
   /** Kafka connection configuration (required) */

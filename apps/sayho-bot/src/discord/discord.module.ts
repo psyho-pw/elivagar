@@ -1,8 +1,8 @@
+import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
 import { ConfigsService } from '@app/core/configs/configs.service';
 import { KafkaModule } from '@app/kafka/kafka/kafka.module';
 import { Module } from '@nestjs/common';
 import { AopModule } from '@toss/nestjs-aop';
-import { ConfigsServiceKey } from 'libs/core/src/configs/configs.constant';
 import { PlayMusicUseCase } from './application/play-music.usecase';
 import { QueueStateManager } from './application/queue-state.manager';
 import { SearchVideoUseCase } from './application/search-video.usecase';

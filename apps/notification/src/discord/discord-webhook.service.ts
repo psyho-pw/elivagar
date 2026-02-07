@@ -1,8 +1,9 @@
+import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
 import { ConfigsService } from '@app/core/configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
+import { SayhoBotErrorEvent } from '@app/kafka/events/events.interface';
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { EmbedBuilder, WebhookClient } from 'discord.js';
-import { ConfigsServiceKey } from 'libs/core/src/configs/configs.constant';
 
 export interface EmbedField {
   name: string;
@@ -47,12 +48,7 @@ export class DiscordWebhookService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async sendErrorReport(event: {
-    message: string;
-    stack: string;
-    context: string;
-    timestamp: string;
-  }): Promise<void> {
+  async sendErrorReport(event: SayhoBotErrorEvent): Promise<void> {
     await this.sendMessage(event.message, `Error in ${event.context}`, [
       { name: 'Stack', value: event.stack || 'No stack trace' },
       { name: 'Context', value: event.context },

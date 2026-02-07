@@ -30,7 +30,19 @@ export class MikroAutoIncrementEntity extends MikroEntity {
 }
 
 @Entity({ abstract: true })
-export class MikroUuidActorEntity extends MikroUuidEntity {}
+export class MikroUuidActorEntity extends MikroUuidEntity {
+  @Property({ type: 'uuid' })
+  createdBy!: string;
+
+  @Property({ type: 'uuid' })
+  updatedBy!: string;
+}
 
 @Entity({ abstract: true })
-export class MikroAutoIncrementActorEntity extends MikroAutoIncrementEntity {}
+export class MikroAutoIncrementActorEntity extends MikroAutoIncrementEntity {
+  @Property({ type: 'uuid' })
+  createdBy!: string;
+
+  @Property({ type: 'uuid' })
+  updatedBy!: string;
+}

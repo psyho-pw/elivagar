@@ -1,4 +1,4 @@
-import { Song } from '../entities/song.entity';
+import { Song } from '../entities/song';
 
 export interface EmbedField {
   name: string;

@@ -1,6 +1,6 @@
 import { IRedisConfig } from '@app/core/configs/configs.interface';
+import { ConfigsService } from '@app/core/configs/configs.service';
 import { ModuleMetadata, Type } from '@nestjs/common';
-import { ConfigsService } from 'libs/core/src/configs/configs.service';
 import { CacheKeyType } from './cache.constant';
 
 export interface CacheModuleOptions {

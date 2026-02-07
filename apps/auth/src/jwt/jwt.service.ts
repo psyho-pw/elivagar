@@ -5,7 +5,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 
 export interface JwtPayload {
-  sub: number;
+  sub: string;
   email: string;
   roles: string[];
   iat?: number;
@@ -51,13 +51,13 @@ export class JwtService {
     return decoded as unknown as JwtPayload;
   }
 
-  verifyRefreshToken(token: string): { sub: number } {
+  verifyRefreshToken(token: string): { sub: string } {
     const { jwtRefreshSecret, jwtAlgorithm, jwtIssuer } = this.configsService.AppConfig;
     const decoded = jwt.verify(token, jwtRefreshSecret, {
       algorithms: [jwtAlgorithm],
       issuer: jwtIssuer,
     });
-    return decoded as unknown as { sub: number };
+    return decoded as unknown as { sub: string };
   }
 
   static hashToken(token: string): string {
