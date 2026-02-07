@@ -37,31 +37,8 @@ jobs:
 
       - name: Discord notification
         if: always()
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          TEST_RESULT: ${{ job.status }}
-        run: |
-          if [ "$TEST_RESULT" = "success" ]; then
-            COLOR=3066993
-            STATUS="Success"
-            EMOJI="white_check_mark"
-          else
-            COLOR=15158332
-            STATUS="Failed"
-            EMOJI="x"
-          fi
-
-          curl -s -H "Content-Type: application/json" \
-            -d "{
-              \"embeds\": [{
-                \"title\": \":${EMOJI}: Test ${STATUS}\",
-                \"color\": ${COLOR},
-                \"fields\": [
-                  { \"name\": \"PR\", \"value\": \"[#${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})\", \"inline\": false },
-                  { \"name\": \"Branch\", \"value\": \"\`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`\", \"inline\": true },
-                  { \"name\": \"Author\", \"value\": \"${{ github.event.pull_request.user.login }}\", \"inline\": true }
-                ],
-                \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-              }]
-            }" \
-            "$DISCORD_WEBHOOK_URL"
+        uses: ./.github/actions/discord-notification
+        with:
+          status: ${{ job.status == 'success' && 'SUCCESS' || 'FAIL' }}
+          title: Test
+          discord_webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
