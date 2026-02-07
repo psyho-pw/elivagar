@@ -16,9 +16,7 @@ export class MikroConnectionService implements IManagedConnection, OnModuleInit,
     private readonly connectionRegistry: ConnectionRegistryService,
     private readonly loggerService: LoggerService,
   ) {
-    // Register with lifecycle manager (lowest priority - shuts down last)
     this.connectionRegistry.register(this, {
-      shutdownPriority: 0,
       required: true,
     });
   }
@@ -32,8 +30,9 @@ export class MikroConnectionService implements IManagedConnection, OnModuleInit,
   }
 
   async onModuleDestroy(): Promise<void> {
-    // Shutdown is handled by ShutdownManager via disconnect()
-    // This hook is just for safety if module is destroyed without shutdown signal
+    if (this._state !== ConnectionState.DISCONNECTED) {
+      await this.disconnect();
+    }
   }
 
   async connect(): Promise<void> {

@@ -26,7 +26,6 @@ describe('ConnectionRegistryService', () => {
       expect(entry).toBeDefined();
       expect(entry!.connection).toBe(conn);
       expect(entry!.metadata.name).toBe('database');
-      expect(entry!.metadata.shutdownPriority).toBe(0);
       expect(entry!.metadata.required).toBe(true);
       expect(entry!.registeredAt).toBeInstanceOf(Date);
     });
@@ -34,15 +33,11 @@ describe('ConnectionRegistryService', () => {
     it('should register a connection with custom metadata', () => {
       const conn = createMockConnection('kafka');
       service.register(conn, {
-        shutdownPriority: 20,
         required: false,
-        shutdownTimeout: 5000,
       });
 
       const entry = service.get('kafka');
-      expect(entry!.metadata.shutdownPriority).toBe(20);
       expect(entry!.metadata.required).toBe(false);
-      expect(entry!.metadata.shutdownTimeout).toBe(5000);
     });
 
     it('should warn and replace when registering duplicate connection name', () => {

@@ -1,9 +1,8 @@
 // Injection tokens
 export const CONNECTION_REGISTRY = Symbol('CONNECTION_REGISTRY');
 export const READINESS_GATE = Symbol('READINESS_GATE');
-export const SHUTDOWN_MANAGER = Symbol('SHUTDOWN_MANAGER');
-export const SHUTDOWN_CONFIG = Symbol('SHUTDOWN_CONFIG');
 export const READINESS_CONFIG = Symbol('READINESS_CONFIG');
+export const GRACE_PERIOD_CONFIG = Symbol('GRACE_PERIOD_CONFIG');
 
 // Standard connection names
 export const ConnectionNames = {

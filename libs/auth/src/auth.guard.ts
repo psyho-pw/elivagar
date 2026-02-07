@@ -35,8 +35,18 @@ export class AuthGuard implements CanActivate {
       return true;
     }
 
-    if (context.getType() !== 'http') {
+    const contextType = context.getType();
+
+    if (contextType === 'rpc') {
       return true;
+    }
+
+    if (contextType !== 'http') {
+      this.loggerService.warn(
+        'canActivate',
+        `Unexpected context type: ${contextType}, denying access`,
+      );
+      return false;
     }
 
     const request = context.switchToHttp().getRequest();

@@ -73,7 +73,7 @@ describe('AuthGuard', () => {
       expect(authGrpcClient.validateToken).not.toHaveBeenCalled();
     });
 
-    it('should return true for non-http context types', async () => {
+    it('should return true for rpc context type (internal gRPC)', async () => {
       reflector.getAllAndOverride.mockReturnValue(false);
       const context = {
         getType: () => 'rpc',
@@ -84,6 +84,23 @@ describe('AuthGuard', () => {
       const result = await guard.canActivate(context);
 
       expect(result).toBe(true);
+    });
+
+    it('should deny access and log warning for unknown context types', async () => {
+      reflector.getAllAndOverride.mockReturnValue(false);
+      const context = {
+        getType: () => 'ws',
+        getHandler: () => ({}),
+        getClass: () => ({}),
+      } as unknown as ExecutionContext;
+
+      const result = await guard.canActivate(context);
+
+      expect(result).toBe(false);
+      expect(loggerService.warn).toHaveBeenCalledWith(
+        'canActivate',
+        'Unexpected context type: ws, denying access',
+      );
     });
 
     it('should throw UnauthorizedException when no authorization header', async () => {

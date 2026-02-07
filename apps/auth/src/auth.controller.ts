@@ -14,6 +14,7 @@ import {
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
+import { GrpcThrottle } from './guards/grpc-throttle.decorator';
 
 @Controller()
 export class AuthController {
@@ -21,12 +22,14 @@ export class AuthController {
 
   @GrpcMethod(AuthServiceServiceName)
   @TransformDto()
+  @GrpcThrottle(3, 60)
   async Register({ data }: GrpcDto<RegisterRequest, RegisterResponse>): Promise<RegisterResponse> {
     return this.authService.register(data.email, data.password);
   }
 
   @GrpcMethod(AuthServiceServiceName)
   @TransformDto()
+  @GrpcThrottle(5, 60)
   async Login({ data }: GrpcDto<LoginRequest, LoginResponse>): Promise<LoginResponse> {
     return this.authService.login(data.email, data.password);
   }

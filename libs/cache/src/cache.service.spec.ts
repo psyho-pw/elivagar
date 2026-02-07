@@ -49,7 +49,6 @@ describe('CacheService', () => {
   describe('constructor', () => {
     it('should register with connection registry on construction', () => {
       expect(connectionRegistry.register).toHaveBeenCalledWith(service, {
-        shutdownPriority: 10,
         required: true,
       });
     });

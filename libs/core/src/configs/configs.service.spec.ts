@@ -119,76 +119,66 @@ describe('ConfigsService', () => {
 
   describe('RedisConfig', () => {
     it('should return redis config from ConfigService', () => {
-      configService.getOrThrow.mockReturnValue(mockRedisConfig);
+      configService.get.mockReturnValue(mockRedisConfig);
       expect(service.RedisConfig).toEqual(mockRedisConfig);
-      expect(configService.getOrThrow).toHaveBeenCalledWith(RedisConfigKey, { infer: true });
+      expect(configService.get).toHaveBeenCalledWith(RedisConfigKey, { infer: true });
     });
 
-    it('should throw when redis config is not loaded', () => {
-      configService.getOrThrow.mockImplementation(() => {
-        throw new Error('Config not found');
-      });
-      expect(() => service.RedisConfig).toThrow('Config not found');
+    it('should return undefined when redis config is not loaded', () => {
+      configService.get.mockReturnValue(undefined);
+      expect(service.RedisConfig).toBeUndefined();
     });
   });
 
   describe('KafkaConfig', () => {
     it('should return kafka config from ConfigService', () => {
-      configService.getOrThrow.mockReturnValue(mockKafkaConfig);
+      configService.get.mockReturnValue(mockKafkaConfig);
       expect(service.KafkaConfig).toEqual(mockKafkaConfig);
-      expect(configService.getOrThrow).toHaveBeenCalledWith(KafkaConfigKey, { infer: true });
+      expect(configService.get).toHaveBeenCalledWith(KafkaConfigKey, { infer: true });
     });
 
-    it('should throw when kafka config is not loaded', () => {
-      configService.getOrThrow.mockImplementation(() => {
-        throw new Error('Config not found');
-      });
-      expect(() => service.KafkaConfig).toThrow('Config not found');
+    it('should return undefined when kafka config is not loaded', () => {
+      configService.get.mockReturnValue(undefined);
+      expect(service.KafkaConfig).toBeUndefined();
     });
   });
 
   describe('DiscordConfig', () => {
     it('should return discord config from ConfigService', () => {
-      configService.getOrThrow.mockReturnValue(mockDiscordConfig);
+      configService.get.mockReturnValue(mockDiscordConfig);
       expect(service.DiscordConfig).toEqual(mockDiscordConfig);
-      expect(configService.getOrThrow).toHaveBeenCalledWith(DiscordConfigKey, { infer: true });
+      expect(configService.get).toHaveBeenCalledWith(DiscordConfigKey, { infer: true });
     });
 
-    it('should throw when discord config is not loaded', () => {
-      configService.getOrThrow.mockImplementation(() => {
-        throw new Error('Config not found');
-      });
-      expect(() => service.DiscordConfig).toThrow('Config not found');
+    it('should return undefined when discord config is not loaded', () => {
+      configService.get.mockReturnValue(undefined);
+      expect(service.DiscordConfig).toBeUndefined();
     });
   });
 
   describe('YoutubeConfig', () => {
     it('should return youtube config from ConfigService', () => {
-      configService.getOrThrow.mockReturnValue(mockYoutubeConfig);
+      configService.get.mockReturnValue(mockYoutubeConfig);
       expect(service.YoutubeConfig).toEqual(mockYoutubeConfig);
-      expect(configService.getOrThrow).toHaveBeenCalledWith(YoutubeConfigKey, { infer: true });
+      expect(configService.get).toHaveBeenCalledWith(YoutubeConfigKey, { infer: true });
     });
 
-    it('should throw when youtube config is not loaded', () => {
-      configService.getOrThrow.mockImplementation(() => {
-        throw new Error('Config not found');
-      });
-      expect(() => service.YoutubeConfig).toThrow('Config not found');
+    it('should return undefined when youtube config is not loaded', () => {
+      configService.get.mockReturnValue(undefined);
+      expect(service.YoutubeConfig).toBeUndefined();
     });
   });
 
   describe('AuthGrpcConfig', () => {
     it('should return auth grpc config from ConfigService', () => {
-      configService.getOrThrow.mockReturnValue(mockAuthGrpcConfig);
+      configService.get.mockReturnValue(mockAuthGrpcConfig);
       expect(service.AuthGrpcConfig).toEqual(mockAuthGrpcConfig);
-      expect(configService.getOrThrow).toHaveBeenCalledWith(AuthGrpcConfigKey, { infer: true });
+      expect(configService.get).toHaveBeenCalledWith(AuthGrpcConfigKey, { infer: true });
     });
 
-    it('should throw when auth grpc config is not loaded', () => {
-      configService.getOrThrow.mockImplementation(() => {
-        throw new Error('Config not found');
-      });
-      expect(() => service.AuthGrpcConfig).toThrow('Config not found');
+    it('should return undefined when auth grpc config is not loaded', () => {
+      configService.get.mockReturnValue(undefined);
+      expect(service.AuthGrpcConfig).toBeUndefined();
     });
   });
 });

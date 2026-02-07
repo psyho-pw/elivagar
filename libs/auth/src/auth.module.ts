@@ -21,7 +21,7 @@ export class AuthModule {
             useFactory: (configsService: IConfigsService): GrpcOptions =>
               GrpcModule.makeOptions({
                 name: AppName.Auth,
-                url: configsService.AuthGrpcConfig.url,
+                url: configsService.AuthGrpcConfig!.url,
               }),
             inject: [ConfigsServiceKey],
           },

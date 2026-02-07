@@ -36,7 +36,6 @@ describe('MikroConnectionService', () => {
   describe('constructor', () => {
     it('should register itself with the connection registry', () => {
       expect(registry.register).toHaveBeenCalledWith(service, {
-        shutdownPriority: 0,
         required: true,
       });
     });
@@ -210,8 +209,18 @@ describe('MikroConnectionService', () => {
   });
 
   describe('onModuleDestroy', () => {
-    it('should be defined and callable (safety hook)', async () => {
-      await expect(service.onModuleDestroy()).resolves.toBeUndefined();
+    it('should disconnect if not already disconnected', async () => {
+      await service.connect();
+      await service.onModuleDestroy();
+
+      expect(orm.close).toHaveBeenCalled();
+      expect(service.state).toBe(ConnectionState.DISCONNECTED);
+    });
+
+    it('should be a no-op when already disconnected', async () => {
+      await service.onModuleDestroy();
+
+      expect(orm.close).not.toHaveBeenCalled();
     });
   });
 });

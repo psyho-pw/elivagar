@@ -27,9 +27,8 @@ export class CacheService
     private readonly loggerService: LoggerService,
     @Optional() private readonly connectionRegistry?: ConnectionRegistryService,
   ) {
-    // Register with lifecycle manager if available (medium priority)
+    // Register with lifecycle manager if available
     this.connectionRegistry?.register(this, {
-      shutdownPriority: 10,
       required: true,
     });
   }
@@ -43,7 +42,6 @@ export class CacheService
   }
 
   async onModuleDestroy(): Promise<void> {
-    // Fallback: disconnect if not already handled by ShutdownManager
     if (this._state !== ConnectionState.DISCONNECTED) {
       await this.disconnect();
     }

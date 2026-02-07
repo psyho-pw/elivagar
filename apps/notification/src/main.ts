@@ -20,7 +20,7 @@ class NotificationMain extends AbstractMain {
   }
 
   protected async onBeforeListen(): Promise<void> {
-    const kafkaConfig = this.configService.KafkaConfig;
+    const kafkaConfig = this.configService.KafkaConfig!;
     const kafkaOptions: KafkaOptions = KafkaModule.getConsumerOptions({
       kafka: kafkaConfig,
       groupId: `notification-consumer`,

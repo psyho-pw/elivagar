@@ -27,7 +27,6 @@ describe('KafkaService', () => {
   describe('constructor', () => {
     it('should register with connection registry when available', () => {
       expect(connectionRegistry.register).toHaveBeenCalledWith(service, {
-        shutdownPriority: 20,
         required: true,
       });
     });
@@ -227,18 +226,41 @@ describe('KafkaService', () => {
   });
 
   describe('onModuleDestroy', () => {
-    it('should call disconnect if not already disconnected', async () => {
+    it('should drain and disconnect if not already disconnected', async () => {
       kafkaClient.connect.mockResolvedValue(undefined as never);
       kafkaClient.close.mockResolvedValue(undefined);
       await service.connect();
+
+      const drainSpy = jest.spyOn(service, 'drain').mockResolvedValue(undefined);
       await service.onModuleDestroy();
 
+      expect(drainSpy).toHaveBeenCalled();
       expect(kafkaClient.close).toHaveBeenCalled();
       expect(service.state).toBe(ConnectionState.DISCONNECTED);
     });
 
-    it('should skip disconnect if already disconnected', async () => {
+    it('should still disconnect even if drain fails', async () => {
+      kafkaClient.connect.mockResolvedValue(undefined as never);
+      kafkaClient.close.mockResolvedValue(undefined);
+      await service.connect();
+
+      jest.spyOn(service, 'drain').mockRejectedValue(new Error('drain failed'));
       await service.onModuleDestroy();
+
+      expect(logger.error).toHaveBeenCalledWith(
+        'onModuleDestroy',
+        expect.any(Error),
+        'Error during drain',
+      );
+      expect(kafkaClient.close).toHaveBeenCalled();
+      expect(service.state).toBe(ConnectionState.DISCONNECTED);
+    });
+
+    it('should skip if already disconnected', async () => {
+      const drainSpy = jest.spyOn(service, 'drain');
+      await service.onModuleDestroy();
+
+      expect(drainSpy).not.toHaveBeenCalled();
       expect(kafkaClient.close).not.toHaveBeenCalled();
     });
   });

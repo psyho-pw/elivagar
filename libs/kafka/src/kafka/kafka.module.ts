@@ -61,6 +61,7 @@ export class KafkaModule {
 
     return {
       module: KafkaModule,
+      global: true,
       imports: [ClientsModule.register([{ name: KafkaClientKey, ...kafkaOptions }])],
       providers: [
         {
@@ -82,6 +83,7 @@ export class KafkaModule {
   static registerAsync(asyncOptions: KafkaModuleAsyncOptions): DynamicModule {
     return {
       module: KafkaModule,
+      global: true,
       imports: [
         ...(asyncOptions.imports ?? []),
         ClientsModule.registerAsync([

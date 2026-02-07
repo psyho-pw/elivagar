@@ -89,9 +89,9 @@ export type Configs = CoreConfigs & {
 export interface IConfigsService {
   get AppConfig(): IApp;
   get DatabaseConfig(): IDatabase;
-  get RedisConfig(): IRedisConfig;
-  get KafkaConfig(): IKafkaConfig;
-  get DiscordConfig(): IDiscordConfig;
-  get YoutubeConfig(): IYoutubeConfig;
-  get AuthGrpcConfig(): IAuthGrpcConfig;
+  get RedisConfig(): IRedisConfig | undefined;
+  get KafkaConfig(): IKafkaConfig | undefined;
+  get DiscordConfig(): IDiscordConfig | undefined;
+  get YoutubeConfig(): IYoutubeConfig | undefined;
+  get AuthGrpcConfig(): IAuthGrpcConfig | undefined;
 }

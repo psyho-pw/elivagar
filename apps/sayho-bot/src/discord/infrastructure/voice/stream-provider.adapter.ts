@@ -28,7 +28,7 @@ export class StreamProviderAdapter implements IStreamProvider {
   }
 
   private createYtdlClient(): YtdlCore {
-    const proxyUrl = this.configsService.YoutubeConfig.proxy;
+    const proxyUrl = this.configsService.YoutubeConfig!.proxy;
     const proxyAgent = proxyUrl
       ? new ProxyAgent({
           uri: proxyUrl,

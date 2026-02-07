@@ -12,7 +12,8 @@ export class Song extends MikroUuidEntity {
   @Index({
     name: 'song_title_trgm_idx',
     type: 'gin',
-    expression: 'create index "song_title_trgm_idx" on "sayho"."song" using gin ("title" gin_trgm_ops)',
+    expression:
+      'create index "song_title_trgm_idx" on "sayho"."song" using gin ("title" gin_trgm_ops)',
   })
   @Property({ type: TextType, nullable: false })
   title!: string;

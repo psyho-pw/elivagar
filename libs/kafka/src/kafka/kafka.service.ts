@@ -21,9 +21,8 @@ export class KafkaService
     private readonly loggerService: LoggerService,
     @Optional() private readonly connectionRegistry?: ConnectionRegistryService,
   ) {
-    // Register with lifecycle manager if available (high priority - shuts down first)
+    // Register with lifecycle manager if available
     this.connectionRegistry?.register(this, {
-      shutdownPriority: 20,
       required: true,
     });
   }
@@ -37,11 +36,17 @@ export class KafkaService
   }
 
   async onModuleDestroy(): Promise<void> {
-    // Fallback: disconnect if not already handled by ShutdownManager
-    // This ensures proper cleanup even when LifecycleModule is not imported
-    if (this._state !== ConnectionState.DISCONNECTED) {
-      await this.disconnect();
+    if (this._state === ConnectionState.DISCONNECTED) {
+      return;
     }
+
+    try {
+      await this.drain();
+    } catch (error) {
+      this.loggerService.error(this.onModuleDestroy.name, error, 'Error during drain');
+    }
+
+    await this.disconnect();
   }
 
   async connect(): Promise<void> {

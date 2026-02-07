@@ -12,7 +12,7 @@ export class YoutubeSearchAdapter implements IYoutubeSearch {
     @Inject(ConfigsServiceKey)
     private readonly configsService: ConfigsService,
   ) {
-    this.youtube = new Youtube(this.configsService.YoutubeConfig.youtubeApiKey);
+    this.youtube = new Youtube(this.configsService.YoutubeConfig!.youtubeApiKey);
   }
 
   async searchVideos(query: string, limit = 5): Promise<VideoInfo[]> {

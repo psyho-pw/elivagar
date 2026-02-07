@@ -31,9 +31,7 @@ export class ConnectionRegistryService {
       connection,
       metadata: {
         name,
-        shutdownPriority: metadata.shutdownPriority ?? 0,
         required: metadata.required ?? true,
-        shutdownTimeout: metadata.shutdownTimeout,
       },
       registeredAt: new Date(),
     };

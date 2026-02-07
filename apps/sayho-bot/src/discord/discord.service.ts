@@ -131,7 +131,7 @@ export class DiscordService implements OnModuleInit {
 
     // Register slash commands
     await this.discordClient.Rest.put(
-      Routes.applicationCommands(this.configsService.DiscordConfig.clientId),
+      Routes.applicationCommands(this.configsService.DiscordConfig!.clientId),
       { body: slashCommands },
     );
 

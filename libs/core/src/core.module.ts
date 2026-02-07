@@ -1,9 +1,11 @@
-import { MikroOrmModule } from '@app/mikro/mikro.module';
 import { Global, Module } from '@nestjs/common';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AopModule } from '@toss/nestjs-aop';
 import { ClsModule } from './cls/cls.module';
+import { RequestIdGuard } from './common/guards/cls.guard';
+import { ErrorInterceptor } from './common/interceptors/error.interceptor';
+import { RequestLogInterceptor } from './common/interceptors/request-log.interceptor';
 import { LifecycleModule } from './lifecycle/lifecycle.module';
-import { MikroConnectionService } from './lifecycle/mikro-connection.service';
 import { LoggerModule } from './logger/logger.module';
 
 @Global()
@@ -11,8 +13,7 @@ import { LoggerModule } from './logger/logger.module';
   imports: [
     LoggerModule,
     LifecycleModule.forRoot({
-      shutdown: {
-        timeout: 30000,
+      gracePeriod: {
         gracePeriod: 5000,
       },
       readiness: {
@@ -20,11 +21,13 @@ import { LoggerModule } from './logger/logger.module';
         checkInterval: 1000,
       },
     }),
-    MikroOrmModule.getInstance(),
     ClsModule,
     AopModule,
   ],
-  providers: [MikroConnectionService],
-  exports: [MikroConnectionService],
+  providers: [
+    { provide: APP_GUARD, useClass: RequestIdGuard },
+    { provide: APP_INTERCEPTOR, useClass: ErrorInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: RequestLogInterceptor },
+  ],
 })
 export class CoreModule {}

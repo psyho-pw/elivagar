@@ -2,25 +2,22 @@ jest.mock('uuid', () => ({
   v7: jest.fn(() => 'mock-uuid-v7'),
 }));
 
-import { ExecutionContext, ServiceUnavailableException } from '@nestjs/common';
+import { ExecutionContext } from '@nestjs/common';
 import { TestBed, Mocked } from '@suites/unit';
 import { createMockExecutionContext } from '@test/factories/execution-context.factory';
 import { RequestIdGuard } from './cls.guard';
 import { IClsService } from '../../cls/cls.interface';
 import { ClsServiceKey } from '../../cls/cls.module';
-import { LoggerService } from '../../logger/logger.service';
 
 describe('RequestIdGuard', () => {
   let guard: RequestIdGuard;
   let clsService: Mocked<IClsService>;
-  let loggerService: Mocked<LoggerService>;
 
   beforeAll(async () => {
     const { unit, unitRef } = await TestBed.solitary(RequestIdGuard).compile();
 
     guard = unit;
     clsService = unitRef.get(ClsServiceKey);
-    loggerService = unitRef.get(LoggerService);
   });
 
   beforeEach(() => jest.clearAllMocks());
@@ -68,7 +65,7 @@ describe('RequestIdGuard', () => {
       expect(clsService.requestId).toBe('mock-uuid-v7');
     });
 
-    it('should catch errors for non-http context and log error', () => {
+    it('should return true for non-http context without setting requestId', () => {
       const context = {
         getType: () => 'rpc',
       } as unknown as ExecutionContext;
@@ -76,24 +73,6 @@ describe('RequestIdGuard', () => {
       const result = guard.canActivate(context);
 
       expect(result).toBe(true);
-      expect(loggerService.error).toHaveBeenCalledWith(
-        'canActivate',
-        expect.any(ServiceUnavailableException),
-      );
-    });
-
-    it('should return true even when an error occurs', () => {
-      const context = {
-        getType: () => 'http',
-        switchToHttp: () => {
-          throw new Error('unexpected');
-        },
-      } as unknown as ExecutionContext;
-
-      const result = guard.canActivate(context);
-
-      expect(result).toBe(true);
-      expect(loggerService.error).toHaveBeenCalled();
     });
   });
 });

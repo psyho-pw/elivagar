@@ -31,23 +31,23 @@ export class ConfigsService implements IConfigsService {
     return this.configService.getOrThrow(DatabaseConfigKey, { infer: true });
   }
 
-  public get RedisConfig(): IRedisConfig {
-    return this.configService.getOrThrow(RedisConfigKey, { infer: true });
+  public get RedisConfig(): IRedisConfig | undefined {
+    return this.configService.get(RedisConfigKey, { infer: true });
   }
 
-  public get KafkaConfig(): IKafkaConfig {
-    return this.configService.getOrThrow(KafkaConfigKey, { infer: true });
+  public get KafkaConfig(): IKafkaConfig | undefined {
+    return this.configService.get(KafkaConfigKey, { infer: true });
   }
 
-  public get DiscordConfig(): IDiscordConfig {
-    return this.configService.getOrThrow(DiscordConfigKey, { infer: true });
+  public get DiscordConfig(): IDiscordConfig | undefined {
+    return this.configService.get(DiscordConfigKey, { infer: true });
   }
 
-  public get YoutubeConfig(): IYoutubeConfig {
-    return this.configService.getOrThrow(YoutubeConfigKey, { infer: true });
+  public get YoutubeConfig(): IYoutubeConfig | undefined {
+    return this.configService.get(YoutubeConfigKey, { infer: true });
   }
 
-  public get AuthGrpcConfig(): IAuthGrpcConfig {
-    return this.configService.getOrThrow(AuthGrpcConfigKey, { infer: true });
+  public get AuthGrpcConfig(): IAuthGrpcConfig | undefined {
+    return this.configService.get(AuthGrpcConfigKey, { infer: true });
   }
 }

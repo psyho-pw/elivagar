@@ -1,6 +1,3 @@
-import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { ConfigsService } from '@app/core/configs/configs.service';
-import { KafkaModule } from '@app/kafka/kafka/kafka.module';
 import { Module } from '@nestjs/common';
 import { AopModule } from '@toss/nestjs-aop';
 import { PlayMusicUseCase } from './application/play-music.usecase';
@@ -25,16 +22,7 @@ import { CommandHandler } from './presentation/commands/command.handler';
 import { EventHandler } from './presentation/events/event.handler';
 
 @Module({
-  imports: [
-    AopModule,
-    SongModule,
-    KafkaModule.registerAsync({
-      useFactory: (configsService: ConfigsService) => ({
-        kafka: configsService.KafkaConfig,
-      }),
-      inject: [ConfigsServiceKey],
-    }),
-  ],
+  imports: [AopModule, SongModule],
   providers: [
     DiscordService,
 

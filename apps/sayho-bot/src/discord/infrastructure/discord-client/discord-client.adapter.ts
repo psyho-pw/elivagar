@@ -56,8 +56,8 @@ export class DiscordClientAdapter {
     this.loggerService.verbose('init', generateDependencyReport());
 
     try {
-      this.rest = new REST({ version: '10' }).setToken(this.configsService.DiscordConfig.token);
-      await this.discordBotClient.login(this.configsService.DiscordConfig.token);
+      this.rest = new REST({ version: '10' }).setToken(this.configsService.DiscordConfig!.token);
+      await this.discordBotClient.login(this.configsService.DiscordConfig!.token);
       this.loggerService.verbose('init', 'DiscordBotClient instance initialized');
     } catch (err) {
       console.error(err);
@@ -212,7 +212,7 @@ export class DiscordClientAdapter {
           .then((msg) =>
             setTimeout(
               () => msg.delete().catch(() => {}),
-              this.configsService.DiscordConfig.messageDeleteTimeout,
+              this.configsService.DiscordConfig!.messageDeleteTimeout,
             ),
           );
         this.stateAdapter.getConnection(guildId)?.destroy();

@@ -21,7 +21,7 @@ export class DiscordWebhookService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit(): void {
-    const { webhookUrl } = this.configsService.DiscordConfig;
+    const { webhookUrl } = this.configsService.DiscordConfig!;
     this.webhookClient = new WebhookClient({ url: webhookUrl });
   }
 

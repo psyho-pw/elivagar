@@ -108,7 +108,7 @@ export class EventHandler {
         ),
       ],
     });
-    setTimeout(() => reply.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
+    setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
     this.discordClient.removeFromDeleteQueue(guild.id, interaction.message.id);
 
     if (!this.discordClient.getIsPlaying(guild.id)) {
@@ -133,16 +133,16 @@ export class EventHandler {
 
     if (message.author.bot) return;
 
-    if (!message.content.startsWith(this.configsService.DiscordConfig.commandPrefix)) {
+    if (!message.content.startsWith(this.configsService.DiscordConfig!.commandPrefix)) {
       this.loggerService.verbose(
         this.messageCreate.name,
-        `doesn't match prefix '${this.configsService.DiscordConfig.commandPrefix}' skipping...`,
+        `doesn't match prefix '${this.configsService.DiscordConfig!.commandPrefix}' skipping...`,
       );
       return;
     }
 
     const args = message.content
-      .slice(this.configsService.DiscordConfig.commandPrefix.length)
+      .slice(this.configsService.DiscordConfig!.commandPrefix.length)
       .trim()
       .split(/ +/g);
     const commandName = args.shift()?.toLowerCase() ?? '';
@@ -194,7 +194,7 @@ export class EventHandler {
               this.discordClient.deleteConnection(newState.guild.id);
               setTimeout(
                 () => msg.delete(),
-                this.configsService.DiscordConfig.messageDeleteTimeout,
+                this.configsService.DiscordConfig!.messageDeleteTimeout,
               );
             });
           }
