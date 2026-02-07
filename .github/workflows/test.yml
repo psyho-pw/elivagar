@@ -1,0 +1,67 @@
+name: Test
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate proto types
+        run: pnpm proto:generate
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Discord notification
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TEST_RESULT: ${{ job.status }}
+        run: |
+          if [ "$TEST_RESULT" = "success" ]; then
+            COLOR=3066993
+            STATUS="Success"
+            EMOJI="white_check_mark"
+          else
+            COLOR=15158332
+            STATUS="Failed"
+            EMOJI="x"
+          fi
+
+          curl -s -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \":${EMOJI}: Test ${STATUS}\",
+                \"color\": ${COLOR},
+                \"fields\": [
+                  { \"name\": \"PR\", \"value\": \"[#${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})\", \"inline\": false },
+                  { \"name\": \"Branch\", \"value\": \"\`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`\", \"inline\": true },
+                  { \"name\": \"Author\", \"value\": \"${{ github.event.pull_request.user.login }}\", \"inline\": true }
+                ],
+                \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+              }]
+            }" \
+            "$DISCORD_WEBHOOK_URL"
