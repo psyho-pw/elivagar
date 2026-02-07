@@ -7,6 +7,8 @@
       "Bash(cat:*)",
       "Bash(tree:*)",
       "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
       "Bash(pnpm add:*)",
       "Bash(pnpm install:*)",
       "Bash(pnpm run:*)",
