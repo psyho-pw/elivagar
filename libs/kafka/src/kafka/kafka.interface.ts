@@ -1,4 +1,5 @@
 import { IKafkaConfig } from '@app/core/configs/configs.interface';
+import { ConfigsService } from '@app/core/configs/configs.service';
 import { ModuleMetadata, Type } from '@nestjs/common';
 
 export interface KafkaModuleOptions {
@@ -11,8 +12,7 @@ export interface KafkaModuleOptions {
 }
 
 export interface KafkaModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useFactory: (...args: any[]) => KafkaModuleOptions | Promise<KafkaModuleOptions>;
+  useFactory: (configsService: ConfigsService) => KafkaModuleOptions | Promise<KafkaModuleOptions>;
   inject?: (Type | string | symbol)[];
 }
 

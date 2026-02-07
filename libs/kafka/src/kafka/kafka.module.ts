@@ -1,4 +1,5 @@
 import { IKafkaConfig } from '@app/core/configs/configs.interface';
+import { ConfigsService } from '@app/core/configs/configs.service';
 import { DynamicModule, Module } from '@nestjs/common';
 import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
 import { SASLOptions } from 'kafkajs';
@@ -60,14 +61,8 @@ export class KafkaModule {
 
     return {
       module: KafkaModule,
-      imports: [
-        ClientsModule.register([
-          {
-            name: KafkaClientKey,
-            ...kafkaOptions,
-          },
-        ]),
-      ],
+      global: true,
+      imports: [ClientsModule.register([{ name: KafkaClientKey, ...kafkaOptions }])],
       providers: [
         {
           provide: KafkaServiceKey,
@@ -88,25 +83,21 @@ export class KafkaModule {
   static registerAsync(asyncOptions: KafkaModuleAsyncOptions): DynamicModule {
     return {
       module: KafkaModule,
+      global: true,
       imports: [
         ...(asyncOptions.imports ?? []),
         ClientsModule.registerAsync([
           {
             name: KafkaClientKey,
-            useFactory: async (...args: unknown[]): Promise<KafkaOptions> => {
-              const options = await asyncOptions.useFactory(...args);
+            useFactory: async (configsService: ConfigsService): Promise<KafkaOptions> => {
+              const options = await asyncOptions.useFactory(configsService);
               return this.makeKafkaOptions(options);
             },
             inject: asyncOptions.inject ?? [],
           },
         ]),
       ],
-      providers: [
-        {
-          provide: KafkaServiceKey,
-          useClass: KafkaService,
-        },
-      ],
+      providers: [{ provide: KafkaServiceKey, useClass: KafkaService }],
       exports: [KafkaServiceKey, ClientsModule],
     };
   }

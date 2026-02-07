@@ -12,15 +12,16 @@ import { GrpcService } from './grpc.service';
   exports: [GrpcService],
 })
 export class GrpcModule {
-  private static makeOptions({ name, version = 'v1' }: GrpcModuleOptions): GrpcOptions {
+  public static makeOptions({ name, version = 'v1', url }: GrpcModuleOptions): GrpcOptions {
     const protoPath = join(__dirname, `../../../../proto/${name}/${version}/${name}.proto`);
 
     const opt: GrpcOptions = {
       transport: Transport.GRPC,
       options: {
-        package: camelCase(name),
+        package: `${camelCase(name)}.${version}`,
         protoPath,
         gracefulShutdown: true,
+        ...(url && { url }),
         maxSendMessageLength: 1024 * 1024 * 10,
         maxReceiveMessageLength: 1024 * 1024 * 10,
         keepalive: {
@@ -34,7 +35,7 @@ export class GrpcModule {
     return opt;
   }
 
-  static register({ name, version = 'v1' }: GrpcModuleOptions): DynamicModule {
+  static register({ name, version = 'v1', url }: GrpcModuleOptions): DynamicModule {
     return {
       module: GrpcModule,
       imports: [
@@ -42,7 +43,7 @@ export class GrpcModule {
           {
             name,
             useFactory: (_configsService: IConfigsService): GrpcOptions =>
-              this.makeOptions({ name, version }),
+              this.makeOptions({ name, version, url }),
             inject: [ConfigsServiceKey],
           },
         ]),

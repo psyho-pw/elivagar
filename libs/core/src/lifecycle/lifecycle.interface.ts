@@ -15,12 +15,8 @@ export enum ConnectionState {
 export interface IConnectionMetadata {
   /** Unique name for this connection (e.g., 'kafka', 'database', 'redis') */
   name: string;
-  /** Priority for shutdown order (higher = shutdown first, lower = shutdown later) */
-  shutdownPriority?: number;
   /** Whether this connection is required for readiness (default: true) */
   required?: boolean;
-  /** Custom timeout for this connection's shutdown (ms) */
-  shutdownTimeout?: number;
 }
 
 /**
@@ -56,18 +52,6 @@ export interface IConnectionEntry {
 }
 
 /**
- * Shutdown manager configuration
- */
-export interface IShutdownConfig {
-  /** Global shutdown timeout (default: 30000ms) */
-  timeout?: number;
-  /** Delay before starting shutdown (for load balancer deregistration) */
-  gracePeriod?: number;
-  /** Enable verbose shutdown logging */
-  verbose?: boolean;
-}
-
-/**
  * Readiness gate configuration
  */
 export interface IReadinessConfig {
@@ -75,6 +59,14 @@ export interface IReadinessConfig {
   timeout?: number;
   /** Interval to check connection status (default: 1000ms) */
   checkInterval?: number;
+}
+
+/**
+ * Grace period configuration for BeforeApplicationShutdown
+ */
+export interface IGracePeriodConfig {
+  /** Delay before starting shutdown (for load balancer deregistration, default: 5000ms) */
+  gracePeriod?: number;
 }
 
 /**

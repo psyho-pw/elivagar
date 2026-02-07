@@ -1,0 +1,184 @@
+import { faker } from '@faker-js/faker';
+import { ConfigService } from '@nestjs/config';
+import { Mocked, TestBed } from '@suites/unit';
+import {
+  Configs,
+  IApp,
+  IAuthGrpcConfig,
+  IDatabase,
+  IDiscordConfig,
+  IKafkaConfig,
+  IRedisConfig,
+  IYoutubeConfig,
+} from './configs.interface';
+import { ConfigsService } from './configs.service';
+import { AppConfigKey } from './configurations/app.config';
+import { AuthGrpcConfigKey } from './configurations/auth-grpc.config';
+import { DatabaseConfigKey } from './configurations/database.config';
+import { DiscordConfigKey } from './configurations/discord.config';
+import { KafkaConfigKey } from './configurations/kafka.config';
+import { RedisConfigKey } from './configurations/redis.config';
+import { YoutubeConfigKey } from './configurations/youtube.config';
+
+describe('ConfigsService', () => {
+  let service: ConfigsService;
+  let configService: Mocked<ConfigService<Configs>>;
+
+  const mockAppConfig: IApp = {
+    env: 'test',
+    port: faker.internet.port(),
+    grpcPort: faker.internet.port(),
+    serviceName: faker.word.noun(),
+    jwtSecret: faker.string.alphanumeric(32),
+    jwtRefreshSecret: faker.string.alphanumeric(32),
+    jwtAlgorithm: 'HS256',
+    jwtExpire: faker.number.int({ min: 3600, max: 86400 }),
+    jwtRefreshExpire: faker.number.int({ min: 86400, max: 604800 }),
+    jwtIssuer: faker.word.noun(),
+    clientURI: faker.internet.url(),
+  } as IApp;
+
+  const mockDatabaseConfig: IDatabase = {
+    host: 'localhost',
+    port: faker.internet.port(),
+    user: faker.word.noun(),
+    password: faker.internet.password(),
+    dbName: faker.word.noun(),
+  } as IDatabase;
+
+  const mockRedisConfig: IRedisConfig = {
+    host: 'localhost',
+    port: faker.internet.port(),
+  };
+
+  const mockKafkaConfig: IKafkaConfig = {
+    brokers: [`localhost:${faker.internet.port()}`],
+    clientId: faker.word.noun(),
+    groupId: `${faker.word.noun()}-group`,
+    ssl: faker.datatype.boolean(),
+  } as IKafkaConfig;
+
+  const mockDiscordConfig: IDiscordConfig = {
+    token: faker.string.alphanumeric(32),
+    clientId: faker.string.alphanumeric(32),
+    guildId: faker.string.alphanumeric(32),
+    commandPrefix: '!',
+    messageDeleteTimeout: faker.number.int({ min: 5000, max: 10000 }),
+    webhookUrl: faker.internet.url(),
+  };
+
+  const mockYoutubeConfig: IYoutubeConfig = {
+    youtubeApiKey: faker.string.alphanumeric(32),
+  };
+
+  const mockAuthGrpcConfig: IAuthGrpcConfig = {
+    url: `localhost:${faker.internet.port()}`,
+  };
+
+  beforeAll(async () => {
+    const { unit, unitRef } = await TestBed.solitary(ConfigsService).compile();
+    service = unit;
+    configService = unitRef.get(ConfigService);
+  });
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('AppConfig', () => {
+    it('should return app config from ConfigService', () => {
+      configService.getOrThrow.mockReturnValue(mockAppConfig);
+      expect(service.AppConfig).toEqual(mockAppConfig);
+      expect(configService.getOrThrow).toHaveBeenCalledWith(AppConfigKey, { infer: true });
+    });
+
+    it('should throw when app config is not loaded', () => {
+      configService.getOrThrow.mockImplementation(() => {
+        throw new Error('Config not found');
+      });
+      expect(() => service.AppConfig).toThrow('Config not found');
+    });
+  });
+
+  describe('DatabaseConfig', () => {
+    it('should return database config from ConfigService', () => {
+      configService.getOrThrow.mockReturnValue(mockDatabaseConfig);
+      expect(service.DatabaseConfig).toEqual(mockDatabaseConfig);
+      expect(configService.getOrThrow).toHaveBeenCalledWith(DatabaseConfigKey, { infer: true });
+    });
+
+    it('should throw when database config is not loaded', () => {
+      configService.getOrThrow.mockImplementation(() => {
+        throw new Error('Config not found');
+      });
+      expect(() => service.DatabaseConfig).toThrow('Config not found');
+    });
+  });
+
+  describe('RedisConfig', () => {
+    it('should return redis config from ConfigService', () => {
+      configService.get.mockReturnValue(mockRedisConfig);
+      expect(service.RedisConfig).toEqual(mockRedisConfig);
+      expect(configService.get).toHaveBeenCalledWith(RedisConfigKey, { infer: true });
+    });
+
+    it('should return undefined when redis config is not loaded', () => {
+      configService.get.mockReturnValue(undefined);
+      expect(service.RedisConfig).toBeUndefined();
+    });
+  });
+
+  describe('KafkaConfig', () => {
+    it('should return kafka config from ConfigService', () => {
+      configService.get.mockReturnValue(mockKafkaConfig);
+      expect(service.KafkaConfig).toEqual(mockKafkaConfig);
+      expect(configService.get).toHaveBeenCalledWith(KafkaConfigKey, { infer: true });
+    });
+
+    it('should return undefined when kafka config is not loaded', () => {
+      configService.get.mockReturnValue(undefined);
+      expect(service.KafkaConfig).toBeUndefined();
+    });
+  });
+
+  describe('DiscordConfig', () => {
+    it('should return discord config from ConfigService', () => {
+      configService.get.mockReturnValue(mockDiscordConfig);
+      expect(service.DiscordConfig).toEqual(mockDiscordConfig);
+      expect(configService.get).toHaveBeenCalledWith(DiscordConfigKey, { infer: true });
+    });
+
+    it('should return undefined when discord config is not loaded', () => {
+      configService.get.mockReturnValue(undefined);
+      expect(service.DiscordConfig).toBeUndefined();
+    });
+  });
+
+  describe('YoutubeConfig', () => {
+    it('should return youtube config from ConfigService', () => {
+      configService.get.mockReturnValue(mockYoutubeConfig);
+      expect(service.YoutubeConfig).toEqual(mockYoutubeConfig);
+      expect(configService.get).toHaveBeenCalledWith(YoutubeConfigKey, { infer: true });
+    });
+
+    it('should return undefined when youtube config is not loaded', () => {
+      configService.get.mockReturnValue(undefined);
+      expect(service.YoutubeConfig).toBeUndefined();
+    });
+  });
+
+  describe('AuthGrpcConfig', () => {
+    it('should return auth grpc config from ConfigService', () => {
+      configService.get.mockReturnValue(mockAuthGrpcConfig);
+      expect(service.AuthGrpcConfig).toEqual(mockAuthGrpcConfig);
+      expect(configService.get).toHaveBeenCalledWith(AuthGrpcConfigKey, { infer: true });
+    });
+
+    it('should return undefined when auth grpc config is not loaded', () => {
+      configService.get.mockReturnValue(undefined);
+      expect(service.AuthGrpcConfig).toBeUndefined();
+    });
+  });
+});

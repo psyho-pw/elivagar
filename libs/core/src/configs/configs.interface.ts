@@ -2,9 +2,12 @@ import { Env } from '@app/core/constants/app.constant';
 import { Algorithm } from 'jsonwebtoken';
 import { tags } from 'typia';
 import { AppConfigKey } from './configurations/app.config';
+import { AuthGrpcConfigKey } from './configurations/auth-grpc.config';
 import { DatabaseConfigKey } from './configurations/database.config';
+import { DiscordConfigKey } from './configurations/discord.config';
 import { KafkaConfigKey } from './configurations/kafka.config';
 import { RedisConfigKey } from './configurations/redis.config';
+import { YoutubeConfigKey } from './configurations/youtube.config';
 
 export interface IApp {
   env: Env;
@@ -48,6 +51,26 @@ export interface IKafkaConfig {
   requestTimeout?: number & tags.Type<'int32'> & tags.Minimum<0>;
 }
 
+export interface IDiscordConfig {
+  token: string;
+  clientId: string;
+  guildId: string;
+  commandPrefix: string;
+  messageDeleteTimeout: number;
+  webhookUrl: string;
+}
+
+export interface IYoutubeConfig {
+  youtubeApiKey: string;
+  cookie?: string;
+  identityToken?: string;
+  proxy?: string;
+}
+
+export interface IAuthGrpcConfig {
+  url: string;
+}
+
 // Core configs (required for all services)
 export type CoreConfigs = {
   [AppConfigKey]: IApp;
@@ -58,11 +81,17 @@ export type CoreConfigs = {
 export type Configs = CoreConfigs & {
   [RedisConfigKey]?: IRedisConfig;
   [KafkaConfigKey]?: IKafkaConfig;
+  [DiscordConfigKey]?: IDiscordConfig;
+  [YoutubeConfigKey]?: IYoutubeConfig;
+  [AuthGrpcConfigKey]?: IAuthGrpcConfig;
 };
 
 export interface IConfigsService {
   get AppConfig(): IApp;
   get DatabaseConfig(): IDatabase;
-  get RedisConfig(): IRedisConfig;
-  get KafkaConfig(): IKafkaConfig;
+  get RedisConfig(): IRedisConfig | undefined;
+  get KafkaConfig(): IKafkaConfig | undefined;
+  get DiscordConfig(): IDiscordConfig | undefined;
+  get YoutubeConfig(): IYoutubeConfig | undefined;
+  get AuthGrpcConfig(): IAuthGrpcConfig | undefined;
 }

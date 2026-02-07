@@ -1,16 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   ConnectionState,
   IConnectionEntry,
   IConnectionMetadata,
   IManagedConnection,
 } from './lifecycle.interface';
+import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
 export class ConnectionRegistryService {
-  private readonly logger = new Logger(ConnectionRegistryService.name);
   private readonly connections = new Map<string, IConnectionEntry>();
   private readonly stateListeners = new Set<(name: string, state: ConnectionState) => void>();
+
+  constructor(private readonly loggerService: LoggerService) {}
 
   /**
    * Register a managed connection
@@ -19,22 +21,23 @@ export class ConnectionRegistryService {
     const name = connection.connectionName;
 
     if (this.connections.has(name)) {
-      this.logger.warn(`Connection '${name}' is already registered, replacing...`);
+      this.loggerService.warn(
+        this.register.name,
+        `Connection '${name}' is already registered, replacing...`,
+      );
     }
 
     const entry: IConnectionEntry = {
       connection,
       metadata: {
         name,
-        shutdownPriority: metadata.shutdownPriority ?? 0,
         required: metadata.required ?? true,
-        shutdownTimeout: metadata.shutdownTimeout,
       },
       registeredAt: new Date(),
     };
 
     this.connections.set(name, entry);
-    this.logger.debug(`Registered connection: ${name}`);
+    this.loggerService.debug(this.register.name, `Registered connection: ${name}`);
   }
 
   /**
@@ -43,7 +46,7 @@ export class ConnectionRegistryService {
   unregister(name: string): boolean {
     const removed = this.connections.delete(name);
     if (removed) {
-      this.logger.debug(`Unregistered connection: ${name}`);
+      this.loggerService.debug(this.unregister.name, `Unregistered connection: ${name}`);
     }
     return removed;
   }

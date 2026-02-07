@@ -25,10 +25,11 @@ apps/
 └── sayho-bot/     # Sayho bot service (port 4200, gRPC 8000)
 
 libs/
+├── auth/          # Shared auth library (gRPC token introspection for consumer services)
 ├── cache/         # Cache module (Redis-backed with @nestjs/cache-manager)
-├── core/          # Shared core functionality (logger, config, guards, CLS, lifecycle)
+├── core/          # Shared core functionality (logger, config, guards, CLS, lifecycle, interceptors)
 ├── grpc/          # gRPC client configuration and proto files
-├── kafka/         # Kafka producer/consumer module
+├── kafka/         # Kafka producer/consumer module with event topics
 └── mikro/         # MikroORM configuration and base entities
 ```
 
@@ -115,7 +116,7 @@ pnpm --config.env=local --config.app=sayho-bot migration:create
 # Run migrations
 pnpm --config.env=local --config.app=auth migration:up
 pnpm --config.env=local --config.app=notification migration:up
-pnpm --config.env=local --config.app=sayho-bot migration:up 
+pnpm --config.env=local --config.app=sayho-bot migration:up
 
 # Rollback migrations
 pnpm --config.env=local --config.app=auth migration:down
@@ -152,6 +153,11 @@ pnpm test:e2e
 # Generate coverage
 pnpm test:cov
 ```
+
+Test infrastructure is in `test/`:
+- `test/factories/` - Test factories (execution-context, managed-connection, user, song)
+- `test/mocks/` - Module mocks (uuid, change-case) mapped via Jest `moduleNameMapper`
+- `@test` path alias available for imports (e.g., `@test/factories/user.factory`)
 
 ### Code Quality
 
@@ -205,10 +211,10 @@ All entities should extend from `libs/mikro/src/abstracts/base.entity.ts`:
 - `MikroEntity` - Base abstract entity with timestamps and soft delete
 - `MikroUuidEntity` - UUID primary key (extends MikroEntity)
 - `MikroAutoIncrementEntity` - Auto-increment integer primary key (extends MikroEntity)
-- `MikroUuidActorEntity` - Reserved for UUID with actor tracking (extends MikroUuidEntity)
-- `MikroAutoIncrementActorEntity` - Reserved for auto-increment with actor tracking (extends MikroAutoIncrementEntity)
+- `MikroUuidActorEntity` - UUID with createdBy/updatedBy actor tracking (extends MikroUuidEntity)
+- `MikroAutoIncrementActorEntity` - Auto-increment with actor tracking (extends MikroAutoIncrementEntity)
 
-All entities include `createdAt`, `updatedAt`, and `deletedAt` (soft delete) fields. The project uses UUIDv7 for primary keys via the `uuid` package.
+All entities include `createdAt`, `updatedAt`, and `deletedAt` (soft delete) fields. The project uses UUIDv7 for primary keys via the `uuid` package. All entities have `protected constructor` - use `em.create()` instead of `new Entity()`.
 
 ### Configuration Loading
 
@@ -224,6 +230,9 @@ Configuration uses Typia for runtime validation. Each service loads environment 
 - `database.config.ts` - PostgreSQL connection
 - `redis.config.ts` - Redis connection
 - `kafka.config.ts` - Kafka broker settings
+- `discord.config.ts` - Discord bot settings (token, clientId, guildId, webhookUrl)
+- `youtube.config.ts` - YouTube API settings (apiKey, cookie, identityToken, proxy)
+- `auth-grpc.config.ts` - Auth gRPC client settings (url)
 
 **ConfigsService** (`libs/core/src/configs/configs.service.ts`):
 
@@ -233,11 +242,16 @@ Provides typed access to configurations via getters:
 // Inject via ConfigsServiceKey
 constructor(@Inject(ConfigsServiceKey) private readonly configsService: ConfigsService) {}
 
-// Access configs
-this.configsService.AppConfig      // IApp (required)
-this.configsService.DatabaseConfig // IDatabase (required)
-this.configsService.RedisConfig    // IRedisConfig (optional - must be loaded)
-this.configsService.KafkaConfig    // IKafkaConfig (optional - must be loaded)
+// Core configs (required for all services)
+this.configsService.AppConfig      // IApp
+this.configsService.DatabaseConfig // IDatabase
+
+// Optional configs (returns undefined if not loaded)
+this.configsService.RedisConfig    // IRedisConfig | undefined
+this.configsService.KafkaConfig    // IKafkaConfig | undefined
+this.configsService.DiscordConfig  // IDiscordConfig | undefined
+this.configsService.YoutubeConfig  // IYoutubeConfig | undefined
+this.configsService.AuthGrpcConfig // IAuthGrpcConfig | undefined
 ```
 
 **Loading Configs per Service** (`apps/{service}/src/configs/configs.module.ts`):
@@ -245,7 +259,7 @@ this.configsService.KafkaConfig    // IKafkaConfig (optional - must be loaded)
 ```typescript
 ConfigModule.forRoot({
   cache: true,
-  load: [AppConfig, DatabaseConfig, RedisConfig, KafkaConfig], // Add configs as needed
+  load: [AppConfig, DatabaseConfig, RedisConfig, KafkaConfig, DiscordConfig], // Add configs as needed
 }),
 ```
 
@@ -266,16 +280,31 @@ The project uses TypeScript transformers via `ts-patch`:
 
 These are configured in tsconfig.json plugins section.
 
+### CoreModule
+
+The `CoreModule` (`libs/core/src/core.module.ts`) is a global module that provides shared infrastructure:
+
+**Imports:**
+- `LoggerModule` - Winston-based structured logging
+- `LifecycleModule.forRoot()` - Connection lifecycle management
+- `ClsModule` - Continuation-local storage for request context
+- `AopModule` - Aspect-oriented programming support (`@toss/nestjs-aop`)
+
+**Global Providers:**
+- `RequestIdGuard` (`APP_GUARD`) - Injects CLS context with request IDs
+- `ErrorInterceptor` (`APP_INTERCEPTOR`) - Catches errors, logs 500+ errors, converts to HTTP responses
+- `RequestLogInterceptor` (`APP_INTERCEPTOR`) - Logs request/response with timing, flags slow requests (>10s)
+
 ### Lifecycle Management & Graceful Shutdown
 
-The project uses a centralized lifecycle management system in `libs/core/src/lifecycle/`:
+The project uses a per-connection lifecycle management system in `libs/core/src/lifecycle/`:
 
 **Core Components:**
 
-- `LifecycleModule` - Global module providing lifecycle services
+- `LifecycleModule` - Global module providing lifecycle services (configured via `forRoot()`)
 - `ConnectionRegistryService` - Registry for all external connections
 - `ReadinessGateService` - Blocks API server until all connections are ready
-- `ShutdownManagerService` - Coordinates graceful shutdown on SIGTERM/SIGINT
+- `GracePeriodService` - Implements `BeforeApplicationShutdown` for graceful shutdown delay
 - `MikroConnectionService` - Database connection lifecycle wrapper
 
 **IManagedConnection Interface:**
@@ -284,7 +313,7 @@ All external connection services must implement this interface:
 ```typescript
 interface IManagedConnection {
   readonly connectionName: string;
-  readonly state: ConnectionState;
+  readonly state: ConnectionState;  // DISCONNECTED | CONNECTING | CONNECTED | DISCONNECTING | ERROR
   connect(): Promise<void>;
   disconnect(): Promise<void>;
   isHealthy(): Promise<boolean>;
@@ -292,34 +321,40 @@ interface IManagedConnection {
 }
 ```
 
-**Shutdown Priority:**
-Connections are shut down in priority order (higher = shutdown first):
-
-- Kafka: priority 20 (shuts down first, drains pending messages)
-- Redis: priority 10
-- Database: priority 0 (shuts down last)
-
 **Startup Flow:**
 
 1. All modules initialized, connection services register with `ConnectionRegistryService`
 2. `app.init()` called - triggers `OnModuleInit` hooks, connections established
-3. `ReadinessGateService.waitForReady()` - waits for all connections (timeout: 30s)
+3. `ReadinessGateService.waitForReady()` - waits for all required connections (timeout: 30s)
 4. HTTP server starts accepting requests
 
 **Shutdown Flow (SIGTERM/SIGINT):**
 
-1. Grace period (5s) - allows load balancer to deregister
+1. `GracePeriodService` waits (5s default) - allows load balancer to deregister
 2. Drain phase - each connection drains pending work
-3. Close connections phase - disconnect in priority order
+3. Disconnect phase - connections disconnect
 4. Application exits
 
 **Configuration (in CoreModule):**
 
 ```typescript
 LifecycleModule.forRoot({
-  shutdown: { timeout: 30000, gracePeriod: 5000 },
+  gracePeriod: { gracePeriod: 5000 },
   readiness: { timeout: 30000, checkInterval: 1000 },
 })
+```
+
+### Error Handling
+
+**GeneralException** (`libs/core/src/common/exceptions/general.exception.ts`):
+
+Extends `HttpException` with call context tracking for consistent error formatting:
+
+```typescript
+class GeneralException extends HttpException {
+  constructor(callClass: string, callMethod: string, message: string, status?: number)
+  getCalledFrom(): string  // Returns "Class.method"
+}
 ```
 
 ### External Connection Modules
@@ -366,7 +401,47 @@ KafkaModule.registerAsync({
 ```
 
 - `KafkaModule.getConsumerOptions()` - For microservice consumer setup
-- Implements `IManagedConnection` with retry logic and message drain support
+- Implements `IManagedConnection` with retry logic (exponential backoff) and message drain support
+- `drain()` waits up to 10s for pending messages to complete before shutdown
+
+**Kafka Event Topics** (`libs/kafka/src/events/`):
+
+Topics follow naming convention `{service}.{entity}.{action}`:
+
+```typescript
+KafkaTopics.Auth.UserCreated        // 'auth.user.created'
+KafkaTopics.Auth.SessionRevoked     // 'auth.session.revoked'
+KafkaTopics.Notification.EmailSent  // 'notification.email.sent'
+KafkaTopics.SayhoBot.SongPlayed     // 'sayho-bot.song.played'
+```
+
+### Auth Library (`libs/auth/`)
+
+Shared authentication library for consumer services using gRPC token introspection:
+
+**Module Registration:**
+
+```typescript
+// In module imports
+AuthModule.forRoot(),  // Registers gRPC client globally
+
+// In module providers
+AuthModule.getGuardProvider(),         // APP_GUARD - requires CacheModule imported first
+AuthModule.getEventListenerProvider(), // AuthEventListener - requires CacheModule + KafkaModule
+```
+
+**Components:**
+- `AuthGrpcClientService` - Communicates with auth service's `ValidateToken` RPC
+- `AuthGuard` - Cache-first token validation: check `@Public()` → extract Bearer → Redis cache → gRPC fallback
+- `AuthEventListener` - Listens for `SessionRevoked` Kafka events to invalidate cached tokens
+- `@Public()` decorator - Skip auth on specific endpoints
+- `@CurrentUser()` decorator - Inject authenticated user from CLS context
+
+**Token Caching:**
+- Cache key: `auth:token:<sha256_of_jwt>`, TTL 5min
+- Single-flight pattern prevents thundering herd for concurrent requests with the same token
+
+**Important:** Consumer services MUST import `CacheModule` BEFORE `AuthModule`.
 
 ### Bootstrap Pattern
 
@@ -391,10 +466,52 @@ class MyServiceMain extends AbstractMain {
 MyServiceMain.run();
 ```
 
+**Bootstrap Phases (Template Method):**
+
+1. Create NestJS application (buffer logs)
+2. Resolve core services (ConfigsService, LoggerService)
+3. Log startup info with mapped env variables
+4. Configure middleware (trust proxy, helmet, CORS)
+5. Configure API versioning (URI, default v1)
+6. Setup Winston logger (disabled in local env)
+7. Configure gRPC microservice
+8. `app.init()` - triggers `OnModuleInit` hooks
+9. Wait for readiness (all connections ready via `ReadinessGateService`)
+10. `onBeforeListen()` hook
+11. Start microservices and HTTP server
+12. `onAfterListen()` hook
+13. Configure HMR (dev mode)
+
 **Extensibility Hooks:**
 
 - `onBeforeListen()` - Called before HTTP server starts
 - `onAfterListen()` - Called after server starts (logs startup info)
+
+### sayho-bot Discord Module (Hexagonal Architecture)
+
+The sayho-bot's Discord integration follows hexagonal (ports & adapters) architecture:
+
+```text
+apps/sayho-bot/src/discord/
+├── domain/
+│   ├── entities/        # song.ts, queue-state.ts
+│   └── ports/           # Interfaces: youtube-search, voice-connection, stream-provider, etc.
+├── application/
+│   ├── play-music.usecase.ts
+│   ├── search-video.usecase.ts
+│   └── queue-state.manager.ts
+├── infrastructure/
+│   ├── discord-client/  # Discord.js adapters (client, channel-state, player)
+│   ├── voice/           # Voice connection and streaming adapters
+│   └── youtube/         # YouTube search and PO token adapters
+└── presentation/
+    ├── commands/        # Slash command handler
+    └── events/          # Message/interaction event handler
+```
+
+Uses `@toss/nestjs-aop` for cross-cutting concerns:
+- `DiscordContextAspect` - Manages Discord context per request
+- `DiscordErrorAspect` - Handles and formats errors
 
 ## Coding Conventions
 
@@ -416,10 +533,11 @@ import { BootstrapConfig } from '@app/core/bootstrap/bootstrap.interface';
 - Always run `pnpm proto:generate` after modifying `.proto` files
 - Each service must set `SERVICE_NAME` environment variable at runtime
 - Database schemas are service-isolated; cross-service queries must use gRPC
-- Use absolute imports via path aliases: `@app/core`, `@app/grpc`, `@app/mikro`, `@app/cache`, `@app/kafka`
+- Use absolute imports via path aliases: `@app/core`, `@app/grpc`, `@app/mikro`, `@app/cache`, `@app/kafka`, `@app/auth`
+- Test imports use `@test` alias (e.g., `@test/factories/user.factory`)
 - The project uses UUIDv7 for primary keys (via `uuid` package v13)
 - Environment files follow pattern `.env.{environment}` (e.g., `.env.local`)
-- Redis/Kafka configs are optional - only load them in services that need them
+- Redis/Kafka/Discord/Youtube/AuthGrpc configs are optional - only load them in services that need them
 
 ## Docker Services
 

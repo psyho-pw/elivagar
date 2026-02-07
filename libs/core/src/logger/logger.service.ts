@@ -28,7 +28,7 @@ export class LoggerService {
     const log: Log = { message, requestId, logId: v7() };
     const appConfig = this.configService.AppConfig;
 
-    if (appConfig.env !== Env.development) {
+    if (appConfig.env !== Env.local) {
       log.app = appConfig.serviceName;
       log.env = appConfig.env;
     }

@@ -20,7 +20,6 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "paths": {
-      "*": ["./*"],
       "@app/core": ["./libs/core/src"],
       "@app/core/*": ["./libs/core/src/*"],
       "@app/grpc": ["./libs/grpc/src"],
@@ -30,7 +29,11 @@
       "@app/kafka": ["./libs/kafka/src"],
       "@app/kafka/*": ["./libs/kafka/src/*"],
       "@app/cache": ["./libs/cache/src"],
-      "@app/cache/*": ["./libs/cache/src/*"]
+      "@app/cache/*": ["./libs/cache/src/*"],
+      "@app/auth": ["./libs/auth/src"],
+      "@app/auth/*": ["./libs/auth/src/*"],
+      "@test": ["./test"],
+      "@test/*": ["./test/*"]
     },
     "plugins": [
       {

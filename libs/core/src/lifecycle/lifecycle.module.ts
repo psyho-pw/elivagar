@@ -1,12 +1,12 @@
 import { DynamicModule, Global, Module, Provider } from '@nestjs/common';
 import { ConnectionRegistryService } from './connection-registry.service';
-import { READINESS_CONFIG, SHUTDOWN_CONFIG } from './lifecycle.constant';
-import { IReadinessConfig, IShutdownConfig } from './lifecycle.interface';
+import { GracePeriodService } from './grace-period.service';
+import { GRACE_PERIOD_CONFIG, READINESS_CONFIG } from './lifecycle.constant';
+import { IGracePeriodConfig, IReadinessConfig } from './lifecycle.interface';
 import { ReadinessGateService } from './readiness-gate.service';
-import { ShutdownManagerService } from './shutdown-manager.service';
 
 export interface LifecycleModuleOptions {
-  shutdown?: IShutdownConfig;
+  gracePeriod?: IGracePeriodConfig;
   readiness?: IReadinessConfig;
 }
 
@@ -16,13 +16,11 @@ export class LifecycleModule {
   static forRoot(options: LifecycleModuleOptions = {}): DynamicModule {
     const providers: Provider[] = [
       {
-        provide: SHUTDOWN_CONFIG,
+        provide: GRACE_PERIOD_CONFIG,
         useValue: {
-          timeout: 30000,
           gracePeriod: 5000,
-          verbose: false,
-          ...options.shutdown,
-        } as IShutdownConfig,
+          ...options.gracePeriod,
+        } as IGracePeriodConfig,
       },
       {
         provide: READINESS_CONFIG,
@@ -34,13 +32,13 @@ export class LifecycleModule {
       },
       ConnectionRegistryService,
       ReadinessGateService,
-      ShutdownManagerService,
+      GracePeriodService,
     ];
 
     return {
       module: LifecycleModule,
       providers,
-      exports: [ConnectionRegistryService, ReadinessGateService, ShutdownManagerService],
+      exports: [ConnectionRegistryService, ReadinessGateService, GracePeriodService],
     };
   }
 }

@@ -73,7 +73,7 @@ export abstract class AbstractMain {
     this.configureVersioning(config.versioning);
 
     // Winston 로거 설정
-    this.setupLogger();
+    this.setupLogger(this.appConfig.env);
 
     // gRPC 설정
     await this.configureGrpc(config.grpc);
@@ -197,7 +197,12 @@ export abstract class AbstractMain {
   /**
    * 애플리케이션 로거로 Winston 설정
    */
-  protected setupLogger(): void {
+  protected setupLogger(env: Env): void {
+    if (env === Env.local) {
+      this.app.useLogger(false);
+      return;
+    }
+
     this.app.useLogger(this.app.get(WINSTON_MODULE_NEST_PROVIDER));
   }
 
@@ -259,7 +264,7 @@ export abstract class AbstractMain {
    */
   protected isDeployedEnvironment(): boolean {
     const env = this.appConfig.env;
-    return env !== Env.development && env !== Env.test;
+    return env !== Env.local && env !== Env.test;
   }
 
   /**

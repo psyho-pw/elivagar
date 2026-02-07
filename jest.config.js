@@ -4,15 +4,21 @@ module.exports = {
   rootDir: '.',
   testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.(t|j)s$': 'ts-jest',
+    '^.+\\.(t|j)s$': ['ts-jest', { compiler: 'ts-patch/compiler' }],
   },
   collectCoverageFrom: ['**/*.(t|j)s'],
   coverageDirectory: './coverage',
   testEnvironment: 'node',
   roots: ['<rootDir>/apps/', '<rootDir>/libs/'],
   moduleNameMapper: {
+    '^uuid$': '<rootDir>/test/mocks/uuid.ts',
+    '^change-case$': '<rootDir>/test/mocks/change-case.ts',
+    '^@test(|/.*)$': '<rootDir>/test/$1',
     '^@app/core(|/.*)$': '<rootDir>/libs/core/src/$1',
     '^@app/grpc(|/.*)$': '<rootDir>/libs/grpc/src/$1',
     '^@app/mikro(|/.*)$': '<rootDir>/libs/mikro/src/$1',
+    '^@app/cache(|/.*)$': '<rootDir>/libs/cache/src/$1',
+    '^@app/kafka(|/.*)$': '<rootDir>/libs/kafka/src/$1',
+    '^@app/auth(|/.*)$': '<rootDir>/libs/auth/src/$1',
   },
 };

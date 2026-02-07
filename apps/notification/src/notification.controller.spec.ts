@@ -1,22 +1,28 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestBed, Mocked } from '@suites/unit';
 import { NotificationController } from './notification.controller';
 import { NotificationService } from './notification.service';
 
 describe('NotificationController', () => {
-  let notificationController: NotificationController;
+  let controller: NotificationController;
+  let notificationService: Mocked<NotificationService>;
 
-  beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
-      controllers: [NotificationController],
-      providers: [NotificationService],
-    }).compile();
+  beforeAll(async () => {
+    const { unit, unitRef } = await TestBed.solitary(NotificationController).compile();
 
-    notificationController = app.get<NotificationController>(NotificationController);
+    controller = unit;
+    notificationService = unitRef.get(NotificationService);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(notificationController.getHello()).toBe('Hello World!');
+  beforeEach(() => jest.clearAllMocks());
+
+  describe('getHello', () => {
+    it('should delegate to notificationService.getHello', () => {
+      notificationService.getHello.mockReturnValue('Hello World!');
+
+      const result = controller.getHello();
+
+      expect(notificationService.getHello).toHaveBeenCalled();
+      expect(result).toBe('Hello World!');
     });
   });
 });

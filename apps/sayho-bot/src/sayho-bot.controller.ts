@@ -1,3 +1,5 @@
+import { Public } from '@app/auth/decorators/public.decorator';
+import { TransformDto } from '@app/grpc/grpc/grpc.decorator';
 import { GrpcDto } from '@app/grpc/grpc/grpc.interface';
 import {
   PingRequest,
@@ -19,35 +21,17 @@ export interface ISendKafkaTest {
   };
 }
 
-export function TransformDto() {
-  return function (
-    _target: unknown,
-    _propertyKey: string,
-    descriptor: PropertyDescriptor,
-  ): PropertyDescriptor {
-    const originalMethod = descriptor.value;
-
-    descriptor.value = function (...args: unknown[]): unknown {
-      const [data, metadata, call] = args;
-      const params = { data, metadata, call };
-
-      // 원본 메서드를 호출하되, this 컨텍스트 및 통합된 파라미터 전달
-      return originalMethod.call(this, params);
-    };
-
-    return descriptor;
-  };
-}
-
 @Controller('/')
 export class SayhoBotController {
   constructor(private readonly sayhoBotService: SayhoBotService) {}
 
+  @Public()
   @Get('/')
   getHello(): string {
     return this.sayhoBotService.getHello();
   }
 
+  @Public()
   @Post('/kafka/test')
   sendKafkaTest(@TypedBody() body: ISendKafkaTest['body']): ISendKafkaTest['response'] {
     this.sayhoBotService.sendNotification(body.message);

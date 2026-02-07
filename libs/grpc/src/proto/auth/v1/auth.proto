@@ -3,7 +3,21 @@ syntax = "proto3";
 package auth.v1;
 
 service AuthService {
+  rpc Register (RegisterRequest) returns (RegisterResponse) {}
   rpc Login (LoginRequest) returns (LoginResponse) {}
+  rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse) {}
+  rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse) {}
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string name = 3;
+}
+
+message RegisterResponse {
+  string user_id = 1;
+  string email = 2;
 }
 
 message LoginRequest {
@@ -12,5 +26,35 @@ message LoginRequest {
 }
 
 message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int32 expires_in = 3;
+}
+
+message ValidateTokenRequest {
   string token = 1;
+}
+
+message ValidateTokenResponse {
+  bool valid = 1;
+  UserInfo user = 2;
+  string error_message = 3;
+}
+
+message UserInfo {
+  string user_id = 1;
+  string email = 2;
+  repeated string roles = 3;
+  int64 token_exp = 4;
+  string token_hash = 5;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int32 expires_in = 3;
 }

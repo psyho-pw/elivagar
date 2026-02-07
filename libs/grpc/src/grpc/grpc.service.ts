@@ -21,7 +21,7 @@ export class GrpcService {
     const opt: GrpcOptions = {
       transport: Transport.GRPC,
       options: {
-        package: camelCase(name),
+        package: `${camelCase(name)}.${version}`,
         protoPath,
         gracefulShutdown: true,
         url: `0.0.0.0:${port}`,
