@@ -19,3 +19,9 @@ export interface IAudioPlayer {
 }
 
 export const AudioPlayerPort = Symbol('AudioPlayerPort');
+
+export interface IAudioPlayerFactory {
+  createPlayer(events: AudioPlayerEvents): IAudioPlayer;
+}
+
+export const AudioPlayerFactoryPort = Symbol('AudioPlayerFactoryPort');

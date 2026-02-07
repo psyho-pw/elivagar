@@ -57,6 +57,17 @@ export class QueueState {
     return this.removeCurrent();
   }
 
+  shuffle(): void {
+    if (this.#queue.length <= 1) return;
+    const current = this.#queue[0];
+    const rest = this.#queue.slice(1);
+    for (let i = rest.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [rest[i], rest[j]] = [rest[j], rest[i]];
+    }
+    this.#queue = [current, ...rest];
+  }
+
   reset(): void {
     this.#queue = [];
     this.#isPlaying = false;

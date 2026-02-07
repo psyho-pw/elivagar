@@ -17,7 +17,11 @@ export class AuthService {
     private readonly loggerService: LoggerService,
   ) {}
 
-  async register(email: string, password: string, name: string): Promise<{ userId: string; email: string }> {
+  async register(
+    email: string,
+    password: string,
+    name: string,
+  ): Promise<{ userId: string; email: string }> {
     const existing = await this.em.findOne(User, { email, deletedAt: null });
     if (existing) {
       throw new RpcException({

@@ -17,9 +17,13 @@ import {
 import { WithDiscordContext } from '../../../common/aop/discord-context.aspect';
 import { HandleDiscordError } from '../../../common/aop/discord-error.aspect';
 import { DiscordException } from '../../../common/exceptions/discord.exception';
+import { HandleVoiceStateUseCase } from '../../application/handle-voice-state.usecase';
+import { PlayMusicUseCase } from '../../application/play-music.usecase';
 import { SearchVideoUseCase } from '../../application/search-video.usecase';
 import { VoiceChannelInfo } from '../../domain/entities/song';
 import { DiscordClientAdapter } from '../../infrastructure/discord-client/discord-client.adapter';
+import { GuildInfraStateManager } from '../../infrastructure/discord-client/guild-infra-state.manager';
+import { buildQueuedEmbed } from '../helpers/embed.helper';
 
 @Injectable()
 export class EventHandler {
@@ -27,6 +31,9 @@ export class EventHandler {
     @Inject(ConfigsServiceKey) private readonly configsService: ConfigsService,
     private readonly discordClient: DiscordClientAdapter,
     private readonly searchVideoUseCase: SearchVideoUseCase,
+    private readonly playMusicUseCase: PlayMusicUseCase,
+    private readonly handleVoiceStateUseCase: HandleVoiceStateUseCase,
+    private readonly guildInfraStateManager: GuildInfraStateManager,
     private readonly loggerService: LoggerService,
   ) {}
 
@@ -90,30 +97,21 @@ export class EventHandler {
       return;
     }
 
-    const musicQueue = [...this.discordClient.getMusicQueue(guild.id)];
-    musicQueue.push(song);
-    this.discordClient.setMusicQueue(guild.id, musicQueue);
+    const result = await this.playMusicUseCase.play({
+      guildId: guild.id,
+      songs: [song],
+      voiceChannel: voiceChannelInfo,
+      channelId: interaction.channelId,
+    });
 
     this.loggerService.info(this.selectMenuHandler.name, `${song.title} added to queue`);
-    this.loggerService.info(this.selectMenuHandler.name, `queue length: ${musicQueue.length}`);
+    this.loggerService.info(this.selectMenuHandler.name, `queue length: ${result.totalInQueue}`);
 
     const reply = await interaction.reply({
-      embeds: [
-        this.discordClient.formatMessageEmbed(
-          selectedUrl,
-          1,
-          musicQueue.length,
-          song.title,
-          song.thumbnail,
-        ),
-      ],
+      embeds: [buildQueuedEmbed(selectedUrl, 1, result.totalInQueue, song.title, song.thumbnail)],
     });
     setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
-    this.discordClient.removeFromDeleteQueue(guild.id, interaction.message.id);
-
-    if (!this.discordClient.getIsPlaying(guild.id)) {
-      await this.discordClient.playSong(interaction.message);
-    }
+    this.guildInfraStateManager.removeFromDeleteQueue(guild.id, interaction.message.id);
   }
 
   @WithDiscordContext()
@@ -180,23 +178,10 @@ export class EventHandler {
               const guildChannel = ch as Channel & { guildId?: string; name?: string };
               return guildChannel.guildId === oldState.guild.id && guildChannel.name === '일반';
             })
-            .first() as (Channel & { send: (content: string) => Promise<Message> }) | undefined;
+            .first() as (Channel & { id: string }) | undefined;
 
           if (channel) {
-            channel.send('바윙~').then((msg) => {
-              this.discordClient.setMusicQueue(newState.guild.id, []);
-              this.discordClient.setIsPlaying(newState.guild.id, false);
-              this.discordClient.setVolume(newState.guild.id, 1);
-              this.discordClient.deleteCurrentInfoMsg(newState.guild.id);
-              this.discordClient.removeGuildFromDeleteQueue(newState.guild.id);
-              this.discordClient.deletePlayer(newState.guild.id);
-              this.discordClient.getConnection(newState.guild.id)?.destroy();
-              this.discordClient.deleteConnection(newState.guild.id);
-              setTimeout(
-                () => msg.delete(),
-                this.configsService.DiscordConfig!.messageDeleteTimeout,
-              );
-            });
+            this.handleVoiceStateUseCase.handleBotAlone(newState.guild.id, channel.id);
           }
         }
       }, 5000);

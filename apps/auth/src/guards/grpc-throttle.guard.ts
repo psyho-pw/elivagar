@@ -1,7 +1,7 @@
+import { status } from '@grpc/grpc-js';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
 import { GRPC_THROTTLE_KEY, GrpcThrottleOptions } from './grpc-throttle.decorator';
 
 interface ThrottleEntry {
@@ -21,7 +21,8 @@ export class GrpcThrottleGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     if (context.getType() !== 'rpc') {
       return true;
-    }GRPC_THROTTLE_KEY
+    }
+    GRPC_THROTTLE_KEY;
 
     const options = this.reflector.get<GrpcThrottleOptions | undefined>(
       GRPC_THROTTLE_KEY,

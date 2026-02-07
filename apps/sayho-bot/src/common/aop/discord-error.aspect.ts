@@ -1,3 +1,4 @@
+import { GeneralException } from '@app/core/common/exceptions/general.exception';
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
 import { IConfigsService } from '@app/core/configs/configs.interface';
 import { LoggerService } from '@app/core/logger/logger.service';
@@ -8,7 +9,6 @@ import { KafkaServiceKey } from '@app/kafka/kafka/kafka.constant';
 import { IKafkaService } from '@app/kafka/kafka/kafka.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { Aspect, LazyDecorator, WrapParams, createDecorator } from '@toss/nestjs-aop';
-import { GeneralException } from '@app/core/common/exceptions/general.exception';
 
 export const DiscordErrorHandlerKey = Symbol('DiscordErrorHandler');
 

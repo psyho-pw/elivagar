@@ -2,23 +2,23 @@ import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
 import { ConfigsService } from '@app/core/configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { Inject, Injectable } from '@nestjs/common';
-import { APIEmbedField } from 'discord-api-types/v10';
 import {
   ChatInputCommandInteraction,
-  EmbedBuilder,
   InteractionResponse,
   Message,
   PermissionFlagsBits,
   StageChannel,
-  TextChannel,
   VoiceChannel,
 } from 'discord.js';
 import { HandleDiscordError } from '../../../common/aop/discord-error.aspect';
 import { DiscordException } from '../../../common/exceptions/discord.exception';
+import { LeaveChannelUseCase } from '../../application/leave-channel.usecase';
+import { ManageQueueUseCase } from '../../application/manage-queue.usecase';
+import { PlayMusicUseCase } from '../../application/play-music.usecase';
 import { SearchVideoUseCase } from '../../application/search-video.usecase';
 import { VoiceChannelInfo } from '../../domain/entities/song';
-import { IYoutubeSearch, YoutubeSearchPort } from '../../domain/ports/youtube-search.port';
-import { DiscordClientAdapter } from '../../infrastructure/discord-client/discord-client.adapter';
+import { GuildInfraStateManager } from '../../infrastructure/discord-client/guild-infra-state.manager';
+import { buildHelpEmbed, buildQueuedEmbed, buildQueueListEmbed } from '../helpers/embed.helper';
 
 interface ParsedPlayCommand {
   content: string;
@@ -35,9 +35,11 @@ interface SelectListItem {
 export class CommandHandler {
   constructor(
     @Inject(ConfigsServiceKey) private readonly configsService: ConfigsService,
-    private readonly discordClient: DiscordClientAdapter,
     private readonly searchVideoUseCase: SearchVideoUseCase,
-    @Inject(YoutubeSearchPort) private readonly youtubeSearch: IYoutubeSearch,
+    private readonly playMusicUseCase: PlayMusicUseCase,
+    private readonly manageQueueUseCase: ManageQueueUseCase,
+    private readonly leaveChannelUseCase: LeaveChannelUseCase,
+    private readonly guildInfraStateManager: GuildInfraStateManager,
     private readonly loggerService: LoggerService,
   ) {}
 
@@ -72,38 +74,35 @@ export class CommandHandler {
 
     const voiceChannelInfo = this.toVoiceChannelInfo(voiceChannel, message.guildId);
     const songs = await this.searchVideoUseCase.getPlaylist(url, voiceChannelInfo);
-    const messageChannel = message.channel as TextChannel;
+    const channelId = message.channelId;
 
     if (!songs.length) {
-      const msg = await messageChannel.send('No videos found');
+      const msg = await message.reply('No videos found');
       setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
       return;
     }
 
-    const musicQueue = [...this.discordClient.getMusicQueue(message.guildId)];
-    for (const song of songs) {
-      musicQueue.push(song);
-    }
-    this.discordClient.setMusicQueue(message.guildId, musicQueue);
+    const result = await this.playMusicUseCase.play({
+      guildId: message.guildId,
+      songs,
+      voiceChannel: voiceChannelInfo,
+      channelId,
+    });
 
-    this.loggerService.info('playlistHandler', `queue length: ${musicQueue.length}`);
+    this.loggerService.info('playlistHandler', `queue length: ${result.totalInQueue}`);
 
     const reply = await message.reply({
       embeds: [
-        this.discordClient.formatMessageEmbed(
+        buildQueuedEmbed(
           url,
           songs.length,
-          musicQueue.length,
+          result.totalInQueue,
           songs[0]?.title ?? 'Unknown',
           songs[0]?.thumbnail ?? '',
         ),
       ],
     });
     setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
-
-    if (!this.discordClient.getIsPlaying(message.guildId)) {
-      await this.discordClient.playSong(message);
-    }
   }
 
   @HandleDiscordError({ bubble: true })
@@ -124,28 +123,19 @@ export class CommandHandler {
       return;
     }
 
-    const musicQueue = [...this.discordClient.getMusicQueue(message.guildId)];
-    musicQueue.push(song);
-    this.discordClient.setMusicQueue(message.guildId, musicQueue);
+    const result = await this.playMusicUseCase.play({
+      guildId: message.guildId,
+      songs: [song],
+      voiceChannel: voiceChannelInfo,
+      channelId: message.channelId,
+    });
 
-    this.loggerService.info('singleVidHandler', `Queue length: ${musicQueue.length}`);
+    this.loggerService.info('singleVidHandler', `Queue length: ${result.totalInQueue}`);
 
     const reply = await message.reply({
-      embeds: [
-        this.discordClient.formatMessageEmbed(
-          url,
-          1,
-          musicQueue.length,
-          song.title,
-          song.thumbnail,
-        ),
-      ],
+      embeds: [buildQueuedEmbed(url, 1, result.totalInQueue, song.title, song.thumbnail)],
     });
     setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
-
-    if (!this.discordClient.getIsPlaying(message.guildId)) {
-      await this.discordClient.playSong(message);
-    }
   }
 
   @HandleDiscordError({ bubble: true })
@@ -156,9 +146,17 @@ export class CommandHandler {
     this.loggerService.info('searchHandler', 'Search detected');
 
     searchTxt = searchTxt.trim();
-    const results = await this.youtubeSearch.searchVideos(searchTxt, 10);
+    const voiceChannel = this.getVoiceChannelFromPayload(payload);
+    if (!voiceChannel || !payload.guildId) return;
 
-    const list: SelectListItem[] = results.map((item) => ({
+    const voiceChannelInfo = this.toVoiceChannelInfo(voiceChannel, payload.guildId);
+    const { songs } = await this.searchVideoUseCase.searchByQuery({
+      query: searchTxt,
+      voiceChannel: voiceChannelInfo,
+      limit: 10,
+    });
+
+    const list: SelectListItem[] = songs.map((item) => ({
       label: item.title.slice(0, 100),
       description: item.url.slice(0, 100),
       value: item.url,
@@ -192,7 +190,7 @@ export class CommandHandler {
     if (!replyMessage) {
       throw new DiscordException('cannot specify reply message object', 'command');
     }
-    this.discordClient.setDeleteQueue(payload.guildId ?? '', replyMessage);
+    this.guildInfraStateManager.addToDeleteQueue(payload.guildId ?? '', replyMessage);
   }
 
   @HandleDiscordError()
@@ -236,7 +234,6 @@ export class CommandHandler {
   public async play(payload: Message | ChatInputCommandInteraction): Promise<void> {
     if (!payload.guildId) throw new DiscordException('guild is not specified', 'command');
 
-    const musicQueue = this.discordClient.getMusicQueue(payload.guildId);
     const parsedCommand = await this.parsePlayCommand(payload);
 
     if (!parsedCommand) {
@@ -265,13 +262,6 @@ export class CommandHandler {
       return;
     }
 
-    if (!this.discordClient.getIsPlaying(payload.guildId) && musicQueue.length === 1) {
-      const queue = [...musicQueue];
-      queue.shift();
-      this.discordClient.setMusicQueue(payload.guildId, queue);
-      this.discordClient.setIsPlaying(payload.guildId, false);
-    }
-
     const playlistCheck =
       content.match(/^(?!.*\?.*\bv=)https:\/\/(www\.)?youtube\.com\/.*\?.*\blist=.*$/) ||
       content.match(/https:\/\/music\.youtube\.com\/playlist\?list=.*/);
@@ -280,14 +270,9 @@ export class CommandHandler {
       content.match(/https:\/\/youtu\.be\/.*/) ||
       content.match(/https:\/\/music\.youtube\.com\/watch\?v=.*/);
 
-    try {
-      if (playlistCheck) await this.playlistHandler(content, voiceChannel, payload);
-      else if (vidSongCheck) await this.singleVidHandler(content, voiceChannel, payload);
-      else await this.searchHandler(content, payload);
-    } catch (err) {
-      this.discordClient.setIsPlaying(payload.guildId, false);
-      throw err;
-    }
+    if (playlistCheck) await this.playlistHandler(content, voiceChannel, payload);
+    else if (vidSongCheck) await this.singleVidHandler(content, voiceChannel, payload);
+    else await this.searchHandler(content, payload);
   }
 
   @HandleDiscordError()
@@ -299,14 +284,14 @@ export class CommandHandler {
     }
     if (!payload.guildId) throw new DiscordException('guild is not specified', 'command');
 
-    const queue = this.discordClient.getMusicQueue(payload.guildId);
+    const queue = this.manageQueueUseCase.getQueue(payload.guildId);
     if (queue.length === 0) {
       const msg = await payload.reply('Queue is empty');
       setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
       return;
     }
 
-    this.discordClient.setMusicQueue(payload.guildId, queue[0] ? [queue[0]] : []);
+    this.manageQueueUseCase.clearQueue(payload.guildId);
 
     const msg = await payload.reply('queue cleared');
     setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
@@ -315,17 +300,7 @@ export class CommandHandler {
   @HandleDiscordError()
   public async help(payload: Message | ChatInputCommandInteraction): Promise<void> {
     const discordConfig = this.configsService.DiscordConfig!;
-    const embed = new EmbedBuilder()
-      .setColor('#ffffff')
-      .setTitle('Commands')
-      .addFields([
-        { name: 'prefix', value: discordConfig.commandPrefix },
-        { name: 'p', value: `음악 재생 => ${discordConfig.commandPrefix}p [uri]` },
-        { name: 's', value: `음악 스킵 => ${discordConfig.commandPrefix}s` },
-        { name: 'q', value: `음악 큐 조회 => ${discordConfig.commandPrefix}q` },
-        { name: 'eq', value: `음악 큐 제거 => ${discordConfig.commandPrefix}eq` },
-        { name: 'l', value: `내보내기 => ${discordConfig.commandPrefix}l` },
-      ]);
+    const embed = buildHelpEmbed(discordConfig.commandPrefix);
 
     const msg = await payload.reply({ embeds: [embed] });
     setTimeout(() => msg.delete(), discordConfig.messageDeleteTimeout);
@@ -340,11 +315,7 @@ export class CommandHandler {
     }
     if (!payload.guildId) throw new DiscordException('guild is not specified', 'command');
 
-    this.discordClient.setMusicQueue(payload.guildId, []);
-    this.discordClient.setIsPlaying(payload.guildId, false);
-    this.discordClient.deleteCurrentInfoMsg(payload.guildId);
-    this.discordClient.getConnection(payload.guildId)?.destroy();
-    this.discordClient.deleteConnection(payload.guildId);
+    this.leaveChannelUseCase.execute(payload.guildId);
 
     const msg = await payload.reply('bye bye ,,,');
     setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
@@ -358,25 +329,14 @@ export class CommandHandler {
     }
     if (!payload.guildId) throw new DiscordException('guild is not specified', 'command');
 
-    const musicQueue = this.discordClient.getMusicQueue(payload.guildId);
+    const musicQueue = this.manageQueueUseCase.getQueue(payload.guildId);
     if (musicQueue.length <= 1) {
       const msg = await payload.reply('Queue is empty');
       setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
       return;
     }
 
-    const embed = new EmbedBuilder()
-      .setColor('#ffffff')
-      .setTitle('Queue')
-      .setThumbnail(musicQueue[1]?.thumbnail ?? '');
-
-    const fields: APIEmbedField[] = [];
-    musicQueue.forEach((item, idx) => {
-      if (idx !== 0 && idx < 26) {
-        fields.push({ name: `${idx}`, value: `${item.title}` });
-      }
-    });
-    embed.addFields(fields);
+    const embed = buildQueueListEmbed(musicQueue);
 
     const msg = await payload.reply({ embeds: [embed] });
     setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
@@ -392,22 +352,21 @@ export class CommandHandler {
     if (!payload.guildId) throw new DiscordException('guild is not specified', 'command');
 
     this.loggerService.verbose('skip', 'Skipping song...');
-    const musicQueue = this.discordClient.getMusicQueue(payload.guildId);
-    this.discordClient.deleteCurrentInfoMsg(payload.guildId);
 
-    if (musicQueue.length <= 1) {
+    const voiceChannel = this.getVoiceChannelFromPayload(payload)!;
+    const voiceChannelInfo = this.toVoiceChannelInfo(voiceChannel, payload.guildId);
+
+    const result = await this.playMusicUseCase.skip(
+      payload.guildId,
+      voiceChannelInfo,
+      payload.channelId,
+    );
+
+    if (result.queueEmpty) {
       const reply = await payload.reply('Nothing to play');
       setTimeout(() => reply.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
-      this.discordClient.setMusicQueue(payload.guildId, []);
-      this.discordClient.getPlayer(payload.guildId).stop();
       return;
     }
-
-    const queue = [...musicQueue];
-    queue.shift();
-    this.discordClient.setMusicQueue(payload.guildId, queue);
-    this.discordClient.setIsPlaying(payload.guildId, false);
-    await this.discordClient.playSong(payload);
 
     const msg = await payload.reply('Skipping ...');
     setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
@@ -417,7 +376,7 @@ export class CommandHandler {
   public async shuffle(payload: Message | ChatInputCommandInteraction): Promise<void> {
     if (!payload.guildId) throw new DiscordException('guild is not specified', 'command');
 
-    this.discordClient.shuffleMusicQueue(payload.guildId);
+    this.manageQueueUseCase.shuffle(payload.guildId);
 
     const msg = await payload.reply('Queue shuffled');
     setTimeout(() => msg.delete(), this.configsService.DiscordConfig!.messageDeleteTimeout);
