@@ -1,8 +1,8 @@
 {
   "name": "elivagar",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "NestJS microservices monorepo with gRPC, MikroORM, Kafka, and Redis",
+  "author": "sayho",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

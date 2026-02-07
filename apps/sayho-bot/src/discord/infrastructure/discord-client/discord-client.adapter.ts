@@ -46,7 +46,7 @@ export class DiscordClientAdapter {
       await this.discordBotClient.login(this.configsService.DiscordConfig.token);
       this.loggerService.verbose('init', 'DiscordBotClient instance initialized');
     } catch (err) {
-      console.error(err);
+      this.loggerService.error('init', `Discord login failed: ${err}`);
       throw new DiscordException('login failed', 'client');
     }
   }

@@ -15,10 +15,14 @@ RUN pnpm proto:generate && pnpm build:sayho-bot
 RUN pnpm prune --prod
 
 FROM base AS production
+
+RUN groupadd -r appuser && useradd -r -g appuser -d /app appuser
 WORKDIR /app
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist/apps/sayho-bot ./dist/apps/sayho-bot
-COPY package.json ./
+COPY --from=build --chown=appuser:appuser /app/node_modules ./node_modules
+COPY --from=build --chown=appuser:appuser /app/dist/apps/sayho-bot ./dist/apps/sayho-bot
+COPY --chown=appuser:appuser package.json ./
+
+USER appuser
 
 ENV NODE_ENV=production
 ENV SERVICE_NAME=sayho-bot

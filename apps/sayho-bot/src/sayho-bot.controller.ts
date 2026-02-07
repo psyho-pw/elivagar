@@ -48,9 +48,6 @@ export class SayhoBotController {
   @GrpcMethod(SayhoBotServiceServiceName)
   @TransformDto()
   ping({ data, metadata }: GrpcDto<PingRequest, PingResponse>): PingResponse {
-    console.log(data);
-    console.log(metadata);
-
     return { message: 'Pong' };
   }
 }

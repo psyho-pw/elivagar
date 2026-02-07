@@ -35,8 +35,7 @@ export const KafkaConfig = registerAs(KafkaConfigKey, (): IKafkaConfig => {
   const res = KafkaConfigSchema.safeParse(config);
 
   if (!res.success) {
-    console.error(res.error.issues);
-    throw new Error(KafkaConfigKey);
+    throw new Error(`${KafkaConfigKey} config validation failed: ${JSON.stringify(res.error.issues)}`);
   }
 
   return res.data;
