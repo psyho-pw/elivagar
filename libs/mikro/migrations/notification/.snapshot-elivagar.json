@@ -8,13 +8,12 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "uuid",
           "unsigned": false,
-          "autoincrement": true,
+          "autoincrement": false,
           "primary": true,
           "nullable": false,
-          "default": "0",
-          "mappedType": "integer"
+          "mappedType": "uuid"
         },
         "created_at": {
           "name": "created_at",
@@ -38,22 +37,22 @@
         },
         "deleted_at": {
           "name": "deleted_at",
-          "type": "varchar(255)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "length": 255,
-          "mappedType": "string"
+          "length": 6,
+          "mappedType": "datetime"
         },
         "user_id": {
           "name": "user_id",
-          "type": "int",
+          "type": "uuid",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "mappedType": "integer"
+          "mappedType": "uuid"
         },
         "title": {
           "name": "title",
@@ -74,6 +73,21 @@
           "nullable": false,
           "length": 255,
           "mappedType": "string"
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "'INFO'",
+          "enumItems": [
+            "SYSTEM",
+            "AUTH",
+            "INFO"
+          ],
+          "mappedType": "enum"
         },
         "is_read": {
           "name": "is_read",

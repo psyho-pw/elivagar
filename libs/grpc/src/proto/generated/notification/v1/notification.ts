@@ -9,30 +9,84 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 export const protobufPackage = "notification.v1";
 
-export interface NotificationRequest {
+export interface SendNotificationRequest {
+  userId: string;
+  title: string;
   message: string;
+  type: string;
 }
 
-export interface NotificationResponse {
+export interface SendNotificationResponse {
+  id: string;
+}
+
+export interface GetNotificationsRequest {
+  userId: string;
+  page: number;
+  limit: number;
+  unreadOnly: boolean;
+}
+
+export interface GetNotificationsResponse {
+  items: NotificationItem[];
+  total: number;
+}
+
+export interface GetNotificationRequest {
+  id: string;
+}
+
+export interface NotificationItem {
+  id: string;
+  userId: string;
+  title: string;
   message: string;
+  type: string;
+  isRead: boolean;
+  createdAt: string;
 }
 
-function createBaseNotificationRequest(): NotificationRequest {
-  return { message: "" };
+export interface MarkAsReadRequest {
+  ids: string[];
 }
 
-export const NotificationRequest: MessageFns<NotificationRequest> = {
-  encode(message: NotificationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export interface MarkAsReadResponse {
+  updatedCount: number;
+}
+
+export interface DeleteNotificationRequest {
+  id: string;
+}
+
+export interface DeleteNotificationResponse {
+  success: boolean;
+}
+
+function createBaseSendNotificationRequest(): SendNotificationRequest {
+  return { userId: "", title: "", message: "", type: "" };
+}
+
+export const SendNotificationRequest: MessageFns<SendNotificationRequest> = {
+  encode(message: SendNotificationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    if (message.title !== "") {
+      writer.uint32(18).string(message.title);
+    }
     if (message.message !== "") {
-      writer.uint32(10).string(message.message);
+      writer.uint32(26).string(message.message);
+    }
+    if (message.type !== "") {
+      writer.uint32(34).string(message.type);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): NotificationRequest {
+  decode(input: BinaryReader | Uint8Array, length?: number): SendNotificationRequest {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseNotificationRequest();
+    const message = createBaseSendNotificationRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -41,7 +95,31 @@ export const NotificationRequest: MessageFns<NotificationRequest> = {
             break;
           }
 
+          message.userId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.title = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
           message.message = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.type = reader.string();
           continue;
         }
       }
@@ -53,44 +131,65 @@ export const NotificationRequest: MessageFns<NotificationRequest> = {
     return message;
   },
 
-  fromJSON(object: any): NotificationRequest {
-    return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
+  fromJSON(object: any): SendNotificationRequest {
+    return {
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+      title: isSet(object.title) ? globalThis.String(object.title) : "",
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+      type: isSet(object.type) ? globalThis.String(object.type) : "",
+    };
   },
 
-  toJSON(message: NotificationRequest): unknown {
+  toJSON(message: SendNotificationRequest): unknown {
     const obj: any = {};
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
     if (message.message !== "") {
       obj.message = message.message;
+    }
+    if (message.type !== "") {
+      obj.type = message.type;
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<NotificationRequest>, I>>(base?: I): NotificationRequest {
-    return NotificationRequest.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<SendNotificationRequest>, I>>(base?: I): SendNotificationRequest {
+    return SendNotificationRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<NotificationRequest>, I>>(object: I): NotificationRequest {
-    const message = createBaseNotificationRequest();
+  fromPartial<I extends Exact<DeepPartial<SendNotificationRequest>, I>>(object: I): SendNotificationRequest {
+    const message = createBaseSendNotificationRequest();
+    message.userId = object.userId ?? "";
+    message.title = object.title ?? "";
     message.message = object.message ?? "";
+    message.type = object.type ?? "";
     return message;
   },
 };
 
-function createBaseNotificationResponse(): NotificationResponse {
-  return { message: "" };
+function createBaseSendNotificationResponse(): SendNotificationResponse {
+  return { id: "" };
 }
 
-export const NotificationResponse: MessageFns<NotificationResponse> = {
-  encode(message: NotificationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.message !== "") {
-      writer.uint32(10).string(message.message);
+export const SendNotificationResponse: MessageFns<SendNotificationResponse> = {
+  encode(message: SendNotificationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): NotificationResponse {
+  decode(input: BinaryReader | Uint8Array, length?: number): SendNotificationResponse {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseNotificationResponse();
+    const message = createBaseSendNotificationResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -99,7 +198,7 @@ export const NotificationResponse: MessageFns<NotificationResponse> = {
             break;
           }
 
-          message.message = reader.string();
+          message.id = reader.string();
           continue;
         }
       }
@@ -111,30 +210,690 @@ export const NotificationResponse: MessageFns<NotificationResponse> = {
     return message;
   },
 
-  fromJSON(object: any): NotificationResponse {
-    return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
+  fromJSON(object: any): SendNotificationResponse {
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
   },
 
-  toJSON(message: NotificationResponse): unknown {
+  toJSON(message: SendNotificationResponse): unknown {
     const obj: any = {};
-    if (message.message !== "") {
-      obj.message = message.message;
+    if (message.id !== "") {
+      obj.id = message.id;
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<NotificationResponse>, I>>(base?: I): NotificationResponse {
-    return NotificationResponse.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<SendNotificationResponse>, I>>(base?: I): SendNotificationResponse {
+    return SendNotificationResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<NotificationResponse>, I>>(object: I): NotificationResponse {
-    const message = createBaseNotificationResponse();
+  fromPartial<I extends Exact<DeepPartial<SendNotificationResponse>, I>>(object: I): SendNotificationResponse {
+    const message = createBaseSendNotificationResponse();
+    message.id = object.id ?? "";
+    return message;
+  },
+};
+
+function createBaseGetNotificationsRequest(): GetNotificationsRequest {
+  return { userId: "", page: 0, limit: 0, unreadOnly: false };
+}
+
+export const GetNotificationsRequest: MessageFns<GetNotificationsRequest> = {
+  encode(message: GetNotificationsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    if (message.page !== 0) {
+      writer.uint32(16).int32(message.page);
+    }
+    if (message.limit !== 0) {
+      writer.uint32(24).int32(message.limit);
+    }
+    if (message.unreadOnly !== false) {
+      writer.uint32(32).bool(message.unreadOnly);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetNotificationsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetNotificationsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.limit = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.unreadOnly = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetNotificationsRequest {
+    return {
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+      page: isSet(object.page) ? globalThis.Number(object.page) : 0,
+      limit: isSet(object.limit) ? globalThis.Number(object.limit) : 0,
+      unreadOnly: isSet(object.unreadOnly)
+        ? globalThis.Boolean(object.unreadOnly)
+        : isSet(object.unread_only)
+        ? globalThis.Boolean(object.unread_only)
+        : false,
+    };
+  },
+
+  toJSON(message: GetNotificationsRequest): unknown {
+    const obj: any = {};
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    if (message.page !== 0) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.limit !== 0) {
+      obj.limit = Math.round(message.limit);
+    }
+    if (message.unreadOnly !== false) {
+      obj.unreadOnly = message.unreadOnly;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetNotificationsRequest>, I>>(base?: I): GetNotificationsRequest {
+    return GetNotificationsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetNotificationsRequest>, I>>(object: I): GetNotificationsRequest {
+    const message = createBaseGetNotificationsRequest();
+    message.userId = object.userId ?? "";
+    message.page = object.page ?? 0;
+    message.limit = object.limit ?? 0;
+    message.unreadOnly = object.unreadOnly ?? false;
+    return message;
+  },
+};
+
+function createBaseGetNotificationsResponse(): GetNotificationsResponse {
+  return { items: [], total: 0 };
+}
+
+export const GetNotificationsResponse: MessageFns<GetNotificationsResponse> = {
+  encode(message: GetNotificationsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.items) {
+      NotificationItem.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int32(message.total);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetNotificationsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetNotificationsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.items.push(NotificationItem.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetNotificationsResponse {
+    return {
+      items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => NotificationItem.fromJSON(e)) : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+    };
+  },
+
+  toJSON(message: GetNotificationsResponse): unknown {
+    const obj: any = {};
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => NotificationItem.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetNotificationsResponse>, I>>(base?: I): GetNotificationsResponse {
+    return GetNotificationsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetNotificationsResponse>, I>>(object: I): GetNotificationsResponse {
+    const message = createBaseGetNotificationsResponse();
+    message.items = object.items?.map((e) => NotificationItem.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    return message;
+  },
+};
+
+function createBaseGetNotificationRequest(): GetNotificationRequest {
+  return { id: "" };
+}
+
+export const GetNotificationRequest: MessageFns<GetNotificationRequest> = {
+  encode(message: GetNotificationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetNotificationRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetNotificationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetNotificationRequest {
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
+  },
+
+  toJSON(message: GetNotificationRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetNotificationRequest>, I>>(base?: I): GetNotificationRequest {
+    return GetNotificationRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetNotificationRequest>, I>>(object: I): GetNotificationRequest {
+    const message = createBaseGetNotificationRequest();
+    message.id = object.id ?? "";
+    return message;
+  },
+};
+
+function createBaseNotificationItem(): NotificationItem {
+  return { id: "", userId: "", title: "", message: "", type: "", isRead: false, createdAt: "" };
+}
+
+export const NotificationItem: MessageFns<NotificationItem> = {
+  encode(message: NotificationItem, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.userId !== "") {
+      writer.uint32(18).string(message.userId);
+    }
+    if (message.title !== "") {
+      writer.uint32(26).string(message.title);
+    }
+    if (message.message !== "") {
+      writer.uint32(34).string(message.message);
+    }
+    if (message.type !== "") {
+      writer.uint32(42).string(message.type);
+    }
+    if (message.isRead !== false) {
+      writer.uint32(48).bool(message.isRead);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(58).string(message.createdAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): NotificationItem {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseNotificationItem();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.title = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.type = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.isRead = reader.bool();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): NotificationItem {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+      title: isSet(object.title) ? globalThis.String(object.title) : "",
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+      type: isSet(object.type) ? globalThis.String(object.type) : "",
+      isRead: isSet(object.isRead)
+        ? globalThis.Boolean(object.isRead)
+        : isSet(object.is_read)
+        ? globalThis.Boolean(object.is_read)
+        : false,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+    };
+  },
+
+  toJSON(message: NotificationItem): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    if (message.type !== "") {
+      obj.type = message.type;
+    }
+    if (message.isRead !== false) {
+      obj.isRead = message.isRead;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<NotificationItem>, I>>(base?: I): NotificationItem {
+    return NotificationItem.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<NotificationItem>, I>>(object: I): NotificationItem {
+    const message = createBaseNotificationItem();
+    message.id = object.id ?? "";
+    message.userId = object.userId ?? "";
+    message.title = object.title ?? "";
     message.message = object.message ?? "";
+    message.type = object.type ?? "";
+    message.isRead = object.isRead ?? false;
+    message.createdAt = object.createdAt ?? "";
+    return message;
+  },
+};
+
+function createBaseMarkAsReadRequest(): MarkAsReadRequest {
+  return { ids: [] };
+}
+
+export const MarkAsReadRequest: MessageFns<MarkAsReadRequest> = {
+  encode(message: MarkAsReadRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.ids) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MarkAsReadRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMarkAsReadRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.ids.push(reader.string());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MarkAsReadRequest {
+    return { ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [] };
+  },
+
+  toJSON(message: MarkAsReadRequest): unknown {
+    const obj: any = {};
+    if (message.ids?.length) {
+      obj.ids = message.ids;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MarkAsReadRequest>, I>>(base?: I): MarkAsReadRequest {
+    return MarkAsReadRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<MarkAsReadRequest>, I>>(object: I): MarkAsReadRequest {
+    const message = createBaseMarkAsReadRequest();
+    message.ids = object.ids?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseMarkAsReadResponse(): MarkAsReadResponse {
+  return { updatedCount: 0 };
+}
+
+export const MarkAsReadResponse: MessageFns<MarkAsReadResponse> = {
+  encode(message: MarkAsReadResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.updatedCount !== 0) {
+      writer.uint32(8).int32(message.updatedCount);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MarkAsReadResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMarkAsReadResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.updatedCount = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MarkAsReadResponse {
+    return {
+      updatedCount: isSet(object.updatedCount)
+        ? globalThis.Number(object.updatedCount)
+        : isSet(object.updated_count)
+        ? globalThis.Number(object.updated_count)
+        : 0,
+    };
+  },
+
+  toJSON(message: MarkAsReadResponse): unknown {
+    const obj: any = {};
+    if (message.updatedCount !== 0) {
+      obj.updatedCount = Math.round(message.updatedCount);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MarkAsReadResponse>, I>>(base?: I): MarkAsReadResponse {
+    return MarkAsReadResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<MarkAsReadResponse>, I>>(object: I): MarkAsReadResponse {
+    const message = createBaseMarkAsReadResponse();
+    message.updatedCount = object.updatedCount ?? 0;
+    return message;
+  },
+};
+
+function createBaseDeleteNotificationRequest(): DeleteNotificationRequest {
+  return { id: "" };
+}
+
+export const DeleteNotificationRequest: MessageFns<DeleteNotificationRequest> = {
+  encode(message: DeleteNotificationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteNotificationRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteNotificationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteNotificationRequest {
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
+  },
+
+  toJSON(message: DeleteNotificationRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteNotificationRequest>, I>>(base?: I): DeleteNotificationRequest {
+    return DeleteNotificationRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteNotificationRequest>, I>>(object: I): DeleteNotificationRequest {
+    const message = createBaseDeleteNotificationRequest();
+    message.id = object.id ?? "";
+    return message;
+  },
+};
+
+function createBaseDeleteNotificationResponse(): DeleteNotificationResponse {
+  return { success: false };
+}
+
+export const DeleteNotificationResponse: MessageFns<DeleteNotificationResponse> = {
+  encode(message: DeleteNotificationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteNotificationResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteNotificationResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteNotificationResponse {
+    return { success: isSet(object.success) ? globalThis.Boolean(object.success) : false };
+  },
+
+  toJSON(message: DeleteNotificationResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteNotificationResponse>, I>>(base?: I): DeleteNotificationResponse {
+    return DeleteNotificationResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteNotificationResponse>, I>>(object: I): DeleteNotificationResponse {
+    const message = createBaseDeleteNotificationResponse();
+    message.success = object.success ?? false;
     return message;
   },
 };
 
 export interface NotificationService {
-  SendNotification(request: NotificationRequest): Promise<NotificationResponse>;
+  SendNotification(request: SendNotificationRequest): Promise<SendNotificationResponse>;
+  GetNotifications(request: GetNotificationsRequest): Promise<GetNotificationsResponse>;
+  GetNotification(request: GetNotificationRequest): Promise<NotificationItem>;
+  MarkAsRead(request: MarkAsReadRequest): Promise<MarkAsReadResponse>;
+  DeleteNotification(request: DeleteNotificationRequest): Promise<DeleteNotificationResponse>;
 }
 
 export const NotificationServiceServiceName = "notification.v1.NotificationService";
@@ -145,11 +904,39 @@ export class NotificationServiceClientImpl implements NotificationService {
     this.service = opts?.service || NotificationServiceServiceName;
     this.rpc = rpc;
     this.SendNotification = this.SendNotification.bind(this);
+    this.GetNotifications = this.GetNotifications.bind(this);
+    this.GetNotification = this.GetNotification.bind(this);
+    this.MarkAsRead = this.MarkAsRead.bind(this);
+    this.DeleteNotification = this.DeleteNotification.bind(this);
   }
-  SendNotification(request: NotificationRequest): Promise<NotificationResponse> {
-    const data = NotificationRequest.encode(request).finish();
+  SendNotification(request: SendNotificationRequest): Promise<SendNotificationResponse> {
+    const data = SendNotificationRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "SendNotification", data);
-    return promise.then((data) => NotificationResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => SendNotificationResponse.decode(new BinaryReader(data)));
+  }
+
+  GetNotifications(request: GetNotificationsRequest): Promise<GetNotificationsResponse> {
+    const data = GetNotificationsRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "GetNotifications", data);
+    return promise.then((data) => GetNotificationsResponse.decode(new BinaryReader(data)));
+  }
+
+  GetNotification(request: GetNotificationRequest): Promise<NotificationItem> {
+    const data = GetNotificationRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "GetNotification", data);
+    return promise.then((data) => NotificationItem.decode(new BinaryReader(data)));
+  }
+
+  MarkAsRead(request: MarkAsReadRequest): Promise<MarkAsReadResponse> {
+    const data = MarkAsReadRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "MarkAsRead", data);
+    return promise.then((data) => MarkAsReadResponse.decode(new BinaryReader(data)));
+  }
+
+  DeleteNotification(request: DeleteNotificationRequest): Promise<DeleteNotificationResponse> {
+    const data = DeleteNotificationRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "DeleteNotification", data);
+    return promise.then((data) => DeleteNotificationResponse.decode(new BinaryReader(data)));
   }
 }
 
