@@ -21,6 +21,7 @@
       "Bash(docker ps:*)",
       "Bash(docker logs:*)",
       "Bash(docker compose:*)",
+      "Bash(gh:*)",
       "Skill(code-review)",
       "mcp__codegraph__codegraph_search",
       "mcp__codegraph__codegraph_context",
