@@ -10,17 +10,57 @@ export class RequestIdGuard implements CanActivate {
   constructor(@Inject(ClsServiceKey) private readonly clsService: IClsService) {}
 
   canActivate(context: ExecutionContext): boolean {
-    if (context.getType() !== 'http') {
-      return true;
-    }
-
-    const request: Request = context.switchToHttp().getRequest();
-    const requestId: string = (request.headers['x-request-id'] as string) || v7();
+    const type = context.getType();
+    const requestId = this.extractRequestId(context, type);
 
     this.clsService.requestId = requestId;
-    request.requestId = requestId;
-    request.startTime = Date.now();
+    this.clsService.controllerCtx = context.getClass().name;
+    this.clsService.methodCtx = context.getHandler().name;
+
+    if (type === 'http') {
+      const request: Request = context.switchToHttp().getRequest();
+      request.requestId = requestId;
+      request.startTime = Date.now();
+    }
 
     return true;
+  }
+
+  private extractRequestId(context: ExecutionContext, type: string): string {
+    if (type === 'http') {
+      const request: Request = context.switchToHttp().getRequest();
+      return (request.headers['x-request-id'] as string) || v7();
+    }
+
+    if (type === 'rpc') {
+      return this.extractRpcRequestId(context) || v7();
+    }
+
+    return v7();
+  }
+
+  private extractRpcRequestId(context: ExecutionContext): string | undefined {
+    const rpcContext = context.switchToRpc().getContext();
+
+    // Kafka: KafkaContext has getTopic()
+    if (typeof rpcContext?.getTopic === 'function') {
+      const message = rpcContext.getMessage?.();
+      const header = message?.headers?.['x-request-id'];
+      if (header) {
+        return Buffer.isBuffer(header) ? header.toString() : String(header);
+      }
+      return undefined;
+    }
+
+    // gRPC: Metadata has get()/set() methods
+    if (typeof rpcContext?.get === 'function' && typeof rpcContext?.set === 'function') {
+      const values = rpcContext.get('x-request-id');
+      if (Array.isArray(values) && values.length > 0) {
+        return String(values[0]);
+      }
+      return undefined;
+    }
+
+    return undefined;
   }
 }

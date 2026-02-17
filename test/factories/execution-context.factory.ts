@@ -6,6 +6,8 @@ export interface MockExecutionContextOptions {
   methodName?: string;
   request?: Record<string, unknown>;
   response?: Record<string, unknown>;
+  rpcContext?: unknown;
+  rpcData?: unknown;
 }
 
 export function createMockExecutionContext(
@@ -17,6 +19,8 @@ export function createMockExecutionContext(
     methodName = 'testMethod',
     request = {},
     response = {},
+    rpcContext = {},
+    rpcData = {},
   } = options;
 
   return {
@@ -26,6 +30,10 @@ export function createMockExecutionContext(
     switchToHttp: () => ({
       getRequest: () => request,
       getResponse: () => response,
+    }),
+    switchToRpc: () => ({
+      getContext: () => rpcContext,
+      getData: () => rpcData,
     }),
   } as unknown as ExecutionContext;
 }
