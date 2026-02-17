@@ -1,4 +1,5 @@
-import { EntityManager, FilterQuery } from '@mikro-orm/postgresql';
+import { Transactional } from '@mikro-orm/core';
+import { FilterQuery } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { Song } from './song.entity';
 import { SongListResult, SongResult } from './song.interface';
@@ -10,22 +11,18 @@ function escapeLike(value: string): string {
 
 @Injectable()
 export class SongService {
-  constructor(
-    private readonly repository: SongRepository,
-    private readonly em: EntityManager,
-  ) {}
+  constructor(private readonly repository: SongRepository) {}
 
+  @Transactional()
   public async create(url: string, title: string): Promise<SongResult> {
     const existing = await this.repository.findOne({ url });
     if (existing) {
       existing.count += 1;
-      await this.em.flush();
       return this.toResult(existing);
     }
 
     const now = new Date();
-    const song = this.em.create(Song, { url, title, count: 1, createdAt: now, updatedAt: now });
-    await this.em.persistAndFlush(song);
+    const song = this.repository.create({ url, title, count: 1, createdAt: now, updatedAt: now });
     return this.toResult(song);
   }
 
@@ -57,11 +54,11 @@ export class SongService {
     };
   }
 
+  @Transactional()
   public async incrementCount(url: string): Promise<void> {
     const song = await this.repository.findOne({ url });
     if (song) {
       song.count += 1;
-      await this.em.flush();
     }
   }
 }

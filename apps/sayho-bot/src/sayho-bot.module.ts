@@ -6,8 +6,10 @@ import { CoreModule } from '@app/core/core.module';
 import { MikroConnectionService } from '@app/core/lifecycle/mikro-connection.service';
 import { GrpcModule } from '@app/grpc/grpc/grpc.module';
 import { KafkaModule } from '@app/kafka/kafka/kafka.module';
+import { MikroOrmContextInterceptor } from '@app/mikro/interceptors/mikro-orm-context.interceptor';
 import { MikroOrmModule } from '@app/mikro/mikro.module';
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigsModule } from './configs/configs.module';
 import { ConfigsService } from './configs/configs.service';
@@ -48,6 +50,7 @@ import { SongModule } from './song/song.module';
   controllers: [SayhoBotController],
   providers: [
     MikroConnectionService,
+    { provide: APP_INTERCEPTOR, useClass: MikroOrmContextInterceptor },
     AuthModule.getGuardProvider(),
     AuthModule.getEventListenerProvider(),
     KafkaModule.getExceptionFilterProvider(),

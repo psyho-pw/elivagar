@@ -1,7 +1,6 @@
 import { LoggerService } from '@app/core/logger/logger.service';
 import { faker } from '@faker-js/faker';
 import { status as GrpcStatus } from '@grpc/grpc-js';
-import { EntityManager } from '@mikro-orm/core';
 import { RpcException } from '@nestjs/microservices';
 import { TestBed, Mocked } from '@suites/unit';
 import { makeUser } from '@test/factories/user.factory';
@@ -9,13 +8,13 @@ import * as bcrypt from 'bcrypt';
 
 import { AuthService } from './auth.service';
 import { JwtService, JwtPayload, TokenPair } from './jwt/jwt.service';
-import { User } from './user/user.entity';
+import { UserRepository } from './user/user.repository';
 
 jest.mock('bcrypt');
 
 describe('AuthService', () => {
   let authService: AuthService;
-  let em: Mocked<EntityManager>;
+  let userRepository: Mocked<UserRepository>;
   let jwtService: Mocked<JwtService>;
   let loggerService: Mocked<LoggerService>;
 
@@ -52,7 +51,7 @@ describe('AuthService', () => {
     const { unit, unitRef } = await TestBed.solitary(AuthService).compile();
 
     authService = unit;
-    em = unitRef.get(EntityManager);
+    userRepository = unitRef.get(UserRepository);
     jwtService = unitRef.get(JwtService);
     loggerService = unitRef.get(LoggerService);
   });
@@ -61,26 +60,25 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('should register a new user and return userId and email', async () => {
-      em.findOne.mockResolvedValue(null);
+      userRepository.findOne.mockResolvedValue(null);
       (bcrypt.hash as jest.Mock).mockResolvedValue(testHashedPassword);
-      em.create.mockReturnValue(mockUser);
+      userRepository.create.mockReturnValue(mockUser);
 
       const result = await authService.register(testEmail, testPassword, testName);
 
-      expect(em.findOne).toHaveBeenCalledWith(User, { email: testEmail, deletedAt: null });
+      expect(userRepository.findOne).toHaveBeenCalledWith({ email: testEmail, deletedAt: null });
       expect(bcrypt.hash).toHaveBeenCalledWith(testPassword, 12);
-      expect(em.create).toHaveBeenCalledWith(User, {
+      expect(userRepository.create).toHaveBeenCalledWith({
         email: testEmail,
         name: testName,
         password: testHashedPassword,
         roles: ['user'],
       });
-      expect(em.flush).toHaveBeenCalled();
       expect(result).toEqual({ userId: testUserId, email: testEmail });
     });
 
     it('should throw ALREADY_EXISTS if email is already registered', async () => {
-      em.findOne.mockResolvedValue(mockUser);
+      userRepository.findOne.mockResolvedValue(mockUser);
 
       const error = await authService
         .register(testEmail, testPassword, testName)
@@ -96,13 +94,13 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should return token pair on valid credentials', async () => {
-      em.findOne.mockResolvedValue(mockUser);
+      userRepository.findOne.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       jwtService.generateTokenPair.mockReturnValue(mockTokenPair);
 
       const result = await authService.login(testEmail, testPassword);
 
-      expect(em.findOne).toHaveBeenCalledWith(User, { email: testEmail, deletedAt: null });
+      expect(userRepository.findOne).toHaveBeenCalledWith({ email: testEmail, deletedAt: null });
       expect(bcrypt.compare).toHaveBeenCalledWith(testPassword, mockUser.password);
       expect(jwtService.generateTokenPair).toHaveBeenCalledWith({
         sub: mockUser.id,
@@ -113,7 +111,7 @@ describe('AuthService', () => {
     });
 
     it('should throw UNAUTHENTICATED when user is not found', async () => {
-      em.findOne.mockResolvedValue(null);
+      userRepository.findOne.mockResolvedValue(null);
 
       const error = await authService
         .login(unknownEmail, testPassword)
@@ -127,7 +125,7 @@ describe('AuthService', () => {
     });
 
     it('should throw UNAUTHENTICATED when password is wrong', async () => {
-      em.findOne.mockResolvedValue(mockUser);
+      userRepository.findOne.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(authService.login(testEmail, wrongPassword)).rejects.toThrow(RpcException);
@@ -197,20 +195,20 @@ describe('AuthService', () => {
   describe('refreshToken', () => {
     it('should return a new token pair for a valid refresh token', async () => {
       jwtService.verifyRefreshToken.mockReturnValue({ sub: testUserId });
-      em.findOne.mockResolvedValue(mockUser);
+      userRepository.findOne.mockResolvedValue(mockUser);
       jwtService.generateTokenPair.mockReturnValue(mockTokenPair);
 
       const result = await authService.refreshToken(validRefreshToken);
 
       expect(jwtService.verifyRefreshToken).toHaveBeenCalledWith(validRefreshToken);
-      expect(em.findOne).toHaveBeenCalledWith(User, { id: testUserId, deletedAt: null });
+      expect(userRepository.findOne).toHaveBeenCalledWith({ id: testUserId, deletedAt: null });
       expect(result).toEqual(mockTokenPair);
     });
 
     it('should throw NOT_FOUND when user no longer exists', async () => {
       const nonExistentUserId = faker.string.uuid();
       jwtService.verifyRefreshToken.mockReturnValue({ sub: nonExistentUserId });
-      em.findOne.mockResolvedValue(null);
+      userRepository.findOne.mockResolvedValue(null);
 
       const error = await authService.refreshToken(validRefreshToken).catch((err: unknown) => err);
 
@@ -238,7 +236,7 @@ describe('AuthService', () => {
 
     it('should re-throw RpcException as-is without wrapping', async () => {
       jwtService.verifyRefreshToken.mockReturnValue({ sub: testUserId });
-      em.findOne.mockResolvedValue(null);
+      userRepository.findOne.mockResolvedValue(null);
 
       const error = await authService.refreshToken(validRefreshToken).catch((err: unknown) => err);
 

@@ -1,18 +1,17 @@
 import { LoggerService } from '@app/core/logger/logger.service';
 import { faker } from '@faker-js/faker';
 import { status as GrpcStatus } from '@grpc/grpc-js';
-import { EntityManager } from '@mikro-orm/postgresql';
 import { RpcException } from '@nestjs/microservices';
 import { TestBed, Mocked } from '@suites/unit';
 import { makeNotification } from '@test/factories/notification.factory';
 
 import { NotificationType } from './notification/notification.constant';
-import { Notification } from './notification/notification.entity';
+import { NotificationRepository } from './notification/notification.repository';
 import { NotificationService } from './notification.service';
 
 describe('NotificationService', () => {
   let service: NotificationService;
-  let em: Mocked<EntityManager>;
+  let notificationRepository: Mocked<NotificationRepository>;
   let _loggerService: Mocked<LoggerService>;
 
   const testUserId = faker.string.uuid();
@@ -32,7 +31,7 @@ describe('NotificationService', () => {
     const { unit, unitRef } = await TestBed.solitary(NotificationService).compile();
 
     service = unit;
-    em = unitRef.get(EntityManager);
+    notificationRepository = unitRef.get(NotificationRepository);
     _loggerService = unitRef.get(LoggerService);
   });
 
@@ -40,7 +39,7 @@ describe('NotificationService', () => {
 
   describe('create', () => {
     it('should create a notification and return result', async () => {
-      em.create.mockReturnValue(mockNotification);
+      notificationRepository.create.mockReturnValue(mockNotification);
 
       const result = await service.create(
         testUserId,
@@ -49,13 +48,12 @@ describe('NotificationService', () => {
         NotificationType.INFO,
       );
 
-      expect(em.create).toHaveBeenCalledWith(Notification, {
+      expect(notificationRepository.create).toHaveBeenCalledWith({
         userId: testUserId,
         title: testTitle,
         message: testMessage,
         type: NotificationType.INFO,
       });
-      expect(em.flush).toHaveBeenCalled();
       expect(result.id).toBe(testNotificationId);
       expect(result.userId).toBe(testUserId);
       expect(result.title).toBe(testTitle);
@@ -67,12 +65,11 @@ describe('NotificationService', () => {
   describe('findAllByUser', () => {
     it('should return paginated notifications for a user', async () => {
       const notifications = [mockNotification];
-      em.findAndCount.mockResolvedValue([notifications, 1]);
+      notificationRepository.findAndCount.mockResolvedValue([notifications, 1]);
 
       const result = await service.findAllByUser(testUserId, 1, 20, false);
 
-      expect(em.findAndCount).toHaveBeenCalledWith(
-        Notification,
+      expect(notificationRepository.findAndCount).toHaveBeenCalledWith(
         { userId: testUserId, deletedAt: null },
         { orderBy: { createdAt: 'DESC' }, offset: 0, limit: 20 },
       );
@@ -81,24 +78,22 @@ describe('NotificationService', () => {
     });
 
     it('should filter unread only when unreadOnly is true', async () => {
-      em.findAndCount.mockResolvedValue([[], 0]);
+      notificationRepository.findAndCount.mockResolvedValue([[], 0]);
 
       await service.findAllByUser(testUserId, 1, 20, true);
 
-      expect(em.findAndCount).toHaveBeenCalledWith(
-        Notification,
+      expect(notificationRepository.findAndCount).toHaveBeenCalledWith(
         { userId: testUserId, deletedAt: null, isRead: false },
         { orderBy: { createdAt: 'DESC' }, offset: 0, limit: 20 },
       );
     });
 
     it('should calculate correct offset for page 2', async () => {
-      em.findAndCount.mockResolvedValue([[], 0]);
+      notificationRepository.findAndCount.mockResolvedValue([[], 0]);
 
       await service.findAllByUser(testUserId, 2, 10, false);
 
-      expect(em.findAndCount).toHaveBeenCalledWith(
-        Notification,
+      expect(notificationRepository.findAndCount).toHaveBeenCalledWith(
         { userId: testUserId, deletedAt: null },
         { orderBy: { createdAt: 'DESC' }, offset: 10, limit: 10 },
       );
@@ -107,11 +102,11 @@ describe('NotificationService', () => {
 
   describe('findOne', () => {
     it('should return a notification by id', async () => {
-      em.findOne.mockResolvedValue(mockNotification);
+      notificationRepository.findOne.mockResolvedValue(mockNotification);
 
       const result = await service.findOne(testNotificationId);
 
-      expect(em.findOne).toHaveBeenCalledWith(Notification, {
+      expect(notificationRepository.findOne).toHaveBeenCalledWith({
         id: testNotificationId,
         deletedAt: null,
       });
@@ -119,7 +114,7 @@ describe('NotificationService', () => {
     });
 
     it('should throw NOT_FOUND when notification does not exist', async () => {
-      em.findOne.mockResolvedValue(null);
+      notificationRepository.findOne.mockResolvedValue(null);
 
       const error = await service.findOne(faker.string.uuid()).catch((err: unknown) => err);
 
@@ -134,12 +129,11 @@ describe('NotificationService', () => {
   describe('markAsRead', () => {
     it('should update unread notifications and return count', async () => {
       const ids = [faker.string.uuid(), faker.string.uuid()];
-      em.nativeUpdate.mockResolvedValue(2);
+      notificationRepository.nativeUpdate.mockResolvedValue(2);
 
       const count = await service.markAsRead(ids);
 
-      expect(em.nativeUpdate).toHaveBeenCalledWith(
-        Notification,
+      expect(notificationRepository.nativeUpdate).toHaveBeenCalledWith(
         { id: { $in: ids }, deletedAt: null, isRead: false },
         { isRead: true },
       );
@@ -147,7 +141,7 @@ describe('NotificationService', () => {
     });
 
     it('should return 0 when no notifications match', async () => {
-      em.nativeUpdate.mockResolvedValue(0);
+      notificationRepository.nativeUpdate.mockResolvedValue(0);
 
       const count = await service.markAsRead([faker.string.uuid()]);
 
@@ -158,21 +152,20 @@ describe('NotificationService', () => {
   describe('remove', () => {
     it('should soft delete a notification', async () => {
       const notification = makeNotification({ id: testNotificationId });
-      em.findOne.mockResolvedValue(notification);
+      notificationRepository.findOne.mockResolvedValue(notification);
 
       const result = await service.remove(testNotificationId);
 
-      expect(em.findOne).toHaveBeenCalledWith(Notification, {
+      expect(notificationRepository.findOne).toHaveBeenCalledWith({
         id: testNotificationId,
         deletedAt: null,
       });
       expect(notification.deletedAt).toBeInstanceOf(Date);
-      expect(em.flush).toHaveBeenCalled();
       expect(result).toBe(true);
     });
 
     it('should throw NOT_FOUND when notification does not exist', async () => {
-      em.findOne.mockResolvedValue(null);
+      notificationRepository.findOne.mockResolvedValue(null);
 
       const error = await service.remove(faker.string.uuid()).catch((err: unknown) => err);
 

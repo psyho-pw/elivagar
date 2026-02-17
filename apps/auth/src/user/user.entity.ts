@@ -1,10 +1,12 @@
 import { MikroUuidEntity } from '@app/mikro/abstracts/base.entity';
-import { Entity, Property } from '@mikro-orm/core';
-import { Enum } from '@mikro-orm/postgresql';
+import { Entity, EntityRepositoryType, Enum, Property } from '@mikro-orm/postgresql';
+import { UserRepository } from './user.repository';
 import { UserRole } from './user.constant';
 
-@Entity({ schema: 'auth' })
+@Entity({ schema: 'auth', repository: () => UserRepository })
 export class User extends MikroUuidEntity {
+  [EntityRepositoryType]?: UserRepository;
+
   constructor(data?: Partial<User>) {
     super(data);
   }
