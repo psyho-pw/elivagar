@@ -1,6 +1,6 @@
 import { LoggerService } from '@app/core/logger/logger.service';
 import { status as GrpcStatus } from '@grpc/grpc-js';
-import { MikroORM, Transactional } from '@mikro-orm/core';
+import { Transactional } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import * as bcrypt from 'bcrypt';
@@ -19,7 +19,6 @@ const BCRYPT_SALT_ROUNDS = 12;
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly orm: MikroORM,
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly loggerService: LoggerService,

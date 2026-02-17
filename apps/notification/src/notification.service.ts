@@ -1,6 +1,6 @@
 import { LoggerService } from '@app/core/logger/logger.service';
 import { status as GrpcStatus } from '@grpc/grpc-js';
-import { MikroORM, Transactional } from '@mikro-orm/core';
+import { Transactional } from '@mikro-orm/core';
 import { FilterQuery } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
@@ -12,7 +12,6 @@ import { NotificationRepository } from './notification/notification.repository';
 @Injectable()
 export class NotificationService {
   constructor(
-    private readonly orm: MikroORM,
     private readonly notificationRepository: NotificationRepository,
     private readonly loggerService: LoggerService,
   ) {}

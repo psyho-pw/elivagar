@@ -1,6 +1,7 @@
 import { ClsStorage, IClsService } from '@app/core/cls/cls.interface';
 import { ClsServiceKey } from '@app/core/cls/cls.module';
 import { AnonymousFunction } from '@app/core/types/anonymous-function.type';
+import { MikroORM, RequestContext } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
 import { Aspect, LazyDecorator, WrapParams, createDecorator } from '@toss/nestjs-aop';
 import { v7 } from 'uuid';
@@ -20,7 +21,10 @@ export class DiscordContextAspect implements LazyDecorator<
   AnonymousFunction,
   DiscordContextOptions
 > {
-  constructor(@Inject(ClsServiceKey) private readonly clsService: IClsService) {}
+  constructor(
+    @Inject(ClsServiceKey) private readonly clsService: IClsService,
+    private readonly orm: MikroORM,
+  ) {}
 
   wrap({ method, methodName, instance }: WrapParams<AnonymousFunction, DiscordContextOptions>) {
     return async (...args: unknown[]): Promise<unknown> => {
@@ -31,7 +35,7 @@ export class DiscordContextAspect implements LazyDecorator<
       };
 
       return this.clsService.runWith(store, () => {
-        return method(...args);
+        return RequestContext.create(this.orm.em, () => method(...args));
       });
     };
   }

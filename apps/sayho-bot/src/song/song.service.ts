@@ -1,4 +1,4 @@
-import { MikroORM, Transactional } from '@mikro-orm/core';
+import { Transactional } from '@mikro-orm/core';
 import { FilterQuery } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { Song } from './song.entity';
@@ -11,10 +11,7 @@ function escapeLike(value: string): string {
 
 @Injectable()
 export class SongService {
-  constructor(
-    private readonly orm: MikroORM,
-    private readonly repository: SongRepository,
-  ) {}
+  constructor(private readonly repository: SongRepository) {}
 
   @Transactional()
   public async create(url: string, title: string): Promise<SongResult> {

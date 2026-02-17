@@ -48,7 +48,7 @@ export class MikroOrmModule {
           dbName,
           schema,
           autoLoadEntities: true,
-          allowGlobalContext: true,
+          registerRequestContext: false,
           discovery: {
             warnWhenNoEntities: false,
             requireEntitiesArray: false,
