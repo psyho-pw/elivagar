@@ -1,330 +1,131 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
-Elivagar is a NestJS-based microservices monorepo built with TypeScript, featuring three independent services that communicate via gRPC. The project uses:
-
-- **NestJS** for the framework
-- **MikroORM** with PostgreSQL for database management (separate schemas per service)
-- **gRPC** for inter-service communication
-- **Zod** for runtime type validation
-- **pnpm** for package management
+Elivagar is a NestJS-based microservices monorepo (TypeScript) with three services communicating via gRPC. Stack: NestJS, MikroORM + PostgreSQL, gRPC, Zod, pnpm.
 
 ## Architecture
 
 ### Monorepo Structure
 
-The repository follows a monorepo pattern with three microservices:
-
 ```text
 apps/
-├── auth/          # Authentication service (port 4000, gRPC 5000)
-├── notification/  # Notification service (port 4100, gRPC 5001)
-└── sayho-bot/     # Sayho bot service (port 4200, gRPC 8000)
+├── auth/          # Authentication (port 4000, gRPC 5000)
+├── notification/  # Notification (port 4100, gRPC 5001)
+└── sayho-bot/     # Sayho bot (port 4200, gRPC 8000)
 
 libs/
-├── auth/          # Shared auth library (gRPC token introspection for consumer services)
-├── cache/         # Cache module (Redis-backed with @nestjs/cache-manager)
-├── core/          # Shared core functionality (logger, config, guards, CLS, lifecycle, interceptors)
-├── grpc/          # gRPC client configuration and proto files
-├── kafka/         # Kafka producer/consumer module with event topics
-└── mikro/         # MikroORM configuration and base entities
+├── auth/    # Shared auth (gRPC token introspection for consumers)
+├── cache/   # Redis-backed cache (@nestjs/cache-manager)
+├── core/    # Shared: logger, config, guards, CLS, lifecycle, interceptors
+├── grpc/    # gRPC client config and proto files
+├── kafka/   # Kafka producer/consumer with event topics
+└── mikro/   # MikroORM config and base entities
 ```
 
-### Service-Specific Configuration
+### Service Configuration
 
-Each service uses **prefixed environment variables** to avoid conflicts:
+Each service uses prefixed env vars (`AUTH_*`, `NOTIFICATION_*`, `SAYHO_BOT_*`). The `getEnv()` helper (`libs/core/src/configs/configs.helper.ts`) resolves prefixed → non-prefixed → default. Also: `getEnvInt()`, `getEnvBool()`.
 
-- `AUTH_*` for auth service
-- `NOTIFICATION_*` for notification service
-- `SAYHO_BOT_*` for sayho-bot service
+### Database
 
-The `getEnv()` helper (libs/core/src/configs/env.helper.ts) automatically resolves prefixed variables based on `SERVICE_NAME`, falling back to non-prefixed versions for shared configs (DB_*, REDIS_*, JWT_*).
+Single PostgreSQL DB with separate schemas: `auth`, `notification`, `sayho` (note: `sayho-bot` → schema `sayho`). Migrations in `libs/mikro/migrations/{service}/`. Entities discovered in `apps/{service}/src/**/*.entity.ts`.
 
-### Database Architecture
+### gRPC
 
-- **Single PostgreSQL database** with **separate schemas per service**:
-  - `auth` schema for auth service
-  - `notification` schema for notification service
-  - `sayho` schema for sayho-bot service (note: service name `sayho-bot` maps to schema `sayho`)
-
-- Migrations are service-specific and stored in `libs/mikro/migrations/{service}/`
-- Each service discovers entities only in its own `apps/{service}/src/**/*.entity.ts` path
-
-### gRPC Communication
-
-- Proto files are organized by service: `libs/grpc/src/proto/{service}/v1/{service}.proto`
-- Generated TypeScript code outputs to `libs/grpc/src/proto/generated/`
-- Proto generation is required before building or starting services
+Proto files: `libs/grpc/src/proto/{service}/v1/{service}.proto`. Generated output: `libs/grpc/src/proto/generated/`. Always run `pnpm proto:generate` after modifying `.proto` files.
 
 ## Common Commands
 
-### Development Setup
-
 ```bash
-# Install dependencies
-pnpm install
-
-# Start development infrastructure (PostgreSQL, Redis)
-pnpm container:up
-
-# Stop infrastructure
-pnpm container:down
-```
-
-### Running Services
-
-Each service requires proto generation before starting:
-
-```bash
-# Start auth service in watch mode
-pnpm start:auth
-
-# Start notification service in watch mode
-pnpm start:notification
-
-# Start sayho-bot service in watch mode
-pnpm start:sayho-bot
-```
-
-Services use `.env.local` file with `dotenvx` for environment management. Set `SERVICE_NAME` environment variable to control which service configuration is loaded.
-
-### Building
-
-```bash
-# Build specific service (includes proto generation)
-pnpm build:sayho-bot
-pnpm build:notification
-pnpm build:auth
-
-# Generate protobuf types only
-pnpm proto:generate
+pnpm install                    # Install deps
+pnpm container:up / :down       # Start/stop infra (PostgreSQL, Redis, Kafka)
+pnpm start:auth                 # Start service in watch mode (also: start:notification, start:sayho-bot)
+pnpm build:auth                 # Build (includes proto gen; also: build:notification, build:sayho-bot)
+pnpm proto:generate             # Generate protobuf types only
+pnpm test / test:watch / test:e2e / test:cov
+pnpm format / lint
 ```
 
 ### Database Migrations
 
-MikroORM migrations use `--app` and `--env` npm config flags:
-
 ```bash
-# Create migration for a specific service
-pnpm --config.env=local --config.app=auth migration:create
-pnpm --config.env=local --config.app=notification migration:create
-pnpm --config.env=local --config.app=sayho-bot migration:create
-
-# Run migrations
-pnpm --config.env=local --config.app=auth migration:up
-pnpm --config.env=local --config.app=notification migration:up
-pnpm --config.env=local --config.app=sayho-bot migration:up
-
-# Rollback migrations
-pnpm --config.env=local --config.app=auth migration:down
-
-# Fresh migrations (drops and recreates)
-pnpm --config.env=local --config.app=auth migration:fresh
-
-# Create schema (development)
-pnpm --config.env=local --config.app=auth schema:create
+pnpm --config.env=local --config.app=auth migration:create  # Also: migration:up, migration:down, migration:fresh, schema:create
+# Or wrapper: ./scripts/mikro-orm-cli.sh auth local migration:create
 ```
 
-Alternatively, use the wrapper script for simpler syntax:
+### Test Infrastructure
 
-```bash
-# Example: ./scripts/mikro-orm-cli.sh <app> <env> <command>
-./scripts/mikro-orm-cli.sh auth local migration:create
-./scripts/mikro-orm-cli.sh sayho-bot local migration:up
-```
-
-The MikroORM CLI config (mikro-orm.config.ts) reads `APP` and `NODE_ENV` environment variables (set via npm config flags) to determine which service configuration and environment file to load.
-
-### Testing
-
-```bash
-# Run all tests
-pnpm test
-
-# Run tests in watch mode
-pnpm test:watch
-
-# Run e2e tests
-pnpm test:e2e
-
-# Generate coverage
-pnpm test:cov
-```
-
-Test infrastructure is in `test/`:
-
-- `test/factories/` - Test factories (execution-context, managed-connection, user, song). The `createMockExecutionContext` factory supports `type` (`'http'` | `'rpc'` | `'ws'`), `rpcContext`, and `rpcData` options for multi-transport testing
-- `test/mocks/` - Module mocks (uuid, change-case) mapped via Jest `moduleNameMapper`
-- `@test` path alias available for imports (e.g., `@test/factories/user.factory`)
-
-### Code Quality
-
-```bash
-# Format code
-pnpm format
-
-# Lint and fix
-pnpm lint
-```
+- `test/factories/` - Factories (execution-context, managed-connection, user, song, notification). `createMockExecutionContext` supports `type` (`'http'|'rpc'|'ws'`), `rpcContext`, `rpcData`
+- `test/mocks/` - Module mocks (uuid, change-case, mikro-orm-core) via Jest `moduleNameMapper`. `mikro-orm-core` mock stubs `@Transactional()` as no-op
+- `@test` path alias for imports
 
 ## CodeGraph
 
-CodeGraph builds a semantic knowledge graph of codebases for faster, smarter code exploration.
-
-### If `.codegraph/` exists in the project
-
-**Use codegraph tools for faster exploration.** These tools provide instant lookups via the code graph instead of scanning files:
-
-| Tool | Use For |
-| ------ | --------- |
-| `codegraph_search` | Find symbols by name (functions, classes, types) |
-| `codegraph_context` | Get relevant code context for a task |
-| `codegraph_callers` | Find what calls a function |
-| `codegraph_callees` | Find what a function calls |
-| `codegraph_impact` | See what's affected by changing a symbol |
-| `codegraph_node` | Get details + source code for a symbol |
-
-**When spawning Explore agents in a codegraph-enabled project:**
-
-Tell the Explore agent to use codegraph tools for faster exploration.
-
-**For quick lookups in the main session:**
-
-- Use `codegraph_search` instead of grep for finding symbols
-- Use `codegraph_callers`/`codegraph_callees` to trace code flow
-- Use `codegraph_impact` before making changes to see what's affected
-
-### If `.codegraph/` does NOT exist
-
-At the start of a session, ask the user if they'd like to initialize CodeGraph:
-
-"I notice this project doesn't have CodeGraph initialized. Would you like me to run `codegraph init -i` to build a code knowledge graph?"
+If `.codegraph/` exists, use codegraph tools (`codegraph_search`, `codegraph_context`, `codegraph_callers`, `codegraph_callees`, `codegraph_impact`, `codegraph_node`) for faster exploration. If not, ask user to run `codegraph init -i`.
 
 ## Key Patterns
 
-### Entity Base Classes
+### Entity Base Classes (`libs/mikro/src/abstracts/base.entity.ts`)
 
-All entities should extend from `libs/mikro/src/abstracts/base.entity.ts`:
+Hierarchy: `MikroEntity` → `MikroUuidEntity` / `MikroAutoIncrementEntity` → `MikroUuidActorEntity` / `MikroAutoIncrementActorEntity`
 
-- `MikroEntity` - Base abstract entity with timestamps and soft delete
-- `MikroUuidEntity` - UUID primary key (extends MikroEntity)
-- `MikroAutoIncrementEntity` - Auto-increment integer primary key (extends MikroEntity)
-- `MikroUuidActorEntity` - UUID with createdBy/updatedBy actor tracking (extends MikroUuidEntity)
-- `MikroAutoIncrementActorEntity` - Auto-increment with actor tracking (extends MikroAutoIncrementEntity)
+- All include `createdAt`, `updatedAt`, `deletedAt` (soft delete). UUIDv7 via `uuid` package.
+- `protected constructor` on base; concrete entities: `constructor(data?: Partial<Entity>)`. Use `em.create()` or `repository.create()`.
+- Entity → Repository binding: `@Entity({ repository: () => XxxRepository })`
 
-All entities include `createdAt`, `updatedAt`, and `deletedAt` (soft delete) fields. The project uses UUIDv7 for primary keys via the `uuid` package. All entities have `protected constructor` - use `em.create()` instead of `new Entity()`.
+### ConfigsService (Layered Architecture)
 
-### Configuration Loading
-
-Configuration uses Zod schemas for runtime validation. Each config file defines a Zod schema (e.g., `AppConfigSchema`) with `satisfies z.ZodType<IApp>` for type safety, and validates via `safeParse` (with error logging) or `parse` (direct throw). Each service loads environment variables through the `getEnv()` helper which:
-
-1. Checks for service-prefixed variable (e.g., `AUTH_PORT`)
-2. Falls back to non-prefixed variable (e.g., `PORT`)
-3. Returns default value if neither exists
-
-**Config Files** (`libs/core/src/configs/configurations/`):
-
-- `app.config.ts` - App settings (port, JWT, etc.)
-- `database.config.ts` - PostgreSQL connection
-- `redis.config.ts` - Redis connection
-- `kafka.config.ts` - Kafka broker settings
-- `discord.config.ts` - Discord bot settings (token, clientId, guildId, webhookUrl)
-- `youtube.config.ts` - YouTube API settings (apiKey, cookie, identityToken, proxy)
-- `auth-grpc.config.ts` - Auth gRPC client settings (url)
-
-**ConfigsService (Layered Architecture)**:
-
-The ConfigsService follows a base + extension pattern:
-
-- **Core `ConfigsService`** (`libs/core/src/configs/configs.service.ts`) - Only core configs (`AppConfig`, `DatabaseConfig`). Uses `protected configService` to allow subclassing.
-- **Service-specific `ConfigsService`** (`apps/{service}/src/configs/configs.service.ts`) - Extends core, adds service-specific getters with `getOrThrow` (non-optional return types).
+Base + extension pattern. Core `ConfigsService` (`libs/core`) has `AppConfig`, `DatabaseConfig` with `protected configService` for subclassing. Service-specific (`apps/{service}/src/configs/configs.service.ts`) extends core, adds getters with `getOrThrow`.
 
 ```typescript
-// Core ConfigsService (libs/core) - base class
+// Core (libs/core/src/configs/configs.service.ts)
 @Injectable()
 export class ConfigsService implements IConfigsService {
   constructor(protected readonly configService: ConfigService) {}
-  get AppConfig(): IApp { ... }       // getOrThrow
-  get DatabaseConfig(): IDatabase { ... } // getOrThrow
+  get AppConfig(): IApp { ... }
+  get DatabaseConfig(): IDatabase { ... }
 }
 
-// Service-specific ConfigsService (apps/{service}) - extends core
+// Service-specific (apps/{service}/src/configs/configs.service.ts)
 import { ConfigsService as CoreConfigsService } from '@app/core/configs/configs.service';
 @Injectable()
 export class ConfigsService extends CoreConfigsService {
-  get RedisConfig(): IRedisConfig { ... }  // getOrThrow (non-optional!)
+  get RedisConfig(): IRedisConfig { ... }
   get KafkaConfig(): IKafkaConfig { ... }
-  // ... service-specific configs
 }
 ```
 
-**Injection**: Always inject via `ConfigsServiceKey`. Within a service's own code, import `ConfigsService` from the local `./configs/configs.service` to get typed access to service-specific configs. For cross-cutting code in `libs/` that only needs core configs, use `IConfigsService` from `@app/core/configs/configs.interface`.
+**Injection**: Always via `ConfigsServiceKey`. Within service code, import from local `./configs/configs.service`. In `libs/`, use `IConfigsService` from `@app/core/configs/configs.interface`.
 
-**Loading Configs per Service** (`apps/{service}/src/configs/configs.module.ts`):
+Config files in `libs/core/src/configs/configurations/`: app, database, redis, kafka, discord, discord-webhook, youtube, auth-grpc. Each uses Zod schema validation (`safeParse`/`parse`).
 
-```typescript
-// Each service loads only the configs it needs
-ConfigModule.forRoot({
-  cache: true,
-  load: [AppConfig, DatabaseConfig, RedisConfig, KafkaConfig, DiscordConfig],
-}),
-// Provides the local ConfigsService (extends core) via ConfigsServiceKey
-providers: [{ provide: ConfigsServiceKey, useClass: ConfigsService }],
-```
+### MikroORM
 
-### MikroORM Module Singleton
+- `MikroOrmModule.getInstance()` - Singleton per service, auto-selects schema by `SERVICE_NAME`
+- `MikroOrmContextInterceptor` as `APP_INTERCEPTOR` for request context (supports HTTP, gRPC, Kafka)
+- Custom `EntityRepository` per entity; `@Transactional()` for transactions
 
-The `MikroOrmModule.getInstance()` returns a singleton instance to ensure only one database connection per service. It automatically:
+### CoreModule (`libs/core/src/core.module.ts`)
 
-- Selects the correct schema based on `SERVICE_NAME`
-- Discovers entities in the service's directory
-- Configures migrations path
+Global module. Imports: LoggerModule, LifecycleModule, ClsModule, AopModule (`@toss/nestjs-aop`).
 
-### CoreModule
+Global providers:
 
-The `CoreModule` (`libs/core/src/core.module.ts`) is a global module that provides shared infrastructure:
+- `RequestIdGuard` (APP_GUARD) - Transport-agnostic CLS init. Sets `requestId`, `controllerCtx`, `methodCtx` on CLS store:
+  - HTTP: `x-request-id` from headers, sets `request.requestId`/`request.startTime`
+  - gRPC: `x-request-id` from `Metadata` (via `instanceof Metadata`)
+  - Kafka: `x-request-id` from message headers (string/Buffer, via `getTopic()` duck-typing)
+  - Fallback: new UUIDv7
+- `GeneralExceptionFilter` (APP_FILTER) - Formats `ErrorResponse`, logs 500+, strips debug in prod
+- `RequestLogInterceptor` (APP_INTERCEPTOR) - Logs with timing, flags >10s
+- `ClassSerializerInterceptor` + `ResponseInterceptor` - Serialization + `ApiResponse` wrapping
 
-**Imports:**
+CLS configured with `middleware: { mount: true }, guard: { mount: true }`.
 
-- `LoggerModule` - Winston-based structured logging
-- `LifecycleModule.forRoot()` - Connection lifecycle management
-- `ClsModule` - Continuation-local storage for request context
-- `AopModule` - Aspect-oriented programming support (`@toss/nestjs-aop`)
+### Lifecycle Management (`libs/core/src/lifecycle/`)
 
-**Global Providers:**
-
-- `RequestIdGuard` (`APP_GUARD`) - Transport-agnostic CLS context initialization (see below)
-- `ErrorInterceptor` (`APP_INTERCEPTOR`) - Catches errors, logs 500+ errors, converts to HTTP responses
-- `RequestLogInterceptor` (`APP_INTERCEPTOR`) - Logs request/response with timing, flags slow requests (>10s)
-
-**RequestIdGuard - Transport-Agnostic CLS Context:**
-
-The `RequestIdGuard` initializes CLS context for **all transport types** (HTTP, gRPC, Kafka), not just HTTP. For every request it sets `requestId`, `controllerCtx`, and `methodCtx` on the CLS store:
-
-- **HTTP**: Extracts `x-request-id` from request headers, sets `request.requestId` and `request.startTime`
-- **gRPC**: Extracts `x-request-id` from `Metadata` (via `instanceof Metadata` check)
-- **Kafka**: Extracts `x-request-id` from message headers (supports both `string` and `Buffer` values, via `getTopic()` duck-typing check)
-- **Unknown transports**: Generates a new UUIDv7 as fallback
-
-The CLS module is configured with both middleware and guard mounting (`middleware: { mount: true }, guard: { mount: true }`) to ensure context is available across all request lifecycles.
-
-### Lifecycle Management & Graceful Shutdown
-
-The project uses a per-connection lifecycle management system in `libs/core/src/lifecycle/`:
-
-**Core Components:**
-
-- `LifecycleModule` - Global module providing lifecycle services (configured via `forRoot()`)
-- `ConnectionRegistryService` - Registry for all external connections
-- `ReadinessGateService` - Blocks API server until all connections are ready
-- `GracePeriodService` - Implements `BeforeApplicationShutdown` for graceful shutdown delay
-- `MikroConnectionService` - Database connection lifecycle wrapper
-
-**IManagedConnection Interface:**
-All external connection services must implement this interface:
+**IManagedConnection Interface** - All external connection services must implement:
 
 ```typescript
 interface IManagedConnection {
@@ -337,157 +138,92 @@ interface IManagedConnection {
 }
 ```
 
+**Components**: `ConnectionRegistryService` (registry), `ReadinessGateService` (blocks until ready), `GracePeriodService` (shutdown delay), `MikroConnectionService` (DB lifecycle).
+
 **Startup Flow:**
 
 1. All modules initialized, connection services register with `ConnectionRegistryService`
-2. `app.init()` called - triggers `OnModuleInit` hooks, connections established
-3. `ReadinessGateService.waitForReady()` - waits for all required connections (timeout: 30s)
+2. `app.init()` - triggers `OnModuleInit` hooks, connections established
+3. `ReadinessGateService.waitForReady()` - waits for all connections (timeout: 30s)
 4. HTTP server starts accepting requests
 
 **Shutdown Flow (SIGTERM/SIGINT):**
 
-1. `GracePeriodService` waits (5s default) - allows load balancer to deregister
+1. `GracePeriodService` waits (0 non-prod, 5s prod for LB deregistration)
 2. Drain phase - each connection drains pending work
 3. Disconnect phase - connections disconnect
 4. Application exits
 
-**Configuration (in CoreModule):**
+**Configuration:**
 
 ```typescript
 LifecycleModule.forRoot({
-  gracePeriod: { gracePeriod: 5000 },
+  gracePeriod: { gracePeriod: process.env.NODE_ENV !== Env.production ? 0 : 5000 },
   readiness: { timeout: 30000, checkInterval: 1000 },
 })
 ```
 
-### Error Handling
+### Error & Response Handling
 
-**GeneralException** (`libs/core/src/common/exceptions/general.exception.ts`):
-
-Extends `HttpException` with call context tracking for consistent error formatting:
+**GeneralException** (`libs/core/src/common/exceptions/general.exception.ts`): Extends `HttpException` with call context.
 
 ```typescript
-class GeneralException extends HttpException {
-  constructor(callClass: string, callMethod: string, message: string, status?: number)
-  getCalledFrom(): string  // Returns "Class.method"
-}
+constructor(dto: { callClass: string; callMethod: string; message: string; status?: number; originalError?: Error })
 ```
+
+**Exception Filters** (`libs/core/src/common/filters/`): `AbstractExceptionFilter` → `GeneralExceptionFilter` (HTTP only; re-throws for gRPC/Kafka). `ErrorResponse`: `{ statusCode, message, path, error, callClass?, callMethod?, stack? }`.
+
+**ApiResponse** (`libs/core/src/common/response/api-response.ts`): Wraps HTTP responses (`statusCode`, `message`, `data`). Applied by `ResponseInterceptor` (HTTP only, skips gRPC/Kafka). Bypass with `@BypassResponseInterceptor()`.
 
 ### External Connection Modules
 
-**Cache Module** (`libs/cache/`):
+All follow `register()` / `registerAsync({ useFactory, inject: [ConfigsServiceKey] })` pattern.
 
-Redis-backed caching using `@nestjs/cache-manager` + `keyv` + `@keyv/redis`.
+**Cache** (`libs/cache/`): Redis via keyv. `CacheService` implements `IManagedConnection`. `getClient()` for raw Redis. AOP `@Cache()` decorator:
 
 ```typescript
-// Option 1: Direct config (simpler, for standalone usage)
-CacheModule.register({
-  redis: RedisConfig(),
-  namespace: 'my-service',
+@Cache({
+  key: 'my-cache-key',
+  type: CacheKeyType.Suffix,     // 'plain' | 'suffix'
   ttl: 60000,
-}),
-
-// Option 2: Async with ConfigsService (recommended for DI)
-CacheModule.registerAsync({
-  useFactory: (configsService: ConfigsService) => ({
-    redis: configsService.RedisConfig,
-    namespace: 'my-service',
-  }),
-  inject: [ConfigsServiceKey],
-}),
+  useSingleFlight: true,
+  useIdSuffix: true,              // ID from first argument
+  useCacheableSuffix: true,       // CacheableQuery.toCachePayload()
+  condition: (...args) => true,   // Skip caching conditionally
+  invalidateExisting: false,
+})
 ```
 
-- `CacheService` implements `IManagedConnection` with lifecycle management
-- `CacheService.getClient()` - Access raw Redis client for advanced operations (sorted sets, etc.)
-- Supports single-flight pattern via `wrap()` method
+**Kafka** (`libs/kafka/`): `getConsumerOptions()`, `getExceptionFilterProvider()`. `IManagedConnection` with retry + drain (10s). Auto-propagates `x-request-id` via CLS. Topics: `{service}.{entity}.{action}` convention, constants in `KafkaTopics.{Service}.{Event}`.
 
-**Kafka Module** (`libs/kafka/`):
+**Auth** (`libs/auth/`): gRPC token introspection for consumer services.
 
 ```typescript
-// Option 1: Direct config
-KafkaModule.register({ kafka: KafkaConfig() }),
-
-// Option 2: Async with ConfigsService
-KafkaModule.registerAsync({
-  useFactory: (configsService: ConfigsService) => ({
-    kafka: configsService.KafkaConfig,
-  }),
-  inject: [ConfigsServiceKey],
-}),
+// Module imports
+AuthModule.registerAsync({ useFactory: (c) => ({ url: c.AuthGrpcConfig.url }), inject: [ConfigsServiceKey] }),
+// Providers
+AuthModule.getGuardProvider(),         // APP_GUARD
+AuthModule.getEventListenerProvider(), // Kafka SessionRevoked listener
 ```
 
-- `KafkaModule.getConsumerOptions()` - For microservice consumer setup
-- `KafkaModule.getExceptionFilterProvider()` - Registers `KafkaExceptionFilter` as `APP_FILTER` (uses `instanceof KafkaContext` to only handle Kafka exceptions, re-throws for other RPC contexts)
-- Implements `IManagedConnection` with retry logic (exponential backoff) and message drain support
-- `drain()` waits up to 10s for pending messages to complete before shutdown
-- **Cross-service requestId propagation**: `emit()` and `emitWithKey()` automatically include `x-request-id` header from CLS context, enabling distributed tracing across Kafka consumers
-
-**Kafka Event Topics** (`libs/kafka/src/events/`):
-
-Topics follow naming convention `{service}.{entity}.{action}`:
-
-```typescript
-KafkaTopics.Auth.UserCreated        // 'auth.user.created'
-KafkaTopics.Auth.SessionRevoked     // 'auth.session.revoked'
-KafkaTopics.Notification.EmailSent  // 'notification.email.sent'
-KafkaTopics.SayhoBot.SongPlayed     // 'sayho-bot.song.played'
-```
-
-### Auth Library (`libs/auth/`)
-
-Shared authentication library for consumer services using gRPC token introspection:
-
-**Module Registration:**
-
-```typescript
-// In module imports (registerAsync pattern - similar to CacheModule/KafkaModule)
-AuthModule.registerAsync({
-  useFactory: (configsService: ConfigsService) => ({
-    url: configsService.AuthGrpcConfig.url,
-  }),
-  inject: [ConfigsServiceKey],
-}),
-
-// In module providers
-AuthModule.getGuardProvider(),         // APP_GUARD - requires CacheModule imported first
-AuthModule.getEventListenerProvider(), // AuthEventListener - requires CacheModule + KafkaModule
-```
-
-**Components:**
-
-- `AuthGrpcClientService` - Communicates with auth service's `ValidateToken` RPC
-- `AuthGuard` - Cache-first token validation: check `@Public()` → extract Bearer → Redis cache → gRPC fallback
-- `AuthEventListener` - Listens for `SessionRevoked` Kafka events to invalidate cached tokens
-- `@Public()` decorator - Skip auth on specific endpoints
-- `@CurrentUser()` decorator - Inject authenticated user from CLS context
-
-**Token Caching:**
-
-- Cache key: `auth:token:<sha256_of_jwt>`, TTL 5min
-- Single-flight pattern prevents thundering herd for concurrent requests with the same token
-
-**Important:** Consumer services MUST import `CacheModule` BEFORE `AuthModule`.
+Cache-first validation: `@Public()` check → Bearer extract → Redis cache (`auth:token:<sha256>`, 5min TTL, single-flight) → gRPC fallback. Decorators: `@Public()`, `@CurrentUser()`. **Must import CacheModule BEFORE AuthModule.**
 
 ### Bootstrap Pattern
 
-All services extend `AbstractMain` from `libs/core/src/bootstrap/abstract-main.ts`:
+All services extend `AbstractMain` (`libs/core/src/bootstrap/abstract-main.ts`):
 
 ```typescript
 class MyServiceMain extends AbstractMain {
-  protected getModule(): Type<unknown> {
-    return MyServiceModule;
-  }
-
+  protected getModule() { return MyServiceModule; }
   protected getBootstrapConfig(): BootstrapConfig {
     return {
+      options: { bufferLogs: true, enableShutdownHooks: true },
       grpc: { enabled: true },
       middleware: { globalPrefix: 'api' },
       versioning: { enabled: true },
-      readiness: { enabled: true, timeout: 30000 },
     };
   }
 }
-
 MyServiceMain.run();
 ```
 
@@ -501,148 +237,47 @@ MyServiceMain.run();
 6. Setup Winston logger (disabled in local env)
 7. Configure gRPC microservice
 8. `app.init()` - triggers `OnModuleInit` hooks
-9. Wait for readiness (all connections ready via `ReadinessGateService`)
+9. Wait for readiness (all connections via `ReadinessGateService`)
 10. `onBeforeListen()` hook
 11. Start microservices and HTTP server
-12. `onAfterListen()` hook
+12. `onAfterListen()` hook (logs startup info)
 13. Configure HMR (dev mode)
 
-**Extensibility Hooks:**
+**Extensibility Hooks**: `onBeforeListen()`, `onAfterListen()`. Notification overrides `onBeforeListen()` to connect Kafka consumer.
 
-- `onBeforeListen()` - Called before HTTP server starts
-- `onAfterListen()` - Called after server starts (logs startup info)
-
-### sayho-bot Discord Module (Hexagonal Architecture)
-
-The sayho-bot's Discord integration follows hexagonal (ports & adapters) architecture:
+### sayho-bot Discord (Hexagonal Architecture)
 
 ```text
 apps/sayho-bot/src/discord/
-├── domain/
-│   ├── entities/        # song.ts, queue-state.ts
-│   └── ports/           # Interfaces: youtube-search, voice-connection, stream-provider, etc.
-├── application/
-│   ├── play-music.usecase.ts
-│   ├── search-video.usecase.ts
-│   └── queue-state.manager.ts
-├── infrastructure/
-│   ├── discord-client/  # Discord.js adapters (client, channel-state, player)
-│   ├── voice/           # Voice connection and streaming adapters
-│   └── youtube/         # YouTube search and PO token adapters
-└── presentation/
-    ├── commands/        # Slash command handler
-    └── events/          # Message/interaction event handler
+├── domain/          # entities (song, queue-state), ports (interfaces)
+├── application/     # use cases (play-music, search-video, leave-channel, manage-queue, handle-voice-state)
+├── infrastructure/  # adapters: discord-client, voice, youtube
+└── presentation/    # commands, events, helpers
 ```
 
-Uses `@toss/nestjs-aop` for cross-cutting concerns:
-
-- `DiscordContextAspect` - Manages Discord context per request
-- `DiscordErrorAspect` - Handles and formats errors
+AOP cross-cutting: `DiscordContextAspect`, `DiscordErrorAspect`.
 
 ## Coding Conventions
 
-### No Barrel Files
-
-**Do NOT use barrel files (index.ts for re-exports).** Always use direct imports:
-
-```typescript
-// Bad - barrel import
-import { AbstractMain, BootstrapConfig } from '@app/core/bootstrap';
-
-// Good - direct import
-import { AbstractMain } from '@app/core/bootstrap/abstract-main';
-import { BootstrapConfig } from '@app/core/bootstrap/bootstrap.interface';
-```
-
-### No TypeScript Enums
-
-**Do NOT use TypeScript `enum`.** Use `as const` object + `Union<T>` type pair instead:
+- **No barrel files** - Always direct imports: `import { X } from '@app/core/bootstrap/abstract-main'` (not `'@app/core/bootstrap'`)
+- **No TypeScript `enum`** - Use `as const` + `Union<T>` (`libs/core/src/types/union.type.ts`). Never use `(typeof X)[keyof typeof X]`
+- **`.constant.ts`** for `as const` + type pairs, injection tokens (Symbols), type guards. **`.interface.ts`** for pure types only
+- **Symbol naming** - PascalCase descriptions matching variable: `Symbol('CacheServiceKey')` not `Symbol('CACHE_SERVICE')`
 
 ```typescript
-// Bad - TypeScript enum
-export enum NotificationType {
-  SYSTEM = 'SYSTEM',
-  AUTH = 'AUTH',
-  INFO = 'INFO',
-}
-
-// Good - as const + Union type
+// as const + Union pattern (in .constant.ts)
 import { Union } from '@app/core/types/union.type';
-
-export const NotificationType = {
-  SYSTEM: 'SYSTEM',
-  AUTH: 'AUTH',
-  INFO: 'INFO',
-} as const;
-export type NotificationType = Union<typeof NotificationType>;
-```
-
-The `Union<T>` helper (`libs/core/src/types/union.type.ts`) extracts the union of literal values from the const object. This pattern is tree-shakeable, works with MikroORM's `@Enum()` decorator, and avoids TypeScript enum pitfalls (reverse mapping, nominal typing).
-
-### File Naming by Content Type
-
-Type definitions must be placed in the correct file based on their nature:
-
-- **`.constant.ts`**: `as const` object + `type` pairs, injection tokens (Symbols), type guards
-- **`.interface.ts`**: Pure types only (interfaces, type aliases with no runtime footprint)
-
-```typescript
-// notification.constant.ts - const+type pair with runtime value
 export const NotificationType = { SYSTEM: 'SYSTEM', AUTH: 'AUTH', INFO: 'INFO' } as const;
 export type NotificationType = Union<typeof NotificationType>;
-
-// notification.interface.ts - pure type (no runtime code)
-import { NotificationType } from './notification.constant';
-export interface NotificationResult {
-  id: string;
-  type: NotificationType;
-}
-```
-
-If a pure type in `.interface.ts` references a const type from `.constant.ts`, import it from the constant file.
-
-### Symbol Naming Convention
-
-**Injection token Symbols use PascalCase descriptions**, matching the variable name:
-
-```typescript
-// Bad - SCREAMING_CASE string
-export const CacheServiceKey = Symbol('CACHE_SERVICE');
-
-// Good - PascalCase matching the variable name
-export const CacheServiceKey = Symbol('CacheServiceKey');
-export const IS_PUBLIC_KEY = Symbol('IsPublicKey');
-export const CACHE_DECORATOR = Symbol('CacheDecorator');
-```
-
-### Union Type Consistency
-
-**Always use `Union<T>` helper** for extracting value unions from `as const` objects. Do NOT use manual `(typeof X)[keyof typeof X]`:
-
-```typescript
-// Bad - manual key extraction
-export type CacheKeyType = (typeof CacheKeyType)[keyof typeof CacheKeyType];
-
-// Good - Union helper
-import { Union } from '@app/core/types/union.type';
-export type CacheKeyType = Union<typeof CacheKeyType>;
 ```
 
 ## Important Notes
 
-- Always run `pnpm proto:generate` after modifying `.proto` files
-- Each service must set `SERVICE_NAME` environment variable at runtime
-- Database schemas are service-isolated; cross-service queries must use gRPC
-- Use absolute imports via path aliases: `@app/core`, `@app/grpc`, `@app/mikro`, `@app/cache`, `@app/kafka`, `@app/auth`
-- Test imports use `@test` alias (e.g., `@test/factories/user.factory`)
-- The project uses UUIDv7 for primary keys (via `uuid` package v13)
-- Environment files follow pattern `.env.{environment}` (e.g., `.env.local`)
-- Redis/Kafka/Discord/Youtube/AuthGrpc configs are optional - only load them in services that need them
+- Path aliases: `@app/core`, `@app/grpc`, `@app/mikro`, `@app/cache`, `@app/kafka`, `@app/auth`, `@test`
+- UUIDv7 for primary keys (`uuid` v13). Env files: `.env.{environment}`
+- Redis/Kafka/Discord/Youtube/AuthGrpc configs are optional per service
+- `SERVICE_NAME` env var required at runtime
 
-## Docker Services
+## Docker Services (docker/compose.local.yml)
 
-Local development containers (docker/compose.local.yml):
-
-- PostgreSQL: localhost:5432 (user: elivagar, db: elivagar)
-- Redis: localhost:6000 (mapped from container 6379)
-- Redis Commander: localhost:8081 (GUI for Redis)
+PostgreSQL(:5432), Redis(:6000), RedisInsight(:5540), Kafka(:9092), Kafka UI(:8082)
