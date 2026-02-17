@@ -13,9 +13,9 @@ export class KafkaExceptionFilter implements ExceptionFilter {
     const rpcCtx = host.switchToRpc();
     const kafkaContext = rpcCtx.getContext();
 
-    if (typeof kafkaContext?.getTopic !== 'function') throw exception;
+    if (!(kafkaContext instanceof KafkaContext)) throw exception;
 
-    const topic = (kafkaContext as KafkaContext).getTopic();
+    const topic = kafkaContext.getTopic();
     const partition = kafkaContext.getPartition();
 
     this.loggerService.error(
