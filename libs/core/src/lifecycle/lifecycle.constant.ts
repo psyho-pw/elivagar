@@ -1,10 +1,10 @@
 import { Union } from '@app/core/types/union.type';
 
 // Injection tokens
-export const CONNECTION_REGISTRY = Symbol('CONNECTION_REGISTRY');
-export const READINESS_GATE = Symbol('READINESS_GATE');
-export const READINESS_CONFIG = Symbol('READINESS_CONFIG');
-export const GRACE_PERIOD_CONFIG = Symbol('GRACE_PERIOD_CONFIG');
+export const CONNECTION_REGISTRY = Symbol('ConnectionRegistry');
+export const READINESS_GATE = Symbol('ReadinessGate');
+export const READINESS_CONFIG = Symbol('ReadinessConfig');
+export const GRACE_PERIOD_CONFIG = Symbol('GracePeriodConfig');
 
 // Standard connection names
 export const ConnectionNames = {
@@ -14,7 +14,7 @@ export const ConnectionNames = {
   GRPC: 'grpc',
 } as const;
 
-export type ConnectionName = (typeof ConnectionNames)[keyof typeof ConnectionNames];
+export type ConnectionName = Union<typeof ConnectionNames>;
 
 /**
  * Connection states for external services

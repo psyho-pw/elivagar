@@ -1,5 +1,6 @@
 import { LoggerService } from '@app/core/logger/logger.service';
 import { ArgumentsHost } from '@nestjs/common';
+import { KafkaContext } from '@nestjs/microservices';
 import { EMPTY } from 'rxjs';
 
 import { KafkaExceptionFilter } from './kafka-exception.filter';
@@ -11,16 +12,23 @@ describe('KafkaExceptionFilter', () => {
   const topic = 'test.topic';
   const partition = 0;
 
-  const createRpcHost = (): ArgumentsHost =>
-    ({
+  const createRpcHost = (): ArgumentsHost => {
+    const kafkaContext = new KafkaContext([
+      {} as never, // message
+      partition,
+      topic,
+      {} as never, // consumer
+      (() => Promise.resolve()) as never, // heartbeat
+      {} as never, // producer
+    ]);
+
+    return {
       getType: () => 'rpc',
       switchToRpc: () => ({
-        getContext: () => ({
-          getTopic: () => topic,
-          getPartition: () => partition,
-        }),
+        getContext: () => kafkaContext,
       }),
-    }) as unknown as ArgumentsHost;
+    } as unknown as ArgumentsHost;
+  };
 
   const createNonRpcHost = (type: string = 'http'): ArgumentsHost =>
     ({

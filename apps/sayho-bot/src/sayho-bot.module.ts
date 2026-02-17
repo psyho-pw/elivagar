@@ -22,7 +22,7 @@ import { SongModule } from './song/song.module';
     CoreModule,
     MikroOrmModule.getInstance(),
     ScheduleModule.forRoot(),
-    GrpcModule.register({ name: AppName.SayhoBot, version: 'v1' }),
+    GrpcModule.register({ name: AppName.SayhoBot }),
     KafkaModule.registerAsync({
       useFactory: (configsService: ConfigsService) => ({
         kafka: configsService.KafkaConfig,
@@ -33,7 +33,6 @@ import { SongModule } from './song/song.module';
       useFactory: (configsService: ConfigsService) => ({
         redis: configsService.RedisConfig,
         namespace: AppName.SayhoBot,
-        db: 0,
       }),
       inject: [ConfigsServiceKey],
     }),
@@ -51,6 +50,7 @@ import { SongModule } from './song/song.module';
     MikroConnectionService,
     AuthModule.getGuardProvider(),
     AuthModule.getEventListenerProvider(),
+    KafkaModule.getExceptionFilterProvider(),
     SayhoBotService,
   ],
 })

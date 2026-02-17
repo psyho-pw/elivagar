@@ -1,3 +1,5 @@
+import { IClsService } from '@app/core/cls/cls.interface';
+import { ClsServiceKey } from '@app/core/cls/cls.module';
 import { ConnectionRegistryService } from '@app/core/lifecycle/connection-registry.service';
 import { ConnectionNames, ConnectionState } from '@app/core/lifecycle/lifecycle.constant';
 import { LoggerService } from '@app/core/logger/logger.service';
@@ -14,6 +16,7 @@ describe('KafkaService', () => {
   let kafkaClient: Mocked<ClientKafka>;
   let logger: Mocked<LoggerService>;
   let connectionRegistry: Mocked<ConnectionRegistryService>;
+  let clsService: Mocked<IClsService>;
 
   beforeEach(async () => {
     const { unit, unitRef } = await TestBed.solitary(KafkaService).compile();
@@ -21,6 +24,11 @@ describe('KafkaService', () => {
     kafkaClient = unitRef.get(KafkaClientKey);
     logger = unitRef.get(LoggerService);
     connectionRegistry = unitRef.get(ConnectionRegistryService);
+    clsService = unitRef.get(ClsServiceKey);
+    Object.defineProperty(clsService, 'requestId', {
+      get: () => undefined,
+      configurable: true,
+    });
   });
 
   describe('constructor', () => {
@@ -277,7 +285,7 @@ describe('KafkaService', () => {
   });
 
   describe('emit', () => {
-    it('should emit message and track pending count', () => {
+    it('should emit message with headers and track pending count', () => {
       const subscribeMock = jest.fn();
       kafkaClient.emit.mockReturnValue({ subscribe: subscribeMock } as never);
 
@@ -286,10 +294,25 @@ describe('KafkaService', () => {
       expect(kafkaClient.emit).toHaveBeenCalledWith('test.topic', {
         value: JSON.stringify({ data: 'hello' }),
         timestamp: expect.any(String),
+        headers: {},
       });
       expect(subscribeMock).toHaveBeenCalledWith({
         complete: expect.any(Function),
         error: expect.any(Function),
+      });
+    });
+
+    it('should include x-request-id in headers when CLS has requestId', () => {
+      const subscribeMock = jest.fn();
+      kafkaClient.emit.mockReturnValue({ subscribe: subscribeMock } as never);
+      Object.defineProperty(clsService, 'requestId', { get: () => 'cls-request-id' });
+
+      service.emit('test.topic', { data: 'hello' });
+
+      expect(kafkaClient.emit).toHaveBeenCalledWith('test.topic', {
+        value: JSON.stringify({ data: 'hello' }),
+        timestamp: expect.any(String),
+        headers: { 'x-request-id': 'cls-request-id' },
       });
     });
 
@@ -329,7 +352,7 @@ describe('KafkaService', () => {
   });
 
   describe('emitWithKey', () => {
-    it('should emit message with key', () => {
+    it('should emit message with key and headers', () => {
       const subscribeMock = jest.fn();
       kafkaClient.emit.mockReturnValue({ subscribe: subscribeMock } as never);
 
@@ -339,6 +362,7 @@ describe('KafkaService', () => {
         key: 'my-key',
         value: JSON.stringify({ data: 'hello' }),
         timestamp: expect.any(String),
+        headers: {},
       });
     });
 

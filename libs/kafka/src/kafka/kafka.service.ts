@@ -1,3 +1,5 @@
+import { IClsService } from '@app/core/cls/cls.interface';
+import { ClsServiceKey } from '@app/core/cls/cls.module';
 import { ConnectionRegistryService } from '@app/core/lifecycle/connection-registry.service';
 import { ConnectionNames, ConnectionState } from '@app/core/lifecycle/lifecycle.constant';
 import { IManagedConnection } from '@app/core/lifecycle/lifecycle.interface';
@@ -20,6 +22,7 @@ export class KafkaService
     @Inject(KafkaClientKey) private readonly kafkaClient: ClientKafka,
     private readonly loggerService: LoggerService,
     @Optional() private readonly connectionRegistry?: ConnectionRegistryService,
+    @Optional() @Inject(ClsServiceKey) private readonly clsService?: IClsService,
   ) {
     // Register with lifecycle manager if available
     this.connectionRegistry?.register(this, {
@@ -149,6 +152,7 @@ export class KafkaService
       .emit(topic, {
         value: JSON.stringify(message),
         timestamp: Date.now().toString(),
+        headers: this.buildHeaders(),
       })
       .subscribe({
         complete: () => {
@@ -173,6 +177,7 @@ export class KafkaService
         key,
         value: JSON.stringify(message),
         timestamp: Date.now().toString(),
+        headers: this.buildHeaders(),
       })
       .subscribe({
         complete: () => {
@@ -191,6 +196,15 @@ export class KafkaService
       this.emitWithKey.name,
       `Message emitted to topic: ${topic} with key: ${key}`,
     );
+  }
+
+  private buildHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {};
+    const requestId = this.clsService?.requestId;
+    if (requestId) {
+      headers['x-request-id'] = requestId;
+    }
+    return headers;
   }
 
   private sleep(ms: number): Promise<void> {

@@ -156,7 +156,7 @@ pnpm test:cov
 
 Test infrastructure is in `test/`:
 
-- `test/factories/` - Test factories (execution-context, managed-connection, user, song)
+- `test/factories/` - Test factories (execution-context, managed-connection, user, song). The `createMockExecutionContext` factory supports `type` (`'http'` | `'rpc'` | `'ws'`), `rpcContext`, and `rpcData` options for multi-transport testing
 - `test/mocks/` - Module mocks (uuid, change-case) mapped via Jest `moduleNameMapper`
 - `@test` path alias available for imports (e.g., `@test/factories/user.factory`)
 
@@ -296,9 +296,20 @@ The `CoreModule` (`libs/core/src/core.module.ts`) is a global module that provid
 
 **Global Providers:**
 
-- `RequestIdGuard` (`APP_GUARD`) - Injects CLS context with request IDs
+- `RequestIdGuard` (`APP_GUARD`) - Transport-agnostic CLS context initialization (see below)
 - `ErrorInterceptor` (`APP_INTERCEPTOR`) - Catches errors, logs 500+ errors, converts to HTTP responses
 - `RequestLogInterceptor` (`APP_INTERCEPTOR`) - Logs request/response with timing, flags slow requests (>10s)
+
+**RequestIdGuard - Transport-Agnostic CLS Context:**
+
+The `RequestIdGuard` initializes CLS context for **all transport types** (HTTP, gRPC, Kafka), not just HTTP. For every request it sets `requestId`, `controllerCtx`, and `methodCtx` on the CLS store:
+
+- **HTTP**: Extracts `x-request-id` from request headers, sets `request.requestId` and `request.startTime`
+- **gRPC**: Extracts `x-request-id` from `Metadata` (via `instanceof Metadata` check)
+- **Kafka**: Extracts `x-request-id` from message headers (supports both `string` and `Buffer` values, via `getTopic()` duck-typing check)
+- **Unknown transports**: Generates a new UUIDv7 as fallback
+
+The CLS module is configured with both middleware and guard mounting (`middleware: { mount: true }, guard: { mount: true }`) to ensure context is available across all request lifecycles.
 
 ### Lifecycle Management & Graceful Shutdown
 
@@ -406,8 +417,10 @@ KafkaModule.registerAsync({
 ```
 
 - `KafkaModule.getConsumerOptions()` - For microservice consumer setup
+- `KafkaModule.getExceptionFilterProvider()` - Registers `KafkaExceptionFilter` as `APP_FILTER` (uses `instanceof KafkaContext` to only handle Kafka exceptions, re-throws for other RPC contexts)
 - Implements `IManagedConnection` with retry logic (exponential backoff) and message drain support
 - `drain()` waits up to 10s for pending messages to complete before shutdown
+- **Cross-service requestId propagation**: `emit()` and `emitWithKey()` automatically include `x-request-id` header from CLS context, enabling distributed tracing across Kafka consumers
 
 **Kafka Event Topics** (`libs/kafka/src/events/`):
 
@@ -587,6 +600,33 @@ export interface NotificationResult {
 ```
 
 If a pure type in `.interface.ts` references a const type from `.constant.ts`, import it from the constant file.
+
+### Symbol Naming Convention
+
+**Injection token Symbols use PascalCase descriptions**, matching the variable name:
+
+```typescript
+// Bad - SCREAMING_CASE string
+export const CacheServiceKey = Symbol('CACHE_SERVICE');
+
+// Good - PascalCase matching the variable name
+export const CacheServiceKey = Symbol('CacheServiceKey');
+export const IS_PUBLIC_KEY = Symbol('IsPublicKey');
+export const CACHE_DECORATOR = Symbol('CacheDecorator');
+```
+
+### Union Type Consistency
+
+**Always use `Union<T>` helper** for extracting value unions from `as const` objects. Do NOT use manual `(typeof X)[keyof typeof X]`:
+
+```typescript
+// Bad - manual key extraction
+export type CacheKeyType = (typeof CacheKeyType)[keyof typeof CacheKeyType];
+
+// Good - Union helper
+import { Union } from '@app/core/types/union.type';
+export type CacheKeyType = Union<typeof CacheKeyType>;
+```
 
 ## Important Notes
 

@@ -1,2 +1,2 @@
-export const KafkaServiceKey = Symbol('KafkaService');
-export const KafkaClientKey = Symbol('KafkaClient');
+export const KafkaServiceKey = Symbol('KafkaServiceKey');
+export const KafkaClientKey = Symbol('KafkaClientKey');
