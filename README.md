@@ -7,7 +7,7 @@ NestJS 기반 마이크로서비스 모노레포 프로젝트입니다. 세 개�
 | 분류 | 기술 |
 |------|------|
 | 프레임워크 | NestJS 11 |
-| 언어 | TypeScript 5.9 |
+| 언어 | TypeScript 5.9 (native preview) |
 | ORM | MikroORM 6 + PostgreSQL 16 |
 | 서비스 간 통신 | gRPC (proto3) |
 | 메시지 브로커 | Kafka (KafkaJS) |
@@ -40,7 +40,7 @@ libs/
 
 **Auth** - JWT 기반 인증/인가, 사용자 관리, 토큰 발급 및 검증 (gRPC `ValidateToken` RPC 제공)
 
-**Notification** - Discord 웹훅 알림, 이벤트 기반 알림 처리
+**Notification** - Discord 웹훅 알림, Kafka 이벤트 기반 알림 처리, 알림 CRUD
 
 **Sayho Bot** - Discord 음악 봇. 헥사고날 아키텍처로 설계되어 YouTube 검색, 음성 채널 연결, 음악 재생/대기열 관리 기능 제공
 
@@ -80,8 +80,8 @@ pnpm install
 # 로컬 인프라 실행 (PostgreSQL, Redis, Kafka)
 pnpm container:up
 
-# 데이터베이스 마이그레이션 실행
-pnpm --config.env=local migration:up:all
+# 데이터베이스 마이그레이션 실행 (기본 env: local)
+pnpm migration:up:all
 ```
 
 ### 환경변수 설정
@@ -148,8 +148,8 @@ pnpm --config.env=local --config.app=auth migration:down
 # 전체 재생성 (개발용)
 pnpm --config.env=local --config.app=auth migration:fresh
 
-# 전체 서비스 마이그레이션 한번에 실행
-pnpm --config.env=local migration:up:all
+# 전체 서비스 마이그레이션 한번에 실행 (기본 env: local)
+pnpm migration:up:all
 ```
 
 래퍼 스크립트로도 실행 가능합니다:
@@ -203,15 +203,16 @@ elivagar/
 │   │   ├── configs/           # 서비스별 설정
 │   │   ├── guards/            # gRPC 스로틀 가드
 │   │   ├── jwt/               # JWT 토큰 서비스
-│   │   ├── user/              # 사용자 엔티티
+│   │   ├── user/              # 사용자 엔티티, 리포지토리
 │   │   └── main.ts
 │   ├── notification/src/
 │   │   ├── configs/           # 서비스별 설정
 │   │   ├── discord/           # Discord 알림 통합
-│   │   ├── notification/      # 알림 엔티티
+│   │   ├── notification/      # 알림 엔티티, 리포지토리
 │   │   └── main.ts
 │   └── sayho-bot/src/
 │       ├── configs/           # 서비스별 설정
+│       ├── common/            # AOP 데코레이터, Discord 예외
 │       ├── discord/
 │       │   ├── domain/        # 엔티티, 포트 (인터페이스)
 │       │   ├── application/   # 유스케이스, 매니저
@@ -248,10 +249,13 @@ elivagar/
 ## 코딩 컨벤션
 
 - **배럴 파일(index.ts) 사용 금지** - 항상 직접 경로로 임포트
-- **경로 별칭 사용** - `@app/core`, `@app/grpc`, `@app/mikro`, `@app/cache`, `@app/kafka`, `@app/auth`
-- **엔티티 생성** - `new Entity()` 대신 `em.create()` 사용 (protected constructor)
-- **UUIDv7** - 모든 UUID 기본키에 사용
+- **TypeScript enum 사용 금지** - `as const` 객체 + `Union<T>` 타입 패턴 사용
+- **경로 별칭 사용** - `@app/core`, `@app/grpc`, `@app/mikro`, `@app/cache`, `@app/kafka`, `@app/auth`, `@test`
+- **엔티티 생성** - MikroORM `em.create()` 또는 `repository.create()` 사용 권장
+- **리포지토리 패턴** - 모든 엔티티에 커스텀 `EntityRepository` 사용
+- **UUIDv7** - 모든 UUID 기본키에 사용 (`uuid` v13)
 - **환경 파일** - `.env.{environment}` 패턴 (예: `.env.local`)
+- **파일 분류** - `.constant.ts` (런타임 값), `.interface.ts` (순수 타입)
 
 ## 라이선스
 

@@ -41,7 +41,7 @@ Each service uses **prefixed environment variables** to avoid conflicts:
 - `NOTIFICATION_*` for notification service
 - `SAYHO_BOT_*` for sayho-bot service
 
-The `getEnv()` helper (libs/core/src/configs/env.helper.ts) automatically resolves prefixed variables based on `SERVICE_NAME`, falling back to non-prefixed versions for shared configs (DB_*, REDIS_*, JWT_*).
+The `getEnv()` helper (`libs/core/src/configs/configs.helper.ts`) automatically resolves prefixed variables based on `SERVICE_NAME`, falling back to non-prefixed versions for shared configs (DB_*, REDIS_*, JWT_*). Additional helpers `getEnvInt()` and `getEnvBool()` parse integer and boolean values respectively.
 
 ### Database Architecture
 
@@ -67,7 +67,7 @@ The `getEnv()` helper (libs/core/src/configs/env.helper.ts) automatically resolv
 # Install dependencies
 pnpm install
 
-# Start development infrastructure (PostgreSQL, Redis)
+# Start development infrastructure (PostgreSQL, Redis, Kafka)
 pnpm container:up
 
 # Stop infrastructure
@@ -156,8 +156,8 @@ pnpm test:cov
 
 Test infrastructure is in `test/`:
 
-- `test/factories/` - Test factories (execution-context, managed-connection, user, song). The `createMockExecutionContext` factory supports `type` (`'http'` | `'rpc'` | `'ws'`), `rpcContext`, and `rpcData` options for multi-transport testing
-- `test/mocks/` - Module mocks (uuid, change-case) mapped via Jest `moduleNameMapper`
+- `test/factories/` - Test factories (execution-context, managed-connection, user, song, notification). The `createMockExecutionContext` factory supports `type` (`'http'` | `'rpc'` | `'ws'`), `rpcContext`, and `rpcData` options for multi-transport testing
+- `test/mocks/` - Module mocks (uuid, change-case, mikro-orm-core) mapped via Jest `moduleNameMapper`. The `mikro-orm-core` mock stubs `@Transactional()` decorator to be a no-op in tests
 - `@test` path alias available for imports (e.g., `@test/factories/user.factory`)
 
 ### Code Quality
@@ -215,7 +215,7 @@ All entities should extend from `libs/mikro/src/abstracts/base.entity.ts`:
 - `MikroUuidActorEntity` - UUID with createdBy/updatedBy actor tracking (extends MikroUuidEntity)
 - `MikroAutoIncrementActorEntity` - Auto-increment with actor tracking (extends MikroAutoIncrementEntity)
 
-All entities include `createdAt`, `updatedAt`, and `deletedAt` (soft delete) fields. The project uses UUIDv7 for primary keys via the `uuid` package. All entities have `protected constructor` - use `em.create()` instead of `new Entity()`.
+All entities include `createdAt`, `updatedAt`, and `deletedAt` (soft delete) fields. The project uses UUIDv7 for primary keys via the `uuid` package. The base `MikroEntity` has `protected constructor`; concrete entities expose `constructor(data?: Partial<Entity>)` that delegates to `super(data)`. Use `em.create()` or `repository.create()` for entity creation. Each entity specifies its custom repository via `@Entity({ repository: () => XxxRepository })`.
 
 ### Configuration Loading
 
@@ -231,7 +231,8 @@ Configuration uses Zod schemas for runtime validation. Each config file defines 
 - `database.config.ts` - PostgreSQL connection
 - `redis.config.ts` - Redis connection
 - `kafka.config.ts` - Kafka broker settings
-- `discord.config.ts` - Discord bot settings (token, clientId, guildId, webhookUrl)
+- `discord.config.ts` - Discord bot settings (token, clientId, guildId, commandPrefix, messageDeleteTimeout)
+- `discord-webhook.config.ts` - Discord webhook settings (webhookUrl) - separate from bot config
 - `youtube.config.ts` - YouTube API settings (apiKey, cookie, identityToken, proxy)
 - `auth-grpc.config.ts` - Auth gRPC client settings (url)
 
@@ -282,6 +283,25 @@ The `MikroOrmModule.getInstance()` returns a singleton instance to ensure only o
 - Selects the correct schema based on `SERVICE_NAME`
 - Discovers entities in the service's directory
 - Configures migrations path
+- Sets `registerRequestContext: false` (uses custom `MikroOrmContextInterceptor` instead)
+
+### MikroORM Request Context
+
+Each service registers `MikroOrmContextInterceptor` as `APP_INTERCEPTOR` to create a new MikroORM `RequestContext` per request. This replaces the default `registerRequestContext` middleware to support all transport types (HTTP, gRPC, Kafka):
+
+```typescript
+{ provide: APP_INTERCEPTOR, useClass: MikroOrmContextInterceptor }
+```
+
+### Repository Pattern
+
+All services use custom `EntityRepository` classes for data access:
+
+- `UserRepository extends EntityRepository<User>` (auth)
+- `NotificationRepository extends EntityRepository<Notification>` (notification)
+- `SongRepository extends EntityRepository<Song>` (sayho-bot)
+
+MikroORM auto-creates repository instances via `@Entity({ repository: () => XxxRepository })` on entities. Services inject repositories directly and use `@Transactional()` decorator for transaction management.
 
 ### CoreModule
 
@@ -297,8 +317,10 @@ The `CoreModule` (`libs/core/src/core.module.ts`) is a global module that provid
 **Global Providers:**
 
 - `RequestIdGuard` (`APP_GUARD`) - Transport-agnostic CLS context initialization (see below)
-- `ErrorInterceptor` (`APP_INTERCEPTOR`) - Catches errors, logs 500+ errors, converts to HTTP responses
+- `GeneralExceptionFilter` (`APP_FILTER`) - Catches all exceptions, formats `ErrorResponse`, logs 500+ errors, strips debug info in production
 - `RequestLogInterceptor` (`APP_INTERCEPTOR`) - Logs request/response with timing, flags slow requests (>10s)
+- `ClassSerializerInterceptor` (`APP_INTERCEPTOR`) - Applies `class-transformer` serialization to responses
+- `ResponseInterceptor` (`APP_INTERCEPTOR`) - Wraps HTTP responses in standardized `ApiResponse` format (see Response Handling below)
 
 **RequestIdGuard - Transport-Agnostic CLS Context:**
 
@@ -355,23 +377,60 @@ interface IManagedConnection {
 
 ```typescript
 LifecycleModule.forRoot({
-  gracePeriod: { gracePeriod: 5000 },
+  gracePeriod: {
+    gracePeriod: process.env.NODE_ENV !== Env.production ? 0 : 5000,
+  },
   readiness: { timeout: 30000, checkInterval: 1000 },
 })
 ```
+
+Grace period is **0 in non-production** (for fast restarts) and **5s in production** (for load balancer deregistration).
 
 ### Error Handling
 
 **GeneralException** (`libs/core/src/common/exceptions/general.exception.ts`):
 
-Extends `HttpException` with call context tracking for consistent error formatting:
+Extends `HttpException` with call context tracking. Uses a DTO-based constructor:
 
 ```typescript
 class GeneralException extends HttpException {
-  constructor(callClass: string, callMethod: string, message: string, status?: number)
+  constructor(dto: { callClass: string; callMethod: string; message: string; status?: number; originalError?: Error })
+  get CallClass(): string
+  get CallMethod(): string
   getCalledFrom(): string  // Returns "Class.method"
 }
 ```
+
+**Exception Filter Architecture** (`libs/core/src/common/filters/`):
+
+- `AbstractExceptionFilter` - Base class extending `BaseExceptionFilter`, handles error formatting, logging, and production stack stripping
+- `GeneralExceptionFilter` - Catches all exceptions (`@Catch()`), delegates to `handle()`. Only processes HTTP context; re-throws for non-HTTP contexts (gRPC, Kafka)
+- `ErrorResponse` interface - Standardized error shape: `{ statusCode, message, path, error, callClass?, callMethod?, stack? }`
+
+The `ResponseInterceptor` catches errors from handlers and wraps them in `GeneralException` with call context from `ExecutionContext`.
+
+### Response Handling
+
+**ApiResponse** (`libs/core/src/common/response/api-response.ts`):
+
+Standardized HTTP response wrapper applied automatically by `ResponseInterceptor`:
+
+```typescript
+class ApiResponse<T = undefined, S extends number = HttpStatus.OK> {
+  statusCode: S;
+  message: string;  // default: 'Success'
+  data: T;
+}
+```
+
+**ResponseInterceptor** (`libs/core/src/common/interceptors/response.interceptor.ts`):
+
+- Only applies to HTTP context (skips gRPC/Kafka)
+- Wraps handler return values in `ApiResponse` automatically
+- Skips wrapping if response is already `ApiResponse` or `@BypassResponseInterceptor()` is set
+- Catches errors and rethrows as `GeneralException` with class/method context
+
+**Bypassing**: Use `@BypassResponseInterceptor()` decorator on class or method to skip wrapping (e.g., for streaming responses or custom formats).
 
 ### External Connection Modules
 
@@ -401,6 +460,29 @@ CacheModule.registerAsync({
 - `CacheService.getClient()` - Access raw Redis client for advanced operations (sorted sets, etc.)
 - Supports single-flight pattern via `wrap()` method
 
+**AOP-based `@Cache()` Decorator** (`libs/cache/src/cache.decorator.ts`):
+
+Method-level declarative caching using `@toss/nestjs-aop`:
+
+```typescript
+@Cache({
+  key: 'my-cache-key',
+  type: CacheKeyType.Suffix,  // 'plain' | 'suffix'
+  ttl: 60000,
+  useSingleFlight: true,
+  useIdSuffix: true,           // Extract ID from first argument as suffix
+  useCacheableSuffix: true,    // Use CacheableQuery.toCachePayload() for suffix
+  condition: (...args) => true, // Optional: skip caching conditionally
+  invalidateExisting: false,   // Optional: invalidate before execution
+})
+```
+
+- `CacheAspect` processes the decorator, builds cache keys, handles get/set/wrap
+- `CacheKeyType.Plain` - Uses `key` as-is
+- `CacheKeyType.Suffix` - Builds compound key from `key` + ID suffix + query suffix
+- `CacheableQuery` interface - Objects with `toCachePayload(): Record<string, unknown>` method for suffix generation
+- Serializes class instances via `instanceToPlain()` before caching
+
 **Kafka Module** (`libs/kafka/`):
 
 ```typescript
@@ -427,10 +509,25 @@ KafkaModule.registerAsync({
 Topics follow naming convention `{service}.{entity}.{action}`:
 
 ```typescript
-KafkaTopics.Auth.UserCreated        // 'auth.user.created'
-KafkaTopics.Auth.SessionRevoked     // 'auth.session.revoked'
-KafkaTopics.Notification.EmailSent  // 'notification.email.sent'
-KafkaTopics.SayhoBot.SongPlayed     // 'sayho-bot.song.played'
+// Auth service events
+KafkaTopics.Auth.UserCreated         // 'auth.user.created'
+KafkaTopics.Auth.UserUpdated         // 'auth.user.updated'
+KafkaTopics.Auth.UserDeleted         // 'auth.user.deleted'
+KafkaTopics.Auth.SessionCreated      // 'auth.session.created'
+KafkaTopics.Auth.SessionRevoked      // 'auth.session.revoked'
+
+// Notification service events
+KafkaTopics.Notification.EmailSent   // 'notification.email.sent'
+KafkaTopics.Notification.EmailFailed // 'notification.email.failed'
+KafkaTopics.Notification.PushSent    // 'notification.push.sent'
+KafkaTopics.Notification.PushFailed  // 'notification.push.failed'
+
+// Sayho-bot service events
+KafkaTopics.SayhoBot.MessageReceived // 'sayho-bot.message.received'
+KafkaTopics.SayhoBot.ResponseSent    // 'sayho-bot.response.sent'
+KafkaTopics.SayhoBot.CommandExecuted // 'sayho-bot.command.executed'
+KafkaTopics.SayhoBot.SongPlayed      // 'sayho-bot.song.played'
+KafkaTopics.SayhoBot.ErrorOccurred   // 'sayho-bot.error.occurred'
 ```
 
 ### Auth Library (`libs/auth/`)
@@ -480,10 +577,10 @@ class MyServiceMain extends AbstractMain {
 
   protected getBootstrapConfig(): BootstrapConfig {
     return {
+      options: { bufferLogs: true, enableShutdownHooks: true },
       grpc: { enabled: true },
       middleware: { globalPrefix: 'api' },
       versioning: { enabled: true },
-      readiness: { enabled: true, timeout: 30000 },
     };
   }
 }
@@ -512,26 +609,52 @@ MyServiceMain.run();
 - `onBeforeListen()` - Called before HTTP server starts
 - `onAfterListen()` - Called after server starts (logs startup info)
 
+### Notification Discord Webhook Module
+
+The notification service includes a Discord integration module (`apps/notification/src/discord/`) for error reporting via Discord webhooks:
+
+- `DiscordWebhookService` - Sends embed messages and error reports to a Discord channel via webhook
+- `DiscordController` - HTTP endpoints for triggering Discord notifications
+- Uses `IDiscordWebhookConfig` (separate from bot's `IDiscordConfig`)
+
+The notification service also overrides `onBeforeListen()` in its bootstrap to connect a Kafka consumer for processing events:
+
+```typescript
+protected override async onBeforeListen(): Promise<void> {
+  const kafkaOptions = KafkaModule.getConsumerOptions({ kafka: kafkaConfig, groupId: 'notification-consumer' });
+  this.app.connectMicroservice<KafkaOptions>(kafkaOptions);
+}
+```
+
 ### sayho-bot Discord Module (Hexagonal Architecture)
 
 The sayho-bot's Discord integration follows hexagonal (ports & adapters) architecture:
 
 ```text
-apps/sayho-bot/src/discord/
-├── domain/
-│   ├── entities/        # song.ts, queue-state.ts
-│   └── ports/           # Interfaces: youtube-search, voice-connection, stream-provider, etc.
-├── application/
-│   ├── play-music.usecase.ts
-│   ├── search-video.usecase.ts
-│   └── queue-state.manager.ts
-├── infrastructure/
-│   ├── discord-client/  # Discord.js adapters (client, channel-state, player)
-│   ├── voice/           # Voice connection and streaming adapters
-│   └── youtube/         # YouTube search and PO token adapters
-└── presentation/
-    ├── commands/        # Slash command handler
-    └── events/          # Message/interaction event handler
+apps/sayho-bot/src/
+├── common/
+│   ├── aop/             # discord-context.aspect.ts, discord-error.aspect.ts
+│   └── exceptions/      # discord.exception.ts
+├── discord/
+│   ├── domain/
+│   │   ├── entities/    # song.ts, queue-state.ts
+│   │   └── ports/       # Interfaces: youtube-search, voice-connection, stream-provider, audio-player, message-sender, po-token
+│   ├── application/
+│   │   ├── play-music.usecase.ts
+│   │   ├── search-video.usecase.ts
+│   │   ├── leave-channel.usecase.ts
+│   │   ├── manage-queue.usecase.ts
+│   │   ├── handle-voice-state.usecase.ts
+│   │   └── queue-state.manager.ts
+│   ├── infrastructure/
+│   │   ├── discord-client/  # Discord.js adapters (client, guild-infra-state, message-sender)
+│   │   ├── voice/           # Voice connection, stream provider, audio player factory adapters
+│   │   └── youtube/         # YouTube search and PO token adapters
+│   └── presentation/
+│       ├── commands/        # Slash command handler
+│       ├── events/          # Message/interaction event handler
+│       └── helpers/         # Embed helper utilities
+└── song/                    # Song entity, repository, service, controller (CRUD + ranking)
 ```
 
 Uses `@toss/nestjs-aop` for cross-cutting concerns:
@@ -643,6 +766,8 @@ export type CacheKeyType = Union<typeof CacheKeyType>;
 
 Local development containers (docker/compose.local.yml):
 
-- PostgreSQL: localhost:5432 (user: elivagar, db: elivagar)
-- Redis: localhost:6000 (mapped from container 6379)
-- Redis Commander: localhost:8081 (GUI for Redis)
+- PostgreSQL: localhost:5432 (user: elivagar, db: elivagar, image: postgres:16-alpine)
+- Redis: localhost:6000 (mapped from container 6379, image: redis:7-alpine)
+- RedisInsight: localhost:5540 (Redis GUI, image: redis/redisinsight:latest)
+- Kafka: localhost:9092 (KRaft mode, image: apache/kafka:3.9.0)
+- Kafka UI: localhost:8082 (Kafka GUI, image: provectuslabs/kafka-ui:latest)
