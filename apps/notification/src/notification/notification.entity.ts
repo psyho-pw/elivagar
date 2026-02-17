@@ -1,20 +1,13 @@
 import { MikroUuidEntity } from '@app/mikro/abstracts/base.entity';
 import { Entity, Enum, Property } from '@mikro-orm/core';
-
-export enum NotificationType {
-  SYSTEM = 'SYSTEM',
-  AUTH = 'AUTH',
-  INFO = 'INFO',
-}
-
-const notificationTypeValues: ReadonlySet<string> = new Set(Object.values(NotificationType));
-
-export function isNotificationType(value: string): value is NotificationType {
-  return notificationTypeValues.has(value);
-}
+import { NotificationType } from './notification.constant';
 
 @Entity({ schema: 'notification' })
 export class Notification extends MikroUuidEntity {
+  constructor(data?: Partial<Notification>) {
+    super(data);
+  }
+
   @Property({ type: 'uuid' })
   userId!: string;
 

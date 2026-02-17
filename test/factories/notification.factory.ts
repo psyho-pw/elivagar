@@ -1,8 +1,10 @@
 import { faker } from '@faker-js/faker';
-import { Notification, NotificationType } from '../../apps/notification/src/notification/notification.entity';
+import { plainToInstance } from 'class-transformer';
+import { NotificationType } from '../../apps/notification/src/notification/notification.constant';
+import { Notification } from '../../apps/notification/src/notification/notification.entity';
 
 export function makeNotification(overrides: Partial<Notification> = {}): Notification {
-  return {
+  return plainToInstance(Notification, {
     id: faker.string.uuid(),
     userId: faker.string.uuid(),
     title: faker.lorem.sentence(),
@@ -13,5 +15,5 @@ export function makeNotification(overrides: Partial<Notification> = {}): Notific
     updatedAt: faker.date.recent(),
     deletedAt: null,
     ...overrides,
-  } as unknown as Notification;
+  });
 }

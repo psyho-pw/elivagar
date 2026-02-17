@@ -1,8 +1,9 @@
 import { faker } from '@faker-js/faker';
+import { plainToInstance } from 'class-transformer';
 import { Song } from '../../apps/sayho-bot/src/song/song.entity';
 
 export function makeSong(overrides: Partial<Song> = {}): Song {
-  return {
+  return plainToInstance(Song, {
     id: faker.string.uuid(),
     url: faker.internet.url(),
     title: faker.music.songName(),
@@ -11,5 +12,5 @@ export function makeSong(overrides: Partial<Song> = {}): Song {
     updatedAt: faker.date.recent(),
     deletedAt: null,
     ...overrides,
-  } as unknown as Song;
+  });
 }

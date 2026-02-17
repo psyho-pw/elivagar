@@ -6,6 +6,10 @@ import { SongRepository } from './song.repository';
 export class Song extends MikroUuidEntity {
   [EntityRepositoryType]?: SongRepository;
 
+  constructor(data?: Partial<Song>) {
+    super(data);
+  }
+
   @Property({ type: TextType, nullable: false })
   url!: string;
 
