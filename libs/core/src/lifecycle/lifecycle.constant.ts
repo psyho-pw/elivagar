@@ -1,3 +1,5 @@
+import { Union } from '@app/core/types/union.type';
+
 // Injection tokens
 export const CONNECTION_REGISTRY = Symbol('CONNECTION_REGISTRY');
 export const READINESS_GATE = Symbol('READINESS_GATE');
@@ -13,3 +15,15 @@ export const ConnectionNames = {
 } as const;
 
 export type ConnectionName = (typeof ConnectionNames)[keyof typeof ConnectionNames];
+
+/**
+ * Connection states for external services
+ */
+export const ConnectionState = {
+  DISCONNECTED: 'disconnected',
+  CONNECTING: 'connecting',
+  CONNECTED: 'connected',
+  DISCONNECTING: 'disconnecting',
+  ERROR: 'error',
+} as const;
+export type ConnectionState = Union<typeof ConnectionState>;

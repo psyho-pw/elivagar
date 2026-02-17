@@ -1,8 +1,8 @@
 import { MikroORM } from '@mikro-orm/core';
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConnectionRegistryService } from './connection-registry.service';
-import { ConnectionNames } from './lifecycle.constant';
-import { ConnectionState, IManagedConnection } from './lifecycle.interface';
+import { ConnectionNames, ConnectionState } from './lifecycle.constant';
+import { IManagedConnection } from './lifecycle.interface';
 import { LoggerService } from '../logger/logger.service';
 
 @Injectable()

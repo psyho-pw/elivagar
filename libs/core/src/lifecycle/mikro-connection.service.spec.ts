@@ -3,8 +3,7 @@ jest.mock('uuid', () => ({ v7: jest.fn(() => 'mock-uuid') }));
 import { MikroORM } from '@mikro-orm/core';
 import { TestBed, Mocked } from '@suites/unit';
 import { ConnectionRegistryService } from './connection-registry.service';
-import { ConnectionNames } from './lifecycle.constant';
-import { ConnectionState } from './lifecycle.interface';
+import { ConnectionNames, ConnectionState } from './lifecycle.constant';
 import { MikroConnectionService } from './mikro-connection.service';
 
 describe('MikroConnectionService', () => {

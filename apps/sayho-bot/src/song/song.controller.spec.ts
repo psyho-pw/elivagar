@@ -30,7 +30,13 @@ describe('SongController', () => {
       songService.findAll.mockResolvedValue({
         items: [
           { id: songId, url: songUrl, title: songTitle, count: songCount, createdAt: songDate },
-          { id: song2Id, url: faker.internet.url(), title: song2Title, count: song2Count, createdAt: song2Date },
+          {
+            id: song2Id,
+            url: faker.internet.url(),
+            title: song2Title,
+            count: song2Count,
+            createdAt: song2Date,
+          },
         ],
         total: 2,
       });

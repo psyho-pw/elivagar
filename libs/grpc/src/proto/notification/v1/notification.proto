@@ -3,13 +3,62 @@ syntax = "proto3";
 package notification.v1;
 
 service NotificationService {
-  rpc SendNotification (NotificationRequest) returns (NotificationResponse) {}
+  rpc SendNotification (SendNotificationRequest) returns (SendNotificationResponse) {}
+  rpc GetNotifications (GetNotificationsRequest) returns (GetNotificationsResponse) {}
+  rpc GetNotification (GetNotificationRequest) returns (NotificationItem) {}
+  rpc MarkAsRead (MarkAsReadRequest) returns (MarkAsReadResponse) {}
+  rpc DeleteNotification (DeleteNotificationRequest) returns (DeleteNotificationResponse) {}
 }
 
-message NotificationRequest {
-  string message = 1;
+message SendNotificationRequest {
+  string user_id = 1;
+  string title = 2;
+  string message = 3;
+  string type = 4;
 }
 
-message NotificationResponse {
-  string message = 1;
+message SendNotificationResponse {
+  string id = 1;
+}
+
+message GetNotificationsRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  bool unread_only = 4;
+}
+
+message GetNotificationsResponse {
+  repeated NotificationItem items = 1;
+  int32 total = 2;
+}
+
+message GetNotificationRequest {
+  string id = 1;
+}
+
+message NotificationItem {
+  string id = 1;
+  string user_id = 2;
+  string title = 3;
+  string message = 4;
+  string type = 5;
+  bool is_read = 6;
+  string created_at = 7;
+}
+
+message MarkAsReadRequest {
+  repeated string ids = 1;
+}
+
+message MarkAsReadResponse {
+  int32 updated_count = 1;
+}
+
+message DeleteNotificationRequest {
+  string id = 1;
+}
+
+message DeleteNotificationResponse {
+  bool success = 1;
 }

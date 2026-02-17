@@ -5,6 +5,10 @@ import { UserRole } from './user.constant';
 
 @Entity({ schema: 'auth' })
 export class User extends MikroUuidEntity {
+  constructor(data?: Partial<User>) {
+    super(data);
+  }
+
   @Property({ unique: true })
   email!: string;
 

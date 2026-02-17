@@ -1,10 +1,10 @@
 import { Env } from '@app/core/constants/app.constant';
 import { ArgumentsHost, Catch, HttpException, HttpStatus, Inject } from '@nestjs/common';
+import { AbstractExceptionFilter } from './abstract-exception.filter';
+import { ErrorResponse } from './error-response.interface';
 import { ConfigsServiceKey } from '../../configs/configs.constant';
 import { IConfigsService } from '../../configs/configs.interface';
 import { LoggerService } from '../../logger/logger.service';
-import { AbstractExceptionFilter } from './abstract-exception.filter';
-import { ErrorResponse } from './error-response.interface';
 
 @Catch()
 export class GeneralExceptionFilter extends AbstractExceptionFilter {
@@ -15,7 +15,7 @@ export class GeneralExceptionFilter extends AbstractExceptionFilter {
     super();
   }
 
-  async handle(exception: any, host: ArgumentsHost) {
+  async handle(exception: Error, host: ArgumentsHost): Promise<Partial<ErrorResponse>> {
     const env = this.configsService.AppConfig.env;
     const isProduction = env === Env.production;
     if (host.getType() !== 'http') throw exception;
@@ -31,13 +31,7 @@ export class GeneralExceptionFilter extends AbstractExceptionFilter {
       errorResponse.message = exception.message;
     }
 
-    const status = errorResponse.statusCode;
-    const useResponseMessage =
-      !isProduction ||
-      (status !== HttpStatus.BAD_REQUEST && status !== HttpStatus.INTERNAL_SERVER_ERROR);
-    if (useResponseMessage) {
-      if (exception?.response?.message) errorResponse.message = exception?.response?.message;
-    }
+    //FIXME: Production에서 validation error message 제거 블록
 
     return errorResponse;
   }

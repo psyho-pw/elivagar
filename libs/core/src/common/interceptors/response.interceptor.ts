@@ -1,8 +1,15 @@
-import { CallHandler, ExecutionContext, HttpStatus, Injectable, NestInterceptor } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  HttpStatus,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Response } from 'express';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
+import { GeneralException } from '../exceptions/general.exception';
 import { ApiResponse } from '../response/api-response';
 import { BYPASS_RESPONSE_INTERCEPTOR } from '../response/response.constant';
 
@@ -10,7 +17,7 @@ import { BYPASS_RESPONSE_INTERCEPTOR } from '../response/response.constant';
 export class ResponseInterceptor implements NestInterceptor {
   constructor(private readonly reflector: Reflector) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (context.getType() !== 'http') return next.handle();
 
     const doBypass =
@@ -23,6 +30,15 @@ export class ResponseInterceptor implements NestInterceptor {
 
         const res: Response = context.switchToHttp().getResponse();
         return new ApiResponse({ statusCode: res.statusCode ?? HttpStatus.OK, data: response });
+      }),
+      catchError((err) => {
+        throw new GeneralException({
+          callClass: context.getClass().name,
+          callMethod: context.getHandler().name,
+          message: err.message,
+          status: err.status,
+          originalError: err,
+        });
       }),
     );
   }

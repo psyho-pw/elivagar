@@ -1,10 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import {
-  ConnectionState,
-  IConnectionEntry,
-  IConnectionMetadata,
-  IManagedConnection,
-} from './lifecycle.interface';
+import { ConnectionState } from './lifecycle.constant';
+import { IConnectionEntry, IConnectionMetadata, IManagedConnection } from './lifecycle.interface';
 import { LoggerService } from '../logger/logger.service';
 
 @Injectable()

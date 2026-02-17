@@ -1,13 +1,4 @@
-/**
- * Connection states for external services
- */
-export enum ConnectionState {
-  DISCONNECTED = 'disconnected',
-  CONNECTING = 'connecting',
-  CONNECTED = 'connected',
-  DISCONNECTING = 'disconnecting',
-  ERROR = 'error',
-}
+import { ConnectionState } from './lifecycle.constant';
 
 /**
  * Connection metadata for registration

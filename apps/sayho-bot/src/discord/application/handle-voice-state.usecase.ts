@@ -1,7 +1,7 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { ConfigsService } from '../../configs/configs.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { LeaveChannelUseCase } from './leave-channel.usecase';
+import { ConfigsService } from '../../configs/configs.service';
 import { IMessageSender, MessageSenderPort } from '../domain/ports/message-sender.port';
 
 @Injectable()

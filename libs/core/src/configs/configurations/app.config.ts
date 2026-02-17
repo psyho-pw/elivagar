@@ -51,7 +51,9 @@ export const AppConfig = registerAs(AppConfigKey, (): IApp => {
   const res = AppConfigSchema.safeParse(config);
 
   if (!res.success) {
-    throw new Error(`${AppConfigKey} config validation failed: ${JSON.stringify(res.error.issues)}`);
+    throw new Error(
+      `${AppConfigKey} config validation failed: ${JSON.stringify(res.error.issues)}`,
+    );
   }
 
   return res.data;

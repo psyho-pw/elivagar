@@ -1,8 +1,9 @@
 import { faker } from '@faker-js/faker';
+import { plainToInstance } from 'class-transformer';
 import { User } from '../../apps/auth/src/user/user.entity';
 
 export function makeUser(overrides: Partial<User> = {}): User {
-  return {
+  return plainToInstance(User, {
     id: faker.string.uuid(),
     email: faker.internet.email(),
     name: faker.person.fullName(),
@@ -12,5 +13,5 @@ export function makeUser(overrides: Partial<User> = {}): User {
     updatedAt: faker.date.recent(),
     deletedAt: null,
     ...overrides,
-  } as unknown as User;
+  });
 }

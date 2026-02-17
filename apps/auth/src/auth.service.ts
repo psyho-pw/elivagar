@@ -4,7 +4,12 @@ import { EntityManager } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import * as bcrypt from 'bcrypt';
-import { LoginResult, RefreshTokenResult, RegisterResult, ValidateTokenResult } from './auth.interface';
+import {
+  LoginResult,
+  RefreshTokenResult,
+  RegisterResult,
+  ValidateTokenResult,
+} from './auth.interface';
 import { JwtPayload, JwtService } from './jwt/jwt.service';
 import { User } from './user/user.entity';
 
@@ -18,11 +23,7 @@ export class AuthService {
     private readonly loggerService: LoggerService,
   ) {}
 
-  async register(
-    email: string,
-    password: string,
-    name: string,
-  ): Promise<RegisterResult> {
+  async register(email: string, password: string, name: string): Promise<RegisterResult> {
     const existing = await this.em.findOne(User, { email, deletedAt: null });
     if (existing) {
       throw new RpcException({
@@ -44,10 +45,7 @@ export class AuthService {
     return { userId: user.id, email: user.email };
   }
 
-  async login(
-    email: string,
-    password: string,
-  ): Promise<LoginResult> {
+  async login(email: string, password: string): Promise<LoginResult> {
     const user = await this.em.findOne(User, { email, deletedAt: null });
     if (!user) {
       throw new RpcException({ code: GrpcStatus.UNAUTHENTICATED, message: 'Invalid credentials' });
@@ -97,9 +95,7 @@ export class AuthService {
     }
   }
 
-  async refreshToken(
-    refreshToken: string,
-  ): Promise<RefreshTokenResult> {
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResult> {
     try {
       const { sub } = this.jwtService.verifyRefreshToken(refreshToken);
       const user = await this.em.findOne(User, { id: sub, deletedAt: null });

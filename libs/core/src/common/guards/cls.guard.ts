@@ -1,6 +1,8 @@
+import '@app/core/types/express';
 import { IClsService } from '@app/core/cls/cls.interface';
 import { ClsServiceKey } from '@app/core/cls/cls.module';
 import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
+import { Request } from 'express';
 import { v7 } from 'uuid';
 
 @Injectable()
@@ -12,11 +14,12 @@ export class RequestIdGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const requestId: string = request.headers['x-request-id'] || v7();
+    const request: Request = context.switchToHttp().getRequest();
+    const requestId: string = (request.headers['x-request-id'] as string) || v7();
 
     this.clsService.requestId = requestId;
     request.requestId = requestId;
+    request.startTime = Date.now();
 
     return true;
   }

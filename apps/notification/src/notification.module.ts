@@ -49,6 +49,7 @@ import { NotificationService } from './notification.service';
     MikroConnectionService,
     AuthModule.getGuardProvider(),
     AuthModule.getEventListenerProvider(),
+    KafkaModule.getExceptionFilterProvider(),
     NotificationService,
   ],
 })

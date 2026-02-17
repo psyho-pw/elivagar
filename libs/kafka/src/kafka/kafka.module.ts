@@ -1,7 +1,9 @@
 import { IKafkaConfig } from '@app/core/configs/configs.interface';
-import { DynamicModule, Module } from '@nestjs/common';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
 import { SASLOptions } from 'kafkajs';
+import { KafkaExceptionFilter } from './kafka-exception.filter';
 import { KafkaClientKey, KafkaServiceKey } from './kafka.constant';
 import { KafkaModuleAsyncOptions, KafkaModuleOptions } from './kafka.interface';
 import { KafkaService } from './kafka.service';
@@ -107,5 +109,10 @@ export class KafkaModule {
    */
   static getConsumerOptions(options: KafkaModuleOptions): KafkaOptions {
     return this.makeKafkaOptions(options);
+  }
+
+  /** Register KafkaExceptionFilter as global APP_FILTER in the consumer module's providers. */
+  static getExceptionFilterProvider(): Provider {
+    return { provide: APP_FILTER, useClass: KafkaExceptionFilter };
   }
 }

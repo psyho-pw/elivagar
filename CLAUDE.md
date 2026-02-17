@@ -155,6 +155,7 @@ pnpm test:cov
 ```
 
 Test infrastructure is in `test/`:
+
 - `test/factories/` - Test factories (execution-context, managed-connection, user, song)
 - `test/mocks/` - Module mocks (uuid, change-case) mapped via Jest `moduleNameMapper`
 - `@test` path alias available for imports (e.g., `@test/factories/user.factory`)
@@ -287,12 +288,14 @@ The `MikroOrmModule.getInstance()` returns a singleton instance to ensure only o
 The `CoreModule` (`libs/core/src/core.module.ts`) is a global module that provides shared infrastructure:
 
 **Imports:**
+
 - `LoggerModule` - Winston-based structured logging
 - `LifecycleModule.forRoot()` - Connection lifecycle management
 - `ClsModule` - Continuation-local storage for request context
 - `AopModule` - Aspect-oriented programming support (`@toss/nestjs-aop`)
 
 **Global Providers:**
+
 - `RequestIdGuard` (`APP_GUARD`) - Injects CLS context with request IDs
 - `ErrorInterceptor` (`APP_INTERCEPTOR`) - Catches errors, logs 500+ errors, converts to HTTP responses
 - `RequestLogInterceptor` (`APP_INTERCEPTOR`) - Logs request/response with timing, flags slow requests (>10s)
@@ -438,6 +441,7 @@ AuthModule.getEventListenerProvider(), // AuthEventListener - requires CacheModu
 ```
 
 **Components:**
+
 - `AuthGrpcClientService` - Communicates with auth service's `ValidateToken` RPC
 - `AuthGuard` - Cache-first token validation: check `@Public()` → extract Bearer → Redis cache → gRPC fallback
 - `AuthEventListener` - Listens for `SessionRevoked` Kafka events to invalidate cached tokens
@@ -445,6 +449,7 @@ AuthModule.getEventListenerProvider(), // AuthEventListener - requires CacheModu
 - `@CurrentUser()` decorator - Inject authenticated user from CLS context
 
 **Token Caching:**
+
 - Cache key: `auth:token:<sha256_of_jwt>`, TTL 5min
 - Single-flight pattern prevents thundering herd for concurrent requests with the same token
 
@@ -517,6 +522,7 @@ apps/sayho-bot/src/discord/
 ```
 
 Uses `@toss/nestjs-aop` for cross-cutting concerns:
+
 - `DiscordContextAspect` - Manages Discord context per request
 - `DiscordErrorAspect` - Handles and formats errors
 
@@ -534,6 +540,53 @@ import { AbstractMain, BootstrapConfig } from '@app/core/bootstrap';
 import { AbstractMain } from '@app/core/bootstrap/abstract-main';
 import { BootstrapConfig } from '@app/core/bootstrap/bootstrap.interface';
 ```
+
+### No TypeScript Enums
+
+**Do NOT use TypeScript `enum`.** Use `as const` object + `Union<T>` type pair instead:
+
+```typescript
+// Bad - TypeScript enum
+export enum NotificationType {
+  SYSTEM = 'SYSTEM',
+  AUTH = 'AUTH',
+  INFO = 'INFO',
+}
+
+// Good - as const + Union type
+import { Union } from '@app/core/types/union.type';
+
+export const NotificationType = {
+  SYSTEM: 'SYSTEM',
+  AUTH: 'AUTH',
+  INFO: 'INFO',
+} as const;
+export type NotificationType = Union<typeof NotificationType>;
+```
+
+The `Union<T>` helper (`libs/core/src/types/union.type.ts`) extracts the union of literal values from the const object. This pattern is tree-shakeable, works with MikroORM's `@Enum()` decorator, and avoids TypeScript enum pitfalls (reverse mapping, nominal typing).
+
+### File Naming by Content Type
+
+Type definitions must be placed in the correct file based on their nature:
+
+- **`.constant.ts`**: `as const` object + `type` pairs, injection tokens (Symbols), type guards
+- **`.interface.ts`**: Pure types only (interfaces, type aliases with no runtime footprint)
+
+```typescript
+// notification.constant.ts - const+type pair with runtime value
+export const NotificationType = { SYSTEM: 'SYSTEM', AUTH: 'AUTH', INFO: 'INFO' } as const;
+export type NotificationType = Union<typeof NotificationType>;
+
+// notification.interface.ts - pure type (no runtime code)
+import { NotificationType } from './notification.constant';
+export interface NotificationResult {
+  id: string;
+  type: NotificationType;
+}
+```
+
+If a pure type in `.interface.ts` references a const type from `.constant.ts`, import it from the constant file.
 
 ## Important Notes
 
