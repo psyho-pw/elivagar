@@ -13,10 +13,6 @@ import { AuthGrpcClientService } from './auth-grpc-client.service';
 import { AUTH_TOKEN_CACHE_PREFIX, AUTH_TOKEN_MAX_CACHE_TTL, IS_PUBLIC_KEY } from './auth.constant';
 import { AuthGuard } from './auth.guard';
 
-jest.mock('uuid', () => ({
-  v7: jest.fn(() => 'mock-uuid-v7'),
-}));
-
 describe('AuthGuard', () => {
   let guard: AuthGuard;
   let reflector: Mocked<Reflector>;

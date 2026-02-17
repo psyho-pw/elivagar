@@ -1,7 +1,3 @@
-jest.mock('uuid', () => ({
-  v7: (): string => 'mock-uuid-v7',
-}));
-
 import { ConnectionRegistryService } from '@app/core/lifecycle/connection-registry.service';
 import { ConnectionNames, ConnectionState } from '@app/core/lifecycle/lifecycle.constant';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';

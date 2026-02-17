@@ -57,7 +57,7 @@ pnpm --config.env=local --config.app=auth migration:create  # Also: migration:up
 ### Test Infrastructure
 
 - `test/factories/` - Factories (execution-context, managed-connection, user, song, notification). `createMockExecutionContext` supports `type` (`'http'|'rpc'|'ws'`), `rpcContext`, `rpcData`
-- `test/mocks/` - Module mocks (uuid, change-case, mikro-orm-core) via Jest `moduleNameMapper`. `mikro-orm-core` mock stubs `@Transactional()` as no-op
+- `test/setup/module-mocks.ts` - Global `jest.mock()` via `setupFiles`: uuid (deterministic UUIDs), change-case (lightweight impl), mikro-orm-core (`@Transactional()` no-op stub via `jest.requireActual`)
 - `@test` path alias for imports
 
 ## CodeGraph

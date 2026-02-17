@@ -1,11 +1,8 @@
-jest.mock('uuid', () => ({
-  v7: jest.fn(() => 'mock-uuid-v7'),
-}));
-
-import { ExecutionContext } from '@nestjs/common';
 import { Metadata } from '@grpc/grpc-js';
+import { ExecutionContext } from '@nestjs/common';
 import { TestBed, Mocked } from '@suites/unit';
 import { createMockExecutionContext } from '@test/factories/execution-context.factory';
+import { MOCK_UUID_V7 } from '@test/mocks/uuid.mock';
 import { RequestIdGuard } from './cls.guard';
 import { IClsService } from '../../cls/cls.interface';
 import { ClsServiceKey } from '../../cls/cls.module';
@@ -91,7 +88,7 @@ describe('RequestIdGuard', () => {
         const result = guard.canActivate(context);
 
         expect(result).toBe(true);
-        expect(clsService.requestId).toBe('mock-uuid-v7');
+        expect(clsService.requestId).toBe(MOCK_UUID_V7);
       });
 
       it('should generate UUID v7 when x-request-id header is empty string', () => {
@@ -100,7 +97,7 @@ describe('RequestIdGuard', () => {
         const result = guard.canActivate(context);
 
         expect(result).toBe(true);
-        expect(clsService.requestId).toBe('mock-uuid-v7');
+        expect(clsService.requestId).toBe(MOCK_UUID_V7);
       });
     });
 
@@ -121,7 +118,7 @@ describe('RequestIdGuard', () => {
         const result = guard.canActivate(context);
 
         expect(result).toBe(true);
-        expect(clsService.requestId).toBe('mock-uuid-v7');
+        expect(clsService.requestId).toBe(MOCK_UUID_V7);
       });
     });
 
@@ -152,7 +149,7 @@ describe('RequestIdGuard', () => {
         const result = guard.canActivate(context);
 
         expect(result).toBe(true);
-        expect(clsService.requestId).toBe('mock-uuid-v7');
+        expect(clsService.requestId).toBe(MOCK_UUID_V7);
       });
     });
 
@@ -190,7 +187,7 @@ describe('RequestIdGuard', () => {
         const result = guard.canActivate(context);
 
         expect(result).toBe(true);
-        expect(clsService.requestId).toBe('mock-uuid-v7');
+        expect(clsService.requestId).toBe(MOCK_UUID_V7);
       });
     });
   });

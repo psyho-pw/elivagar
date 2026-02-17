@@ -1,5 +1,3 @@
-jest.mock('uuid', () => ({ v7: jest.fn(() => 'mock-uuid') }));
-
 import { TestBed, Mocked } from '@suites/unit';
 import { GracePeriodService } from './grace-period.service';
 import { GRACE_PERIOD_CONFIG } from './lifecycle.constant';

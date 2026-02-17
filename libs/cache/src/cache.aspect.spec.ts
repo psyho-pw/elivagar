@@ -1,7 +1,3 @@
-jest.mock('uuid', () => ({
-  v7: (): string => 'mock-uuid-v7',
-}));
-
 import { LoggerService } from '@app/core/logger/logger.service';
 import { AnonymousFunction } from '@app/core/types/anonymous-function.type';
 import { Mocked, TestBed } from '@suites/unit';
