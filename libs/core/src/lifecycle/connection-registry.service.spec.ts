@@ -1,5 +1,3 @@
-jest.mock('uuid', () => ({ v7: jest.fn(() => 'mock-uuid') }));
-
 import { TestBed, Mocked } from '@suites/unit';
 import { createMockConnection } from '@test/factories/managed-connection.factory';
 

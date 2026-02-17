@@ -10,10 +10,8 @@ module.exports = {
   coverageDirectory: './coverage',
   testEnvironment: 'node',
   roots: ['<rootDir>/apps/', '<rootDir>/libs/'],
+  setupFiles: ['<rootDir>/test/setup/module-mocks.ts'],
   moduleNameMapper: {
-    '^uuid$': '<rootDir>/test/mocks/uuid.ts',
-    '^change-case$': '<rootDir>/test/mocks/change-case.ts',
-    '^@mikro-orm/core$': '<rootDir>/test/mocks/mikro-orm-core.ts',
     '^@test(|/.*)$': '<rootDir>/test/$1',
     '^@app/core(|/.*)$': '<rootDir>/libs/core/src/$1',
     '^@app/grpc(|/.*)$': '<rootDir>/libs/grpc/src/$1',

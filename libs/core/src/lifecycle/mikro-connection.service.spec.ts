@@ -1,5 +1,3 @@
-jest.mock('uuid', () => ({ v7: jest.fn(() => 'mock-uuid') }));
-
 import { MikroORM } from '@mikro-orm/core';
 import { TestBed, Mocked } from '@suites/unit';
 import { ConnectionRegistryService } from './connection-registry.service';

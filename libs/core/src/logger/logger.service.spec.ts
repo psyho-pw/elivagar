@@ -1,7 +1,3 @@
-jest.mock('uuid', () => ({
-  v7: jest.fn(() => 'mock-log-id'),
-}));
-
 import { INQUIRER } from '@nestjs/core';
 import { TestBed, Mocked } from '@suites/unit';
 import { WINSTON_MODULE_NEST_PROVIDER, WinstonLogger } from 'nest-winston';
