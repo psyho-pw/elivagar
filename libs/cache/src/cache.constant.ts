@@ -1,10 +1,12 @@
+import { Union } from '@app/core/types/union.type';
+
 // Injection tokens
-export const CacheServiceKey = Symbol('CACHE_SERVICE');
-export const KeyvRedisKey = Symbol('KEYV_REDIS');
-export const CacheModuleOptionsKey = Symbol('CACHE_MODULE_OPTIONS');
+export const CacheServiceKey = Symbol('CacheServiceKey');
+export const KeyvRedisKey = Symbol('KeyvRedisKey');
+export const CacheModuleOptionsKey = Symbol('CacheModuleOptionsKey');
 
 // AOP decorator symbol
-export const CACHE_DECORATOR = Symbol('CACHE_DECORATOR');
+export const CACHE_DECORATOR = Symbol('CacheDecorator');
 
 // Cache key types
 export const CacheKeyType = {
@@ -12,4 +14,4 @@ export const CacheKeyType = {
   Suffix: 'suffix',
 } as const;
 
-export type CacheKeyType = (typeof CacheKeyType)[keyof typeof CacheKeyType];
+export type CacheKeyType = Union<typeof CacheKeyType>;

@@ -11,7 +11,7 @@ const clsService: ClassProvider = {
 
 @Global()
 @Module({
-  imports: [ClsModuleInNest.forRoot({ guard: { mount: true } })],
+  imports: [ClsModuleInNest.forRoot({ middleware: { mount: true }, guard: { mount: true } })],
   providers: [clsService],
   exports: [ClsModuleInNest, clsService],
 })

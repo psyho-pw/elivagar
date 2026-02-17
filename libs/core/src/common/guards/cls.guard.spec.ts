@@ -3,6 +3,7 @@ jest.mock('uuid', () => ({
 }));
 
 import { ExecutionContext } from '@nestjs/common';
+import { Metadata } from '@grpc/grpc-js';
 import { TestBed, Mocked } from '@suites/unit';
 import { createMockExecutionContext } from '@test/factories/execution-context.factory';
 import { RequestIdGuard } from './cls.guard';
@@ -28,13 +29,20 @@ describe('RequestIdGuard', () => {
     });
   }
 
-  function createMockGrpcContext(metadata?: {
-    get: (key: string) => string[];
-    set: (key: string, value: string) => void;
-  }): ExecutionContext {
+  function createGrpcMetadata(headers?: Record<string, string>): Metadata {
+    const metadata = new Metadata();
+    if (headers) {
+      for (const [key, value] of Object.entries(headers)) {
+        metadata.set(key, value);
+      }
+    }
+    return metadata;
+  }
+
+  function createMockGrpcContext(metadata?: Metadata): ExecutionContext {
     return createMockExecutionContext({
       type: 'rpc',
-      rpcContext: metadata ?? { get: () => [], set: () => {} },
+      rpcContext: metadata ?? new Metadata(),
     });
   }
 
@@ -98,10 +106,8 @@ describe('RequestIdGuard', () => {
 
     describe('gRPC transport', () => {
       it('should extract x-request-id from gRPC metadata', () => {
-        const context = createMockGrpcContext({
-          get: (key: string) => (key === 'x-request-id' ? ['grpc-request-id'] : []),
-          set: () => {},
-        });
+        const metadata = createGrpcMetadata({ 'x-request-id': 'grpc-request-id' });
+        const context = createMockGrpcContext(metadata);
 
         const result = guard.canActivate(context);
 
@@ -110,10 +116,7 @@ describe('RequestIdGuard', () => {
       });
 
       it('should generate UUID v7 when gRPC metadata has no x-request-id', () => {
-        const context = createMockGrpcContext({
-          get: () => [],
-          set: () => {},
-        });
+        const context = createMockGrpcContext();
 
         const result = guard.canActivate(context);
 

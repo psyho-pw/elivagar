@@ -2,6 +2,7 @@ import '@app/core/types/express';
 import { IClsService } from '@app/core/cls/cls.interface';
 import { ClsServiceKey } from '@app/core/cls/cls.module';
 import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
+import { Metadata } from '@grpc/grpc-js';
 import { Request } from 'express';
 import { v7 } from 'uuid';
 
@@ -52,8 +53,8 @@ export class RequestIdGuard implements CanActivate {
       return undefined;
     }
 
-    // gRPC: Metadata has get()/set() methods
-    if (typeof rpcContext?.get === 'function' && typeof rpcContext?.set === 'function') {
+    // gRPC: instanceof check for reliable detection
+    if (rpcContext instanceof Metadata) {
       const values = rpcContext.get('x-request-id');
       if (Array.isArray(values) && values.length > 0) {
         return String(values[0]);

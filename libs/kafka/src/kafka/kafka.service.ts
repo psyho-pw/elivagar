@@ -22,7 +22,7 @@ export class KafkaService
     @Inject(KafkaClientKey) private readonly kafkaClient: ClientKafka,
     private readonly loggerService: LoggerService,
     @Optional() private readonly connectionRegistry?: ConnectionRegistryService,
-    @Inject(ClsServiceKey) @Optional() private readonly clsService?: IClsService,
+    @Optional() @Inject(ClsServiceKey) private readonly clsService?: IClsService,
   ) {
     // Register with lifecycle manager if available
     this.connectionRegistry?.register(this, {
