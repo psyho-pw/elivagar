@@ -9,7 +9,7 @@ export class MikroOrmContextInterceptor implements NestInterceptor {
   intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return new Observable((subscriber) => {
       RequestContext.create(this.orm.em, () => {
-        next.handle().subscribe(subscriber);
+        subscriber.add(next.handle().subscribe(subscriber));
       });
     });
   }
