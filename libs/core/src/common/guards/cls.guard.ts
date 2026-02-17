@@ -53,7 +53,8 @@ export class RequestIdGuard implements CanActivate {
       return undefined;
     }
 
-    // gRPC: instanceof check for reliable detection
+    // gRPC: duck-typing 대신 instanceof를 사용해 안정성 확보.
+    // libs/core에 @grpc/grpc-js 의존이 생기지만, 모든 서비스가 gRPC를 사용하므로 허용.
     if (rpcContext instanceof Metadata) {
       const values = rpcContext.get('x-request-id');
       if (Array.isArray(values) && values.length > 0) {
