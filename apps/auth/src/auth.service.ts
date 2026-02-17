@@ -48,6 +48,7 @@ export class AuthService {
       roles: ['user'],
     } as unknown as User);
 
+    // TODO: @Transactional() 커밋 전에 emit하므로 롤백 시 이벤트 철회 불가 — Saga/Outbox 패턴 적용 필요
     this.kafkaService.emit(KafkaTopics.Auth.UserCreated, {
       userId: user.id,
       email: user.email,
