@@ -628,22 +628,6 @@ import { Union } from '@app/core/types/union.type';
 export type CacheKeyType = Union<typeof CacheKeyType>;
 ```
 
-### RPC Context Discrimination with instanceof
-
-**Use `instanceof` narrowing (not duck-typing) to discriminate RPC context types.** This ensures type safety when handling multiple transports (gRPC, Kafka) in shared code:
-
-```typescript
-// Bad - duck-typing / generic type assertion
-const kafkaContext = rpcCtx.getContext<KafkaContext>();
-
-// Good - instanceof narrowing
-const context = rpcCtx.getContext();
-if (context instanceof KafkaContext) { /* Kafka-specific logic */ }
-if (context instanceof Metadata) { /* gRPC-specific logic */ }
-```
-
-This creates a dependency on transport-specific packages (e.g., `@grpc/grpc-js` in `libs/core`), which is acceptable when all services use these transports.
-
 ## Important Notes
 
 - Always run `pnpm proto:generate` after modifying `.proto` files
