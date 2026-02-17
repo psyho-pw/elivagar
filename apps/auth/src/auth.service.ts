@@ -1,8 +1,8 @@
 import { LoggerService } from '@app/core/logger/logger.service';
 import { KafkaTopics } from '@app/kafka/events/events.constant';
 import { AuthUserCreatedEvent } from '@app/kafka/events/events.interface';
-import { IKafkaService } from '@app/kafka/kafka/kafka.interface';
 import { KafkaServiceKey } from '@app/kafka/kafka/kafka.constant';
+import { IKafkaService } from '@app/kafka/kafka/kafka.interface';
 import { status as GrpcStatus } from '@grpc/grpc-js';
 import { Transactional } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';

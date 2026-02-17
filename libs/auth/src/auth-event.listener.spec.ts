@@ -1,9 +1,9 @@
 import { CacheServiceKey } from '@app/cache/cache.constant';
 import { ICacheService } from '@app/cache/cache.interface';
 import { LoggerService } from '@app/core/logger/logger.service';
+import { AuthSessionRevokedEvent } from '@app/kafka/events/events.interface';
 import { faker } from '@faker-js/faker';
 import { TestBed, Mocked } from '@suites/unit';
-import { AuthSessionRevokedEvent } from '@app/kafka/events/events.interface';
 import { AuthEventListener } from './auth-event.listener';
 import { AUTH_TOKEN_CACHE_PREFIX } from './auth.constant';
 

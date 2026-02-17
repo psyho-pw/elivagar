@@ -1,8 +1,8 @@
 import '@app/core/types/express';
 import { IClsService } from '@app/core/cls/cls.interface';
 import { ClsServiceKey } from '@app/core/cls/cls.module';
-import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
 import { Metadata } from '@grpc/grpc-js';
+import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
 import { Request } from 'express';
 import { v7 } from 'uuid';
 
