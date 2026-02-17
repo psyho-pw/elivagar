@@ -2,15 +2,10 @@ import { CacheServiceKey } from '@app/cache/cache.constant';
 import { ICacheService } from '@app/cache/cache.interface';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { KafkaTopics } from '@app/kafka/events/events.constant';
+import { AuthSessionRevokedEvent } from '@app/kafka/events/events.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { AUTH_TOKEN_CACHE_PREFIX } from './auth.constant';
-
-export interface SessionRevokedPayload {
-  tokenHash: string;
-  userId: string;
-  reason?: string;
-}
 
 @Injectable()
 export class AuthEventListener {
@@ -20,7 +15,7 @@ export class AuthEventListener {
   ) {}
 
   @EventPattern(KafkaTopics.Auth.SessionRevoked)
-  async handleSessionRevoked(@Payload() payload: SessionRevokedPayload): Promise<void> {
+  async handleSessionRevoked(@Payload() payload: AuthSessionRevokedEvent): Promise<void> {
     this.loggerService.info(
       'handleSessionRevoked',
       { userId: payload.userId },

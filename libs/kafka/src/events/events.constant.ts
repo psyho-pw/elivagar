@@ -32,7 +32,8 @@ export const KafkaTopics = {
   },
 } as const;
 
-export type AuthTopics = (typeof KafkaTopics.Auth)[keyof typeof KafkaTopics.Auth];
-export type NotificationTopics =
-  (typeof KafkaTopics.Notification)[keyof typeof KafkaTopics.Notification];
-export type SayhoBotTopics = (typeof KafkaTopics.SayhoBot)[keyof typeof KafkaTopics.SayhoBot];
+import { Union } from '@app/core/types/union.type';
+
+export type AuthTopics = Union<typeof KafkaTopics.Auth>;
+export type NotificationTopics = Union<typeof KafkaTopics.Notification>;
+export type SayhoBotTopics = Union<typeof KafkaTopics.SayhoBot>;

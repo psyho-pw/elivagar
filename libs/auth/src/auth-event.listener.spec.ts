@@ -3,7 +3,8 @@ import { ICacheService } from '@app/cache/cache.interface';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { faker } from '@faker-js/faker';
 import { TestBed, Mocked } from '@suites/unit';
-import { AuthEventListener, SessionRevokedPayload } from './auth-event.listener';
+import { AuthSessionRevokedEvent } from '@app/kafka/events/events.interface';
+import { AuthEventListener } from './auth-event.listener';
 import { AUTH_TOKEN_CACHE_PREFIX } from './auth.constant';
 
 describe('AuthEventListener', () => {
@@ -26,7 +27,7 @@ describe('AuthEventListener', () => {
       const tokenHash = faker.string.hexadecimal({ length: 64, prefix: '' });
       const userId = faker.string.uuid();
 
-      const payload: SessionRevokedPayload = {
+      const payload: AuthSessionRevokedEvent = {
         tokenHash,
         userId,
       };
@@ -42,7 +43,7 @@ describe('AuthEventListener', () => {
       const userId = faker.string.uuid();
       const reason = faker.lorem.words(2);
 
-      const payload: SessionRevokedPayload = {
+      const payload: AuthSessionRevokedEvent = {
         tokenHash,
         userId,
         reason,
@@ -64,7 +65,7 @@ describe('AuthEventListener', () => {
 
       cacheService.del.mockRejectedValue(cacheError);
 
-      const payload: SessionRevokedPayload = { tokenHash, userId };
+      const payload: AuthSessionRevokedEvent = { tokenHash, userId };
 
       await expect(listener.handleSessionRevoked(payload)).rejects.toThrow('Redis connection lost');
     });

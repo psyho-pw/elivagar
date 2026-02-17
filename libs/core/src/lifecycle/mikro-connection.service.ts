@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/core';
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { ConnectionRegistryService } from './connection-registry.service';
 import { ConnectionNames, ConnectionState } from './lifecycle.constant';
 import { IManagedConnection } from './lifecycle.interface';
@@ -13,10 +13,10 @@ export class MikroConnectionService implements IManagedConnection, OnModuleInit,
 
   constructor(
     private readonly orm: MikroORM,
-    private readonly connectionRegistry: ConnectionRegistryService,
     private readonly loggerService: LoggerService,
+    @Optional() private readonly connectionRegistry?: ConnectionRegistryService,
   ) {
-    this.connectionRegistry.register(this, {
+    this.connectionRegistry?.register(this, {
       required: true,
     });
   }
@@ -55,11 +55,11 @@ export class MikroConnectionService implements IManagedConnection, OnModuleInit,
       await this.orm.em.getConnection().execute('SELECT 1');
 
       this._state = ConnectionState.CONNECTED;
-      this.connectionRegistry.emitStateChange(this.connectionName, this._state);
+      this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
       this.loggerService.info(this.connect.name, '✅ connected to database');
     } catch (error) {
       this._state = ConnectionState.ERROR;
-      this.connectionRegistry.emitStateChange(this.connectionName, this._state);
+      this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
       this.loggerService.error(this.connect.name, error, 'Failed to connect to database');
       throw error;
     }
@@ -76,11 +76,11 @@ export class MikroConnectionService implements IManagedConnection, OnModuleInit,
     try {
       await this.orm.close();
       this._state = ConnectionState.DISCONNECTED;
-      this.connectionRegistry.emitStateChange(this.connectionName, this._state);
+      this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
       this.loggerService.info(this.disconnect.name, 'Disconnected from database');
     } catch (error) {
       this._state = ConnectionState.ERROR;
-      this.connectionRegistry.emitStateChange(this.connectionName, this._state);
+      this.connectionRegistry?.emitStateChange(this.connectionName, this._state);
       throw error;
     }
   }

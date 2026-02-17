@@ -1,7 +1,11 @@
 import { LoggerService } from '@app/core/logger/logger.service';
+import { KafkaTopics } from '@app/kafka/events/events.constant';
+import { AuthUserCreatedEvent } from '@app/kafka/events/events.interface';
+import { IKafkaService } from '@app/kafka/kafka/kafka.interface';
+import { KafkaServiceKey } from '@app/kafka/kafka/kafka.constant';
 import { status as GrpcStatus } from '@grpc/grpc-js';
 import { Transactional } from '@mikro-orm/core';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import * as bcrypt from 'bcrypt';
 import {
@@ -22,6 +26,7 @@ export class AuthService {
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly loggerService: LoggerService,
+    @Inject(KafkaServiceKey) private readonly kafkaService: IKafkaService,
   ) {}
 
   @Transactional()
@@ -42,6 +47,13 @@ export class AuthService {
       password: hashedPassword,
       roles: ['user'],
     } as unknown as User);
+
+    // TODO: @Transactional() 커밋 전에 emit하므로 롤백 시 이벤트 철회 불가 — Saga/Outbox 패턴 적용 필요
+    this.kafkaService.emit(KafkaTopics.Auth.UserCreated, {
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+    } satisfies AuthUserCreatedEvent);
 
     return { userId: user.id, email: user.email };
   }
