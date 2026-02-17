@@ -3,8 +3,7 @@ jest.mock('uuid', () => ({
 }));
 
 import { ConnectionRegistryService } from '@app/core/lifecycle/connection-registry.service';
-import { ConnectionNames } from '@app/core/lifecycle/lifecycle.constant';
-import { ConnectionState } from '@app/core/lifecycle/lifecycle.interface';
+import { ConnectionNames, ConnectionState } from '@app/core/lifecycle/lifecycle.constant';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { TestBed, Mocked } from '@suites/unit';
 import { KeyvRedisKey } from './cache.constant';

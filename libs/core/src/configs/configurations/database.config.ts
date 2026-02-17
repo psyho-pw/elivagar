@@ -25,7 +25,9 @@ export const DatabaseConfig = registerAs(DatabaseConfigKey, (): IDatabase => {
   const res = DatabaseConfigSchema.safeParse(config);
 
   if (!res.success) {
-    throw new Error(`${DatabaseConfigKey} config validation failed: ${JSON.stringify(res.error.issues)}`);
+    throw new Error(
+      `${DatabaseConfigKey} config validation failed: ${JSON.stringify(res.error.issues)}`,
+    );
   }
 
   return res.data;

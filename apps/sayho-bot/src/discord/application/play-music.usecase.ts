@@ -1,9 +1,9 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
-import { ConfigsService } from '../../configs/configs.service';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { PlayMusicRequest, PlayMusicResult, SkipResult } from './play-music.interface';
 import { QueueStateManager } from './queue-state.manager';
+import { ConfigsService } from '../../configs/configs.service';
 import { SongService } from '../../song/song.service';
 import { VoiceChannelInfo } from '../domain/entities/song';
 import {

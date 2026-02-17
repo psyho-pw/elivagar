@@ -4,7 +4,7 @@ import { TestBed, Mocked } from '@suites/unit';
 import { createMockConnection } from '@test/factories/managed-connection.factory';
 
 import { ConnectionRegistryService } from './connection-registry.service';
-import { ConnectionState } from './lifecycle.interface';
+import { ConnectionState } from './lifecycle.constant';
 import { LoggerService } from '../logger/logger.service';
 
 describe('ConnectionRegistryService', () => {

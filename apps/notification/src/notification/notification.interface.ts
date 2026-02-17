@@ -1,4 +1,4 @@
-import { NotificationType } from './notification.entity';
+import { NotificationType } from './notification.constant';
 
 export interface NotificationResult {
   id: string;

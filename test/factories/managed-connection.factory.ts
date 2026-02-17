@@ -1,4 +1,5 @@
-import { ConnectionState, IManagedConnection } from '@app/core/lifecycle/lifecycle.interface';
+import { ConnectionState } from '@app/core/lifecycle/lifecycle.constant';
+import { IManagedConnection } from '@app/core/lifecycle/lifecycle.interface';
 
 export function createMockConnection(
   name: string,

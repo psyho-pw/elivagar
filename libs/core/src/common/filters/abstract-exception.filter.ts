@@ -1,10 +1,12 @@
+import '@app/core/types/express';
 import { Env } from '@app/core/constants/app.constant';
 import { ArgumentsHost, HttpStatus } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
 import { Request, Response } from 'express';
+import { ErrorResponse } from './error-response.interface';
 import { IConfigsService } from '../../configs/configs.interface';
 import { LoggerService } from '../../logger/logger.service';
-import { ErrorResponse } from './error-response.interface';
+import { GeneralException } from '../exceptions/general.exception';
 
 export abstract class AbstractExceptionFilter extends BaseExceptionFilter {
   protected abstract readonly configsService: IConfigsService;
@@ -14,7 +16,21 @@ export abstract class AbstractExceptionFilter extends BaseExceptionFilter {
     super();
   }
 
-  async catch(exception: any, host: ArgumentsHost): Promise<Response<ErrorResponse>> {
+  protected isGeneralException(exception: Error): exception is GeneralException {
+    return exception instanceof GeneralException;
+  }
+
+  async catch(exception: unknown, host: ArgumentsHost): Promise<Response<ErrorResponse>> {
+    if (!this.isExceptionObject(exception)) {
+      this.loggerService.error(this.catch.name, exception, 'Catching non-exception object');
+      throw new Error('Catching non-exception object');
+    }
+
+    if (!this.isGeneralException(exception)) {
+      this.loggerService.error(this.catch.name, exception, 'Catching non-general exception');
+      throw new Error('Catching non-general exception');
+    }
+
     const env = this.configsService.AppConfig.env;
     const isProduction = env === Env.production;
 
@@ -28,8 +44,8 @@ export abstract class AbstractExceptionFilter extends BaseExceptionFilter {
       message: handledData.message ?? exception.message,
       path: request.url,
       error: handledData.error ?? exception.name,
-      callClass: handledData.callClass ?? exception.callClass,
-      callMethod: handledData.callMethod ?? exception.callMethod,
+      callClass: handledData.callClass ?? exception.CallClass,
+      callMethod: handledData.callMethod ?? exception.CallMethod,
       stack: handledData.stack ?? exception.stack,
     };
 
@@ -39,7 +55,7 @@ export abstract class AbstractExceptionFilter extends BaseExceptionFilter {
       query: request.query,
     };
 
-    const responseTime = Date.now() - (request as any).startTime;
+    const responseTime = Date.now() - request.startTime;
     const res = { status: errorResponse.statusCode, responseTime, headers: response.getHeaders() };
 
     if (errorResponse.statusCode >= 500) {
@@ -61,5 +77,5 @@ export abstract class AbstractExceptionFilter extends BaseExceptionFilter {
     return response.status(errorResponse.statusCode).json(errorResponse);
   }
 
-  abstract handle(exception: any, host: ArgumentsHost): Promise<Partial<ErrorResponse>>;
+  abstract handle(exception: Error, host: ArgumentsHost): Promise<Partial<ErrorResponse>>;
 }

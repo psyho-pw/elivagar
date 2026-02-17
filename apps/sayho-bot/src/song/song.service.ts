@@ -29,11 +29,7 @@ export class SongService {
     return this.toResult(song);
   }
 
-  public async findAll(
-    page: number,
-    limit: number,
-    searchText?: string,
-  ): Promise<SongListResult> {
+  public async findAll(page: number, limit: number, searchText?: string): Promise<SongListResult> {
     const where: FilterQuery<Song> = {};
     if (searchText) {
       where.title = { $like: `%${escapeLike(searchText)}%` };

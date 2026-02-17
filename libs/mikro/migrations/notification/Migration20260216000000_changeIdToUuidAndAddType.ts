@@ -8,12 +8,8 @@ export class Migration20260216000000_changeIdToUuidAndAddType extends Migration 
     );
 
     // Convert id from serial to uuid
-    this.addSql(
-      `alter table "notification"."notification" drop constraint "notification_pkey";`,
-    );
-    this.addSql(
-      `alter table "notification"."notification" alter column "id" drop default;`,
-    );
+    this.addSql(`alter table "notification"."notification" drop constraint "notification_pkey";`);
+    this.addSql(`alter table "notification"."notification" alter column "id" drop default;`);
     this.addSql(
       `alter table "notification"."notification" alter column "id" type uuid using gen_random_uuid();`,
     );
@@ -34,19 +30,13 @@ export class Migration20260216000000_changeIdToUuidAndAddType extends Migration 
     );
 
     // Revert id from uuid back to serial
-    this.addSql(
-      `alter table "notification"."notification" drop constraint "notification_pkey";`,
-    );
-    this.addSql(
-      `alter table "notification"."notification" alter column "id" type serial;`,
-    );
+    this.addSql(`alter table "notification"."notification" drop constraint "notification_pkey";`);
+    this.addSql(`alter table "notification"."notification" alter column "id" type serial;`);
     this.addSql(
       `alter table "notification"."notification" add constraint "notification_pkey" primary key ("id");`,
     );
 
     // Drop type column
-    this.addSql(
-      `alter table "notification"."notification" drop column "type";`,
-    );
+    this.addSql(`alter table "notification"."notification" drop column "type";`);
   }
 }

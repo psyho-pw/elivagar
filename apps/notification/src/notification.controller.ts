@@ -18,7 +18,7 @@ import { KafkaTopics } from '@app/kafka/events/events.constant';
 import { AuthUserCreatedEvent } from '@app/kafka/events/events.interface';
 import { Controller, Get } from '@nestjs/common';
 import { EventPattern, GrpcMethod, Payload } from '@nestjs/microservices';
-import { isNotificationType, NotificationType } from './notification/notification.entity';
+import { isNotificationType, NotificationType } from './notification/notification.constant';
 import { NotificationService } from './notification.service';
 
 @Controller('/')
@@ -35,7 +35,10 @@ export class NotificationController {
   @TransformDto()
   async SendNotification({
     data,
-  }: GrpcDto<SendNotificationRequest, SendNotificationResponse>): Promise<SendNotificationResponse> {
+  }: GrpcDto<
+    SendNotificationRequest,
+    SendNotificationResponse
+  >): Promise<SendNotificationResponse> {
     const type = isNotificationType(data.type) ? data.type : NotificationType.INFO;
     const result = await this.notificationService.create(
       data.userId,
@@ -50,7 +53,10 @@ export class NotificationController {
   @TransformDto()
   async GetNotifications({
     data,
-  }: GrpcDto<GetNotificationsRequest, GetNotificationsResponse>): Promise<GetNotificationsResponse> {
+  }: GrpcDto<
+    GetNotificationsRequest,
+    GetNotificationsResponse
+  >): Promise<GetNotificationsResponse> {
     const result = await this.notificationService.findAllByUser(
       data.userId,
       data.page || 1,
@@ -84,7 +90,10 @@ export class NotificationController {
   @TransformDto()
   async DeleteNotification({
     data,
-  }: GrpcDto<DeleteNotificationRequest, DeleteNotificationResponse>): Promise<DeleteNotificationResponse> {
+  }: GrpcDto<
+    DeleteNotificationRequest,
+    DeleteNotificationResponse
+  >): Promise<DeleteNotificationResponse> {
     const success = await this.notificationService.remove(data.id);
     return { success };
   }

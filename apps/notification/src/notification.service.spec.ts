@@ -6,7 +6,8 @@ import { RpcException } from '@nestjs/microservices';
 import { TestBed, Mocked } from '@suites/unit';
 import { makeNotification } from '@test/factories/notification.factory';
 
-import { Notification, NotificationType } from './notification/notification.entity';
+import { NotificationType } from './notification/notification.constant';
+import { Notification } from './notification/notification.entity';
 import { NotificationService } from './notification.service';
 
 describe('NotificationService', () => {
@@ -41,7 +42,12 @@ describe('NotificationService', () => {
     it('should create a notification and return result', async () => {
       em.create.mockReturnValue(mockNotification);
 
-      const result = await service.create(testUserId, testTitle, testMessage, NotificationType.INFO);
+      const result = await service.create(
+        testUserId,
+        testTitle,
+        testMessage,
+        NotificationType.INFO,
+      );
 
       expect(em.create).toHaveBeenCalledWith(Notification, {
         userId: testUserId,

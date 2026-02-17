@@ -1,9 +1,9 @@
 import { ConfigsServiceKey } from '@app/core/configs/configs.constant';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { SayhoBotErrorEvent } from '@app/kafka/events/events.interface';
-import { ConfigsService } from '../configs/configs.service';
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { EmbedBuilder, WebhookClient } from 'discord.js';
+import { ConfigsService } from '../configs/configs.service';
 
 export interface EmbedField {
   name: string;

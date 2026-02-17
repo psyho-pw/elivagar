@@ -1,8 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import { TestBed, Mocked } from '@suites/unit';
-
-import { NotificationType } from './notification/notification.entity';
+import { NotificationType } from './notification/notification.constant';
 import { NotificationController } from './notification.controller';
 import { NotificationService } from './notification.service';
 

@@ -367,16 +367,18 @@ export class CommandHandler {
     );
 
     if (result.queueEmpty) {
-      const msg = payload instanceof ChatInputCommandInteraction
-        ? await payload.editReply('Nothing to play')
-        : await payload.reply('Nothing to play');
+      const msg =
+        payload instanceof ChatInputCommandInteraction
+          ? await payload.editReply('Nothing to play')
+          : await payload.reply('Nothing to play');
       setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
       return;
     }
 
-    const msg = payload instanceof ChatInputCommandInteraction
-      ? await payload.editReply('Skipping ...')
-      : await payload.reply('Skipping ...');
+    const msg =
+      payload instanceof ChatInputCommandInteraction
+        ? await payload.editReply('Skipping ...')
+        : await payload.reply('Skipping ...');
     setTimeout(() => msg.delete(), this.configsService.DiscordConfig.messageDeleteTimeout);
   }
 

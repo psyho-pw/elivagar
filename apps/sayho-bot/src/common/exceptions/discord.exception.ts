@@ -15,7 +15,13 @@ export class DiscordException extends GeneralException {
     status?: number,
   ) {
     const callClass = `Discord${context.charAt(0).toUpperCase() + context.slice(1)}Service`;
-    super(callClass, callMethod ?? '', message, status || HttpStatus.INTERNAL_SERVER_ERROR);
+    super({
+      callClass,
+      callMethod: callMethod ?? '',
+      message,
+      status: status || HttpStatus.INTERNAL_SERVER_ERROR,
+    });
+
     this.context = context;
     this.metadata = metadata;
   }

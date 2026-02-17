@@ -1,6 +1,6 @@
 import { ConnectionRegistryService } from '@app/core/lifecycle/connection-registry.service';
-import { ConnectionNames } from '@app/core/lifecycle/lifecycle.constant';
-import { ConnectionState, IManagedConnection } from '@app/core/lifecycle/lifecycle.interface';
+import { ConnectionNames, ConnectionState } from '@app/core/lifecycle/lifecycle.constant';
+import { IManagedConnection } from '@app/core/lifecycle/lifecycle.interface';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';

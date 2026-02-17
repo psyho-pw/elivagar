@@ -3,7 +3,8 @@ import { status as GrpcStatus } from '@grpc/grpc-js';
 import { EntityManager, FilterQuery } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import { Notification, NotificationType } from './notification/notification.entity';
+import { NotificationType } from './notification/notification.constant';
+import { Notification } from './notification/notification.entity';
 import { NotificationListResult, NotificationResult } from './notification/notification.interface';
 
 @Injectable()

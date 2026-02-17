@@ -1,6 +1,5 @@
 import { ConnectionRegistryService } from '@app/core/lifecycle/connection-registry.service';
-import { ConnectionNames } from '@app/core/lifecycle/lifecycle.constant';
-import { ConnectionState } from '@app/core/lifecycle/lifecycle.interface';
+import { ConnectionNames, ConnectionState } from '@app/core/lifecycle/lifecycle.constant';
 import { LoggerService } from '@app/core/logger/logger.service';
 import { ClientKafka } from '@nestjs/microservices';
 import { Mocked, TestBed } from '@suites/unit';
