@@ -1,22 +1,18 @@
 import { faker } from '@faker-js/faker';
-import { EntityManager } from '@mikro-orm/postgresql';
 import { TestBed, Mocked } from '@suites/unit';
 import { makeSong } from '@test/factories/song.factory';
-import { Song } from './song.entity';
 import { SongRepository } from './song.repository';
 import { SongService } from './song.service';
 
 describe('SongService', () => {
   let service: SongService;
   let repository: Mocked<SongRepository>;
-  let em: Mocked<EntityManager>;
 
   beforeAll(async () => {
     const { unit, unitRef } = await TestBed.solitary(SongService).compile();
 
     service = unit;
     repository = unitRef.get(SongRepository);
-    em = unitRef.get(EntityManager);
   });
 
   beforeEach(() => jest.clearAllMocks());
@@ -31,8 +27,6 @@ describe('SongService', () => {
       const result = await service.create(url, title);
 
       expect(existing.count).toBe(4);
-      expect(em.flush).toHaveBeenCalled();
-      expect(em.persistAndFlush).not.toHaveBeenCalled();
       expect(result).toEqual({
         id: existing.id,
         url: existing.url,
@@ -42,24 +36,22 @@ describe('SongService', () => {
       });
     });
 
-    it('should create and persist a new song if URL does not exist', async () => {
+    it('should create a new song if URL does not exist', async () => {
       const url = faker.internet.url();
       const title = faker.music.songName();
       repository.findOne.mockResolvedValue(null);
       const newSong = makeSong({ url, title });
-      em.create.mockReturnValue(newSong);
+      repository.create.mockReturnValue(newSong);
 
       const result = await service.create(url, title);
 
-      expect(em.create).toHaveBeenCalledWith(
-        Song,
+      expect(repository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           url,
           title,
           count: 1,
         }),
       );
-      expect(em.persistAndFlush).toHaveBeenCalledWith(newSong);
       expect(result).toEqual({
         id: newSong.id,
         url: newSong.url,
@@ -73,11 +65,11 @@ describe('SongService', () => {
       const url = faker.internet.url();
       const title = faker.music.songName();
       repository.findOne.mockResolvedValue(null);
-      em.create.mockReturnValue(makeSong());
+      repository.create.mockReturnValue(makeSong());
 
       await service.create(url, title);
 
-      const createArg = em.create.mock.calls[0][1] as Record<string, unknown>;
+      const createArg = repository.create.mock.calls[0][0] as Record<string, unknown>;
       expect(createArg.createdAt).toBeInstanceOf(Date);
       expect(createArg.updatedAt).toBeInstanceOf(Date);
     });
@@ -137,7 +129,7 @@ describe('SongService', () => {
   });
 
   describe('incrementCount', () => {
-    it('should increment count and flush when song is found', async () => {
+    it('should increment count when song is found', async () => {
       const url = faker.internet.url();
       const song = makeSong({ url, count: 5 });
       repository.findOne.mockResolvedValue(song);
@@ -145,7 +137,6 @@ describe('SongService', () => {
       await service.incrementCount(url);
 
       expect(song.count).toBe(6);
-      expect(em.flush).toHaveBeenCalled();
     });
 
     it('should do nothing when song is not found', async () => {
@@ -153,8 +144,6 @@ describe('SongService', () => {
       repository.findOne.mockResolvedValue(null);
 
       await service.incrementCount(url);
-
-      expect(em.flush).not.toHaveBeenCalled();
     });
   });
 });

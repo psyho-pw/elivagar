@@ -1,32 +1,35 @@
 import { LoggerService } from '@app/core/logger/logger.service';
 import { status as GrpcStatus } from '@grpc/grpc-js';
-import { EntityManager, FilterQuery } from '@mikro-orm/postgresql';
+import { MikroORM, Transactional } from '@mikro-orm/core';
+import { FilterQuery } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { NotificationType } from './notification/notification.constant';
 import { Notification } from './notification/notification.entity';
 import { NotificationListResult, NotificationResult } from './notification/notification.interface';
+import { NotificationRepository } from './notification/notification.repository';
 
 @Injectable()
 export class NotificationService {
   constructor(
-    private readonly em: EntityManager,
+    private readonly orm: MikroORM,
+    private readonly notificationRepository: NotificationRepository,
     private readonly loggerService: LoggerService,
   ) {}
 
+  @Transactional()
   async create(
     userId: string,
     title: string,
     message: string,
     type: NotificationType,
   ): Promise<NotificationResult> {
-    const notification = this.em.create(Notification, {
+    const notification = this.notificationRepository.create({
       userId,
       title,
       message,
       type,
     } as unknown as Notification);
-    await this.em.flush();
 
     return this.toResult(notification);
   }
@@ -42,7 +45,7 @@ export class NotificationService {
       where.isRead = false;
     }
 
-    const [notifications, total] = await this.em.findAndCount(Notification, where, {
+    const [notifications, total] = await this.notificationRepository.findAndCount(where, {
       orderBy: { createdAt: 'DESC' },
       offset: (page - 1) * limit,
       limit,
@@ -55,7 +58,7 @@ export class NotificationService {
   }
 
   async findOne(id: string): Promise<NotificationResult> {
-    const notification = await this.em.findOne(Notification, { id, deletedAt: null });
+    const notification = await this.notificationRepository.findOne({ id, deletedAt: null });
     if (!notification) {
       throw new RpcException({
         code: GrpcStatus.NOT_FOUND,
@@ -66,9 +69,9 @@ export class NotificationService {
     return this.toResult(notification);
   }
 
+  @Transactional()
   async markAsRead(ids: string[]): Promise<number> {
-    const count = await this.em.nativeUpdate(
-      Notification,
+    const count = await this.notificationRepository.nativeUpdate(
       { id: { $in: ids }, deletedAt: null, isRead: false },
       { isRead: true },
     );
@@ -76,8 +79,9 @@ export class NotificationService {
     return count;
   }
 
+  @Transactional()
   async remove(id: string): Promise<boolean> {
-    const notification = await this.em.findOne(Notification, { id, deletedAt: null });
+    const notification = await this.notificationRepository.findOne({ id, deletedAt: null });
     if (!notification) {
       throw new RpcException({
         code: GrpcStatus.NOT_FOUND,
@@ -86,7 +90,6 @@ export class NotificationService {
     }
 
     notification.deletedAt = new Date();
-    await this.em.flush();
 
     return true;
   }

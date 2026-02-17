@@ -1,6 +1,6 @@
 import { LoggerService } from '@app/core/logger/logger.service';
 import { status as GrpcStatus } from '@grpc/grpc-js';
-import { EntityManager } from '@mikro-orm/core';
+import { MikroORM, Transactional } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import * as bcrypt from 'bcrypt';
@@ -12,19 +12,22 @@ import {
 } from './auth.interface';
 import { JwtPayload, JwtService } from './jwt/jwt.service';
 import { User } from './user/user.entity';
+import { UserRepository } from './user/user.repository';
 
 const BCRYPT_SALT_ROUNDS = 12;
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly em: EntityManager,
+    private readonly orm: MikroORM,
+    private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly loggerService: LoggerService,
   ) {}
 
+  @Transactional()
   async register(email: string, password: string, name: string): Promise<RegisterResult> {
-    const existing = await this.em.findOne(User, { email, deletedAt: null });
+    const existing = await this.userRepository.findOne({ email, deletedAt: null });
     if (existing) {
       throw new RpcException({
         code: GrpcStatus.ALREADY_EXISTS,
@@ -34,19 +37,18 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
     // MikroORM handles default values (createdAt, updatedAt, deletedAt) at entity level
-    const user = this.em.create(User, {
+    const user = this.userRepository.create({
       email,
       name,
       password: hashedPassword,
       roles: ['user'],
     } as unknown as User);
-    await this.em.flush();
 
     return { userId: user.id, email: user.email };
   }
 
   async login(email: string, password: string): Promise<LoginResult> {
-    const user = await this.em.findOne(User, { email, deletedAt: null });
+    const user = await this.userRepository.findOne({ email, deletedAt: null });
     if (!user) {
       throw new RpcException({ code: GrpcStatus.UNAUTHENTICATED, message: 'Invalid credentials' });
     }
@@ -98,7 +100,7 @@ export class AuthService {
   async refreshToken(refreshToken: string): Promise<RefreshTokenResult> {
     try {
       const { sub } = this.jwtService.verifyRefreshToken(refreshToken);
-      const user = await this.em.findOne(User, { id: sub, deletedAt: null });
+      const user = await this.userRepository.findOne({ id: sub, deletedAt: null });
 
       if (!user) {
         throw new RpcException({ code: GrpcStatus.NOT_FOUND, message: 'User not found' });
